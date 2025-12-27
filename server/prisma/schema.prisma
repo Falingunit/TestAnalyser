@@ -1,0 +1,104 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id               String            @id @default(cuid())
+  name             String
+  email            String            @unique
+  passwordHash     String
+  role             String            @default("USER")
+  preferences      String
+  externalAccounts ExternalAccount[]
+  attempts         Attempt[]
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+}
+
+model ExternalAccount {
+  id            String                 @id @default(cuid())
+  userId        String
+  provider      String
+  username      String
+  status        String                 @default("CONNECTED")
+  syncStatus    String                 @default("IDLE")
+  syncTotal     Int                    @default(0)
+  syncCompleted Int                    @default(0)
+  syncStartedAt DateTime?
+  syncFinishedAt DateTime?
+  lastSyncAt    DateTime?
+  statusMessage String?
+  credential    ExternalAccountCredential?
+  user          User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt     DateTime               @default(now())
+  updatedAt     DateTime               @updatedAt
+
+  @@index([userId])
+  @@unique([userId, provider])
+}
+
+model ExternalAccountCredential {
+  id                String           @id @default(cuid())
+  accountId         String           @unique
+  encryptedPassword String
+  iv                String
+  tag               String
+  account           ExternalAccount  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+}
+
+model Exam {
+  id               String           @id @default(cuid())
+  title            String
+  externalExamId   String?
+  examDate         String
+  questions        Question[]
+  attempts         Attempt[]
+
+  @@index([externalExamId])
+  @@unique([externalExamId])
+}
+
+model Question {
+  id                 String       @id @default(cuid())
+  examId             String
+  subject            String
+  qtype              String
+  correctAnswer      String
+  questionContent    String
+  optionContentA     String?
+  optionContentB     String?
+  optionContentC     String?
+  optionContentD     String?
+  hasPartial         Boolean      @default(false)
+  correctMarking     Int
+  incorrectMarking   Int
+  unattemptedMarking Int
+  questionNumber     Int
+  keyUpdate          String?
+  lastKeyUpdateTime  DateTime?
+  exam               Exam         @relation(fields: [examId], references: [id], onDelete: Cascade)
+
+  @@index([examId])
+  @@unique([examId, questionNumber])
+}
+
+model Attempt {
+  id           String           @id @default(cuid())
+  userId       String
+  examId       String
+  answers      String
+  timings      String
+  user         User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  exam         Exam             @relation(fields: [examId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([examId])
+  @@unique([userId, examId])
+}

@@ -1,0 +1,102 @@
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 5%;
+    --foreground: 0 0% 98%;
+    --card: 0 0% 8%;
+    --card-foreground: 0 0% 98%;
+    --popover: 0 0% 7%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 0 0% 98%;
+    --primary-foreground: 0 0% 9%;
+    --secondary: 0 0% 18%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 0 0% 20%;
+    --muted-foreground: 0 0% 70%;
+    --accent: 0 0% 22%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 24%;
+    --input: 0 0% 24%;
+    --ring: 0 0% 83.1%;
+    --radius: 0.5rem;
+    --chart-1: 0 0% 98%;
+    --chart-2: 0 0% 72%;
+    --chart-3: 0 0% 56%;
+    --chart-4: 0 0% 40%;
+    --chart-5: 0 0% 28%;
+    --reader-font-scale: 1;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--border)) transparent;
+  }
+
+  *::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  *::-webkit-scrollbar-thumb {
+    background: hsl(var(--border));
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+
+  *::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground));
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased font-body;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-display;
+  }
+}
+
+@layer components {
+  .app-canvas {
+    @apply min-h-screen bg-background text-foreground;
+  }
+
+  .app-surface {
+    @apply rounded-lg border border-border bg-card;
+  }
+
+  .app-panel {
+    @apply rounded-lg border border-border bg-card;
+  }
+
+  .question-html {
+    font-size: calc(1rem * var(--reader-font-scale));
+  }
+
+  .question-html img {
+    cursor: zoom-in;
+  }
+}
