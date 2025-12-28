@@ -1,54 +1,54 @@
-import type { ReactNode } from 'react'
-import { Link, NavLink } from 'react-router-dom'
-import { LayoutDashboard, ListChecks, Settings } from 'lucide-react'
-import { useAppStore } from '@/lib/store'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
+import type { ReactNode } from "react";
+import { Link, NavLink } from "react-router-dom";
+import { LayoutDashboard, ListChecks, Settings } from "lucide-react";
+import { useAppStore } from "@/lib/store";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import { cn } from '@/lib/utils'
+} from "@/components/ui/dropdown-menu";
+import { cn } from "@/lib/utils";
 
 const navItems = [
   {
-    to: '/app',
-    label: 'Dashboard',
+    to: "/app",
+    label: "Dashboard",
     icon: LayoutDashboard,
   },
   {
-    to: '/app/tests',
-    label: 'Tests',
+    to: "/app/tests",
+    label: "Tests",
     icon: ListChecks,
   },
   {
-    to: '/app/profile',
-    label: 'Preferences',
+    to: "/app/profile",
+    label: "Preferences",
     icon: Settings,
   },
-]
+];
 
 export const AppShell = ({ children }: { children: ReactNode }) => {
-  const { currentUser, logout, state, syncExternalAccount } = useAppStore()
+  const { currentUser, logout, state, syncExternalAccount } = useAppStore();
   const account = state.externalAccounts.find(
-    (item) => item.userId === currentUser?.id,
-  )
-  const isSyncing = account?.syncStatus === 'syncing'
-  const syncTotal = account?.syncTotal ?? 0
-  const syncCompleted = account?.syncCompleted ?? 0
-  const needsConnect = !account
+    (item) => item.userId === currentUser?.id
+  );
+  const isSyncing = account?.syncStatus === "syncing";
+  const syncTotal = account?.syncTotal ?? 0;
+  const syncCompleted = account?.syncCompleted ?? 0;
+  const needsConnect = !account;
   const syncLabel = needsConnect
-    ? 'Connect account'
+    ? "Connect account"
     : isSyncing
-      ? `Syncing ${syncCompleted}/${syncTotal || '?'}`
-      : 'Sync latest'
+    ? `Syncing ${syncCompleted}/${syncTotal || "?"}`
+    : "Sync latest";
   const syncTitle = needsConnect
-    ? 'Connect an external account'
+    ? "Connect an external account"
     : isSyncing
-      ? 'Sync in progress'
-      : 'Sync latest tests'
+    ? "Sync in progress"
+    : "Sync latest tests";
 
   return (
     <div className="app-canvas">
@@ -60,13 +60,13 @@ export const AppShell = ({ children }: { children: ReactNode }) => {
                 <NavLink
                   key={item.to}
                   to={item.to}
-                  end={item.to === '/app'}
+                  end={item.to === "/app"}
                   className={({ isActive }) =>
                     cn(
-                      'inline-flex items-center gap-2 rounded-full px-4 py-2 transition',
+                      "inline-flex items-center gap-2 rounded-full px-4 py-2 transition",
                       isActive
-                        ? 'bg-secondary text-foreground'
-                        : 'text-muted-foreground hover:bg-accent hover:text-foreground',
+                        ? "bg-secondary text-foreground"
+                        : "text-muted-foreground hover:bg-accent hover:text-foreground"
                     )
                   }
                 >
@@ -115,7 +115,7 @@ export const AppShell = ({ children }: { children: ReactNode }) => {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm">
-                  {currentUser?.name ?? 'Account'}
+                  {currentUser?.name ?? "Account"}
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
@@ -129,7 +129,7 @@ export const AppShell = ({ children }: { children: ReactNode }) => {
         </div>
       </header>
 
-      <main className="min-w-0 px-6 pb-10 pt-6">{children}</main>
+      <main className="min-w-0 px-2 py-2">{children}</main>
     </div>
-  )
-}
+  );
+};

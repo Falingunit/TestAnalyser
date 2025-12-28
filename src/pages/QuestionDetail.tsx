@@ -6,27 +6,28 @@ import {
   type FormEvent,
   type MouseEvent,
   type PointerEvent,
-} from 'react'
-import { Link, useParams } from 'react-router-dom'
-import { Copy, Star } from 'lucide-react'
-import { useAppStore } from '@/lib/store'
+} from "react";
+import { Link, useParams } from "react-router-dom";
+import { Copy, Star } from "lucide-react";
+import { useAppStore } from "@/lib/store";
 import {
+  buildAnalysis,
   formatAnswerValue,
   getAnswerForQuestion,
   getQuestionMark,
   getQuestionStatus,
   getTimeForQuestion,
   isBonusKey,
-} from '@/lib/analysis'
-import type { Subject } from '@/lib/types'
+} from "@/lib/analysis";
+import type { Subject } from "@/lib/types";
 import {
   buildDisplayQuestions,
   subjectDisplayOrder,
-} from '@/lib/questionDisplay'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
+} from "@/lib/questionDisplay";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
   DialogContent,
@@ -35,109 +36,111 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog'
-import { Separator } from '@/components/ui/separator'
-import { Switch } from '@/components/ui/switch'
-import { cn } from '@/lib/utils'
+} from "@/components/ui/dialog";
+import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
+import { cn } from "@/lib/utils";
 
 const formatSeconds = (value: number) => {
   if (!Number.isFinite(value)) {
-    return '0s'
+    return "0s";
   }
   if (value < 60) {
-    return `${Math.round(value)}s`
+    return `${Math.round(value)}s`;
   }
-  const minutes = Math.floor(value / 60)
-  const seconds = Math.round(value % 60)
-  return seconds ? `${minutes}m ${seconds}s` : `${minutes}m`
-}
+  const minutes = Math.floor(value / 60);
+  const seconds = Math.round(value % 60);
+  return seconds ? `${minutes}m ${seconds}s` : `${minutes}m`;
+};
 
 const splitByOr = (value: string) =>
   value
     .split(/\s+(?:OR)\s+|\s*\|\s*/i)
     .map((item) => item.trim())
-    .filter(Boolean)
+    .filter(Boolean);
 
 const toOptionArray = (value: unknown): string[] => {
   if (Array.isArray(value)) {
-    return value.map((item) => String(item).trim().toUpperCase()).filter(Boolean)
+    return value
+      .map((item) => String(item).trim().toUpperCase())
+      .filter(Boolean);
   }
-  if (typeof value === 'string') {
-    const segments = splitByOr(value)
+  if (typeof value === "string") {
+    const segments = splitByOr(value);
     if (segments.length === 0) {
-      return []
+      return [];
     }
     return segments.flatMap((segment) => {
-      const normalized = segment.trim().toUpperCase()
+      const normalized = segment.trim().toUpperCase();
       if (!normalized) {
-        return []
+        return [];
       }
-      if (normalized.includes(',')) {
+      if (normalized.includes(",")) {
         return normalized
-          .split(',')
+          .split(",")
           .map((item) => item.trim().toUpperCase())
-          .filter(Boolean)
+          .filter(Boolean);
       }
       if (/^[A-Z]+$/.test(normalized)) {
-        return normalized.split('')
+        return normalized.split("");
       }
-      return [normalized]
-    })
+      return [normalized];
+    });
   }
-  return []
-}
+  return [];
+};
 
 type ChatMessage = {
-  id: string
-  author: string
-  body: string
-  createdAt: string
-  pinned?: boolean
-}
+  id: string;
+  author: string;
+  body: string;
+  createdAt: string;
+  pinned?: boolean;
+};
 
 type KeyAnswerGroup = {
-  id: string
-  single: string
-  multi: string[]
-  min: string
-  max: string
-}
+  id: string;
+  single: string;
+  multi: string[];
+  min: string;
+  max: string;
+};
 
 const buildKeyGroup = (): KeyAnswerGroup => ({
   id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
-  single: '',
+  single: "",
   multi: [],
-  min: '',
-  max: '',
-})
+  min: "",
+  max: "",
+});
 
 const parseNumberValue = (value: string) => {
-  const trimmed = value.trim()
+  const trimmed = value.trim();
   if (!trimmed) {
-    return null
+    return null;
   }
-  const parsed = Number(trimmed)
-  return Number.isFinite(parsed) ? parsed : null
-}
+  const parsed = Number(trimmed);
+  return Number.isFinite(parsed) ? parsed : null;
+};
 
 const parseNumericGroup = (value: string) => {
-  const trimmed = value.trim()
+  const trimmed = value.trim();
   if (!trimmed) {
-    return null
+    return null;
   }
   const rangeMatch = trimmed.match(
-    /(-?\d+(?:\.\d+)?)\s*(?:to|-)\s*(-?\d+(?:\.\d+)?)/i,
-  )
+    /(-?\d+(?:\.\d+)?)\s*(?:to|-)\s*(-?\d+(?:\.\d+)?)/i
+  );
   if (rangeMatch) {
-    return { min: rangeMatch[1], max: rangeMatch[2] }
+    return { min: rangeMatch[1], max: rangeMatch[2] };
   }
-  return { min: trimmed, max: '' }
-}
+  return { min: trimmed, max: "" };
+};
 
-const keyOptionLabels = ['A', 'B', 'C', 'D'] as const
+const keyOptionLabels = ["A", "B", "C", "D"] as const;
 
 export const QuestionDetail = () => {
-  const { testId, questionId } = useParams()
+  const { testId, questionId } = useParams();
   const {
     state,
     updateAnswerKey,
@@ -147,246 +150,273 @@ export const QuestionDetail = () => {
     fontScale,
     setFontScale,
     setMode,
-  } =
-    useAppStore()
-  const test = state.tests.find((item) => item.id === testId)
+  } = useAppStore();
+  const test = state.tests.find((item) => item.id === testId);
   const displayQuestions = useMemo(() => {
     if (!test) {
-      return []
+      return [];
     }
-    return buildDisplayQuestions(test.questions)
-  }, [test])
+    return buildDisplayQuestions(test.questions);
+  }, [test]);
+
+  if (!test) {
+    return;
+    <Card className="app-panel">
+      <CardContent className="space-y-3 p-6">
+        <p className="text-sm text-muted-foreground">Test not found.</p>
+        <Button asChild variant="outline">
+          <Link to="/app/tests">Back to tests</Link>
+        </Button>
+      </CardContent>
+    </Card>;
+  }
+  const analysis = buildAnalysis(test);
+  const totalScore = test.questions.reduce(
+    (sum, question) => sum + question.correctMarking,
+    0
+  );
+  const scoreLabel = analysis
+    ? `${analysis.scoreCurrent}/${totalScore}`
+    : "n/a";
 
   const currentIndex = displayQuestions.findIndex(
-    (item) => item.question.id === questionId,
-  )
-  const questionEntry = currentIndex >= 0 ? displayQuestions[currentIndex] : null
-  const question = questionEntry?.question ?? null
-  const status = question && test ? getQuestionStatus(test, question) : 'Unattempted'
-  const timeSpent = question && test ? getTimeForQuestion(test, question) : 0
-  const answer = question && test ? getAnswerForQuestion(test, question) : null
-  const score = question && test ? getQuestionMark(test, question) : 0
-  const displayNumber = questionEntry?.displayNumber ?? 0
+    (item) => item.question.id === questionId
+  );
+  const questionEntry =
+    currentIndex >= 0 ? displayQuestions[currentIndex] : null;
+  const question = questionEntry?.question ?? null;
+  const status =
+    question && test ? getQuestionStatus(test, question) : "Unattempted";
+  const timeSpent = question && test ? getTimeForQuestion(test, question) : 0;
+  const answer = question && test ? getAnswerForQuestion(test, question) : null;
+  const score = question && test ? getQuestionMark(test, question) : 0;
+  const displayNumber = questionEntry?.displayNumber ?? 0;
   const isBookmarked = Boolean(
-    test && question ? test.bookmarks?.[question.id] : false,
-  )
-  const mode = currentUser?.preferences.mode ?? state.ui.mode
-  const isDark = mode === 'dark'
-  const keyOptions = keyOptionLabels
-  const keyOptionOrder: readonly string[] = keyOptionLabels
+    test && question ? test.bookmarks?.[question.id] : false
+  );
+  const mode = currentUser?.preferences.mode ?? state.ui.mode;
+  const isDark = mode === "dark";
+  const keyOptions = keyOptionLabels;
+  const keyOptionOrder: readonly string[] = keyOptionLabels;
 
   const paletteSections = useMemo(() => {
     if (!test) {
-      return []
+      return [];
     }
-    const map = new Map<Subject, Array<{
-      id: string
-      number: number
-      status: string
-      bonus: boolean
-      bookmarked: boolean
-    }>>()
+    const map = new Map<
+      Subject,
+      Array<{
+        id: string;
+        number: number;
+        status: string;
+        bonus: boolean;
+        bookmarked: boolean;
+      }>
+    >();
     displayQuestions.forEach((entry) => {
-      const { question: item, displayNumber } = entry
-      const subject = item.subject as Subject
-      const current = map.get(subject) ?? []
+      const { question: item, displayNumber } = entry;
+      const subject = item.subject as Subject;
+      const current = map.get(subject) ?? [];
       current.push({
         id: item.id,
         number: displayNumber,
         status: getQuestionStatus(test, item),
         bonus: isBonusKey(item.keyUpdate),
         bookmarked: Boolean(test.bookmarks?.[item.id]),
-      })
-      map.set(subject, current)
-    })
+      });
+      map.set(subject, current);
+    });
     return subjectDisplayOrder
       .map((subject) => ({
         subject,
         items: map.get(subject) ?? [],
       }))
-      .filter((section) => section.items.length > 0)
-  }, [displayQuestions, test])
+      .filter((section) => section.items.length > 0);
+  }, [displayQuestions, test]);
 
-  const [message, setMessage] = useState<string | null>(null)
-  const [keyUpdateBonus, setKeyUpdateBonus] = useState(false)
+  const [message, setMessage] = useState<string | null>(null);
+  const [keyUpdateBonus, setKeyUpdateBonus] = useState(false);
   const [keyAnswerGroups, setKeyAnswerGroups] = useState<KeyAnswerGroup[]>([
     buildKeyGroup(),
-  ])
-  const [notes, setNotes] = useState('')
-  const [chatInput, setChatInput] = useState('')
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([])
-  const [chatKeyLoaded, setChatKeyLoaded] = useState<string | null>(null)
-  const [isBookmarking, setIsBookmarking] = useState(false)
-  const [isCopying, setIsCopying] = useState(false)
-  const [isImageOpen, setIsImageOpen] = useState(false)
-  const [imageSrc, setImageSrc] = useState<string | null>(null)
-  const [imageZoom, setImageZoom] = useState(1)
-  const [imageOffset, setImageOffset] = useState({ x: 0, y: 0 })
-  const questionCopyRef = useRef<HTMLDivElement | null>(null)
+  ]);
+  const [notes, setNotes] = useState("");
+  const [chatInput, setChatInput] = useState("");
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [chatKeyLoaded, setChatKeyLoaded] = useState<string | null>(null);
+  const [isBookmarking, setIsBookmarking] = useState(false);
+  const [isCopying, setIsCopying] = useState(false);
+  const [isImageOpen, setIsImageOpen] = useState(false);
+  const [imageSrc, setImageSrc] = useState<string | null>(null);
+  const [imageZoom, setImageZoom] = useState(1);
+  const [imageOffset, setImageOffset] = useState({ x: 0, y: 0 });
+  const questionCopyRef = useRef<HTMLDivElement | null>(null);
   const dragState = useRef<{
-    startX: number
-    startY: number
-    originX: number
-    originY: number
-  } | null>(null)
-  const activePointers = useRef(new Map<number, { x: number; y: number }>())
+    startX: number;
+    startY: number;
+    originX: number;
+    originY: number;
+  } | null>(null);
+  const activePointers = useRef(new Map<number, { x: number; y: number }>());
   const pinchState = useRef<{
-    startDistance: number
-    startZoom: number
-  } | null>(null)
+    startDistance: number;
+    startZoom: number;
+  } | null>(null);
 
   const addKeyAnswerGroup = () => {
-    setKeyAnswerGroups((prev) => [...prev, buildKeyGroup()])
-  }
+    setKeyAnswerGroups((prev) => [...prev, buildKeyGroup()]);
+  };
 
   const removeKeyAnswerGroup = (groupId: string) => {
     setKeyAnswerGroups((prev) =>
-      prev.length > 1 ? prev.filter((group) => group.id !== groupId) : prev,
-    )
-  }
+      prev.length > 1 ? prev.filter((group) => group.id !== groupId) : prev
+    );
+  };
 
   const updateSingleGroup = (groupId: string, value: string) => {
     setKeyAnswerGroups((prev) =>
       prev.map((group) =>
-        group.id === groupId ? { ...group, single: value } : group,
-      ),
-    )
-  }
+        group.id === groupId ? { ...group, single: value } : group
+      )
+    );
+  };
 
   const toggleMultiGroupOption = (groupId: string, value: string) => {
     setKeyAnswerGroups((prev) =>
       prev.map((group) => {
         if (group.id !== groupId) {
-          return group
+          return group;
         }
-        const exists = group.multi.includes(value)
+        const exists = group.multi.includes(value);
         return {
           ...group,
           multi: exists
             ? group.multi.filter((item) => item !== value)
             : [...group.multi, value],
-        }
-      }),
-    )
-  }
+        };
+      })
+    );
+  };
 
   const updateRangeGroup = (
     groupId: string,
-    field: 'min' | 'max',
-    value: string,
+    field: "min" | "max",
+    value: string
   ) => {
     setKeyAnswerGroups((prev) =>
       prev.map((group) =>
-        group.id === groupId ? { ...group, [field]: value } : group,
-      ),
-    )
-  }
+        group.id === groupId ? { ...group, [field]: value } : group
+      )
+    );
+  };
 
   const sortOptions = (values: string[]) => {
     if (values.length === 0) {
-      return values
+      return values;
     }
     return [...values].sort((a, b) => {
-      const ai = keyOptionOrder.indexOf(a)
-      const bi = keyOptionOrder.indexOf(b)
-      const safeA = ai === -1 ? Number.MAX_SAFE_INTEGER : ai
-      const safeB = bi === -1 ? Number.MAX_SAFE_INTEGER : bi
-      return safeA - safeB
-    })
-  }
+      const ai = keyOptionOrder.indexOf(a);
+      const bi = keyOptionOrder.indexOf(b);
+      const safeA = ai === -1 ? Number.MAX_SAFE_INTEGER : ai;
+      const safeB = bi === -1 ? Number.MAX_SAFE_INTEGER : bi;
+      return safeA - safeB;
+    });
+  };
 
   const buildKeyUpdateValue = () => {
     if (!question) {
-      return null
+      return null;
     }
 
-    if (question.qtype === 'NAT') {
-      const ranges: string[] = []
-      let hasInvalid = false
+    if (question.qtype === "NAT") {
+      const ranges: string[] = [];
+      let hasInvalid = false;
       keyAnswerGroups.forEach((group) => {
-        const minRaw = group.min.trim()
-        const maxRaw = group.max.trim()
+        const minRaw = group.min.trim();
+        const maxRaw = group.max.trim();
         if (!minRaw && !maxRaw) {
-          return
+          return;
         }
-        const minValue = parseNumberValue(minRaw)
+        const minValue = parseNumberValue(minRaw);
         if (minValue === null) {
-          hasInvalid = true
-          return
+          hasInvalid = true;
+          return;
         }
-        const maxValue = maxRaw.length > 0 ? parseNumberValue(maxRaw) : minValue
+        const maxValue =
+          maxRaw.length > 0 ? parseNumberValue(maxRaw) : minValue;
         if (maxValue === null) {
-          hasInvalid = true
-          return
+          hasInvalid = true;
+          return;
         }
         ranges.push(
-          minValue === maxValue ? String(minValue) : `${minValue}-${maxValue}`,
-        )
-      })
+          minValue === maxValue ? String(minValue) : `${minValue}-${maxValue}`
+        );
+      });
       if (hasInvalid) {
-        return null
+        return null;
       }
-      return ranges.length > 0 ? ranges.join(' OR ') : null
+      return ranges.length > 0 ? ranges.join(" OR ") : null;
     }
 
-    if (question.qtype === 'MAQ') {
+    if (question.qtype === "MAQ") {
       const groups = keyAnswerGroups
         .map((group) => {
-          const selections = group.multi.map((item) => item.trim().toUpperCase())
+          const selections = group.multi.map((item) =>
+            item.trim().toUpperCase()
+          );
           if (selections.length === 0) {
-            return null
+            return null;
           }
-          return sortOptions(selections).join('')
+          return sortOptions(selections).join("");
         })
-        .filter((value): value is string => Boolean(value))
-      return groups.length > 0 ? groups.join(' OR ') : null
+        .filter((value): value is string => Boolean(value));
+      return groups.length > 0 ? groups.join(" OR ") : null;
     }
 
     const singles = keyAnswerGroups
       .map((group) => group.single.trim().toUpperCase())
-      .filter(Boolean)
-    return singles.length > 0 ? singles.join(' OR ') : null
-  }
+      .filter(Boolean);
+    return singles.length > 0 ? singles.join(" OR ") : null;
+  };
 
   const handleKeyUpdate = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    setMessage(null)
+    event.preventDefault();
+    setMessage(null);
     if (!isAdmin) {
-      setMessage('Only admins can update answer keys.')
-      return
+      setMessage("Only admins can update answer keys.");
+      return;
     }
     if (!test || !question) {
-      return
+      return;
     }
-    const keyValue = buildKeyUpdateValue()
+    const keyValue = buildKeyUpdateValue();
     if (!keyUpdateBonus && !keyValue) {
-      setMessage('Enter a valid key or mark this question as bonus.')
-      return
+      setMessage("Enter a valid key or mark this question as bonus.");
+      return;
     }
     await updateAnswerKey({
       testId: test.id,
       questionId: question.id,
       newKey: keyUpdateBonus ? { bonus: true } : keyValue,
-    })
-    setMessage('Answer key updated.')
-    setKeyUpdateBonus(false)
-  }
+    });
+    setMessage("Answer key updated.");
+    setKeyUpdateBonus(false);
+  };
 
   const handleBookmarkToggle = async () => {
     if (!test || !question || isBookmarking) {
-      return
+      return;
     }
-    setIsBookmarking(true)
+    setIsBookmarking(true);
     const result = await toggleQuestionBookmark({
       testId: test.id,
       questionId: question.id,
       bookmarked: !isBookmarked,
-    })
+    });
     if (!result.ok) {
-      setMessage(result.message ?? 'Unable to update bookmark.')
+      setMessage(result.message ?? "Unable to update bookmark.");
     }
-    setIsBookmarking(false)
-  }
+    setIsBookmarking(false);
+  };
 
   if (!test || !question) {
     return (
@@ -398,216 +428,222 @@ export const QuestionDetail = () => {
           </Button>
         </CardContent>
       </Card>
-    )
+    );
   }
 
-  const prev =
-    currentIndex > 0 ? displayQuestions[currentIndex - 1] : null
+  const prev = currentIndex > 0 ? displayQuestions[currentIndex - 1] : null;
   const next =
     currentIndex < displayQuestions.length - 1
       ? displayQuestions[currentIndex + 1]
-      : null
-  const selectedOptions = toOptionArray(answer)
-  const correctOptions = question ? toOptionArray(question.keyUpdate) : []
-  const isMultiSelect = question?.qtype === 'MAQ'
+      : null;
+  const selectedOptions = toOptionArray(answer);
+  const correctOptions = question ? toOptionArray(question.keyUpdate) : [];
+  const isMultiSelect = question?.qtype === "MAQ";
   const notesKey =
-    test && question ? `testanalyser-question-notes-${test.id}-${question.id}` : null
+    test && question
+      ? `testanalyser-question-notes-${test.id}-${question.id}`
+      : null;
   const chatKey =
-    test && question ? `testanalyser-question-chat-${test.id}-${question.id}` : null
+    test && question
+      ? `testanalyser-question-chat-${test.id}-${question.id}`
+      : null;
   const orderedMessages = useMemo(() => {
     return [...chatMessages].sort((a, b) => {
-      const pinDelta = Number(Boolean(b.pinned)) - Number(Boolean(a.pinned))
+      const pinDelta = Number(Boolean(b.pinned)) - Number(Boolean(a.pinned));
       if (pinDelta !== 0) {
-        return pinDelta
+        return pinDelta;
       }
-      return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-    })
-  }, [chatMessages])
-  const activeMessages = chatKeyLoaded === chatKey ? orderedMessages : []
+      return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+    });
+  }, [chatMessages]);
+  const activeMessages = chatKeyLoaded === chatKey ? orderedMessages : [];
 
   useEffect(() => {
     if (!notesKey) {
-      setNotes('')
-      return
+      setNotes("");
+      return;
     }
-    const saved = localStorage.getItem(notesKey)
-    setNotes(saved ?? '')
-  }, [notesKey])
+    const saved = localStorage.getItem(notesKey);
+    setNotes(saved ?? "");
+  }, [notesKey]);
 
   useEffect(() => {
     if (!question) {
-      setKeyAnswerGroups([buildKeyGroup()])
-      setKeyUpdateBonus(false)
-      return
+      setKeyAnswerGroups([buildKeyGroup()]);
+      setKeyUpdateBonus(false);
+      return;
     }
-    const bonusActive = isBonusKey(question.keyUpdate)
-    setKeyUpdateBonus(bonusActive)
+    const bonusActive = isBonusKey(question.keyUpdate);
+    setKeyUpdateBonus(bonusActive);
     if (bonusActive) {
-      setKeyAnswerGroups([buildKeyGroup()])
-      return
+      setKeyAnswerGroups([buildKeyGroup()]);
+      return;
     }
 
-    const nextGroups: KeyAnswerGroup[] = []
-    const rawKey = question.keyUpdate ?? question.correctAnswer
+    const nextGroups: KeyAnswerGroup[] = [];
+    const rawKey = question.keyUpdate ?? question.correctAnswer;
 
-    if (question.qtype === 'NAT') {
-      if (typeof rawKey === 'number') {
-        nextGroups.push({ ...buildKeyGroup(), min: String(rawKey), max: '' })
+    if (question.qtype === "NAT") {
+      if (typeof rawKey === "number") {
+        nextGroups.push({ ...buildKeyGroup(), min: String(rawKey), max: "" });
       } else if (
         rawKey &&
-        typeof rawKey === 'object' &&
-        'min' in rawKey &&
-        'max' in rawKey
+        typeof rawKey === "object" &&
+        "min" in rawKey &&
+        "max" in rawKey
       ) {
         nextGroups.push({
           ...buildKeyGroup(),
-          min: String(rawKey.min ?? ''),
-          max: String(rawKey.max ?? ''),
-        })
-      } else if (typeof rawKey === 'string') {
+          min: String(rawKey.min ?? ""),
+          max: String(rawKey.max ?? ""),
+        });
+      } else if (typeof rawKey === "string") {
         splitByOr(rawKey).forEach((segment) => {
-          const parsed = parseNumericGroup(segment)
+          const parsed = parseNumericGroup(segment);
           if (parsed) {
             nextGroups.push({
               ...buildKeyGroup(),
               min: parsed.min,
               max: parsed.max,
-            })
+            });
           }
-        })
+        });
       }
-    } else if (question.qtype === 'MAQ') {
+    } else if (question.qtype === "MAQ") {
       if (Array.isArray(rawKey)) {
         nextGroups.push({
           ...buildKeyGroup(),
           multi: rawKey.map((item) => String(item).trim().toUpperCase()),
-        })
-      } else if (typeof rawKey === 'string') {
+        });
+      } else if (typeof rawKey === "string") {
         splitByOr(rawKey).forEach((segment) => {
-          const selections = toOptionArray(segment)
+          const selections = toOptionArray(segment);
           if (selections.length > 0) {
-            nextGroups.push({ ...buildKeyGroup(), multi: selections })
+            nextGroups.push({ ...buildKeyGroup(), multi: selections });
           }
-        })
+        });
       }
-    } else if (typeof rawKey === 'string') {
+    } else if (typeof rawKey === "string") {
       splitByOr(rawKey).forEach((segment) => {
-        const selection = toOptionArray(segment)[0]
+        const selection = toOptionArray(segment)[0];
         if (selection) {
-          nextGroups.push({ ...buildKeyGroup(), single: selection })
+          nextGroups.push({ ...buildKeyGroup(), single: selection });
         }
-      })
+      });
     } else if (Array.isArray(rawKey)) {
-      const selection = rawKey[0] ? String(rawKey[0]).trim().toUpperCase() : ''
-      nextGroups.push({ ...buildKeyGroup(), single: selection })
+      const selection = rawKey[0] ? String(rawKey[0]).trim().toUpperCase() : "";
+      nextGroups.push({ ...buildKeyGroup(), single: selection });
     }
 
-    setKeyAnswerGroups(nextGroups.length > 0 ? nextGroups : [buildKeyGroup()])
-  }, [question])
+    setKeyAnswerGroups(nextGroups.length > 0 ? nextGroups : [buildKeyGroup()]);
+  }, [question]);
 
   useEffect(() => {
     if (!notesKey) {
-      return
+      return;
     }
-    localStorage.setItem(notesKey, notes)
-  }, [notes, notesKey])
+    localStorage.setItem(notesKey, notes);
+  }, [notes, notesKey]);
 
   useEffect(() => {
     if (!chatKey) {
-      setChatMessages([])
-      setChatKeyLoaded(null)
-      return
+      setChatMessages([]);
+      setChatKeyLoaded(null);
+      return;
     }
-    const raw = localStorage.getItem(chatKey)
+    const raw = localStorage.getItem(chatKey);
     if (!raw) {
-      setChatMessages([])
-      setChatKeyLoaded(chatKey)
-      return
+      setChatMessages([]);
+      setChatKeyLoaded(chatKey);
+      return;
     }
     try {
-      const parsed = JSON.parse(raw) as ChatMessage[]
-      setChatMessages(Array.isArray(parsed) ? parsed : [])
+      const parsed = JSON.parse(raw) as ChatMessage[];
+      setChatMessages(Array.isArray(parsed) ? parsed : []);
     } catch {
-      setChatMessages([])
+      setChatMessages([]);
     }
-    setChatKeyLoaded(chatKey)
-  }, [chatKey])
+    setChatKeyLoaded(chatKey);
+  }, [chatKey]);
 
   useEffect(() => {
     if (!chatKey || chatKeyLoaded !== chatKey) {
-      return
+      return;
     }
-    localStorage.setItem(chatKey, JSON.stringify(chatMessages))
-  }, [chatKey, chatKeyLoaded, chatMessages])
+    localStorage.setItem(chatKey, JSON.stringify(chatMessages));
+  }, [chatKey, chatKeyLoaded, chatMessages]);
 
   const handleChatSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    const trimmed = chatInput.trim()
+    event.preventDefault();
+    const trimmed = chatInput.trim();
     if (!trimmed) {
-      return
+      return;
     }
-    const author = currentUser?.name ?? 'User'
+    const author = currentUser?.name ?? "User";
     const nextMessage: ChatMessage = {
       id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
       author,
       body: trimmed,
       createdAt: new Date().toISOString(),
       pinned: false,
-    }
-    setChatMessages((prevMessages) => [...prevMessages, nextMessage])
-    setChatInput('')
-  }
+    };
+    setChatMessages((prevMessages) => [...prevMessages, nextMessage]);
+    setChatInput("");
+  };
 
-  const clampZoom = (value: number) => Math.min(4, Math.max(0.1, value))
+  const clampZoom = (value: number) => Math.min(4, Math.max(0.1, value));
 
   const resetImageView = () => {
-    setImageZoom(1)
-    setImageOffset({ x: 0, y: 0 })
-    activePointers.current.clear()
-    pinchState.current = null
-    dragState.current = null
-  }
+    setImageZoom(1);
+    setImageOffset({ x: 0, y: 0 });
+    activePointers.current.clear();
+    pinchState.current = null;
+    dragState.current = null;
+  };
 
   const handleImageOpen = (src: string) => {
-    setImageSrc(src)
-    resetImageView()
-    setIsImageOpen(true)
-  }
+    setImageSrc(src);
+    resetImageView();
+    setIsImageOpen(true);
+  };
 
   const handleRichContentClick = (event: MouseEvent<HTMLElement>) => {
-    const target = event.target
+    const target = event.target;
     if (target instanceof HTMLImageElement) {
-      const src = target.currentSrc || target.src
+      const src = target.currentSrc || target.src;
       if (src) {
-        event.preventDefault()
-        handleImageOpen(src)
+        event.preventDefault();
+        handleImageOpen(src);
       }
     }
-  }
+  };
 
   const handleImageWheel = (event: React.WheelEvent<HTMLDivElement>) => {
-    event.preventDefault()
-    const delta = event.deltaY < 0 ? 0.15 : -0.15
-    setImageZoom((prev) => clampZoom(prev + delta))
-  }
+    event.preventDefault();
+    const delta = event.deltaY < 0 ? 0.15 : -0.15;
+    setImageZoom((prev) => clampZoom(prev + delta));
+  };
 
   const handleImagePointerDown = (event: PointerEvent<HTMLDivElement>) => {
-    event.preventDefault()
-    event.currentTarget.setPointerCapture(event.pointerId)
+    event.preventDefault();
+    event.currentTarget.setPointerCapture(event.pointerId);
     activePointers.current.set(event.pointerId, {
       x: event.clientX,
       y: event.clientY,
-    })
+    });
 
     if (activePointers.current.size === 2) {
-      const points = Array.from(activePointers.current.values())
-      const distance = Math.hypot(points[0].x - points[1].x, points[0].y - points[1].y)
+      const points = Array.from(activePointers.current.values());
+      const distance = Math.hypot(
+        points[0].x - points[1].x,
+        points[0].y - points[1].y
+      );
       pinchState.current = {
         startDistance: distance || 1,
         startZoom: imageZoom,
-      }
-      dragState.current = null
-      return
+      };
+      dragState.current = null;
+      return;
     }
 
     dragState.current = {
@@ -615,233 +651,254 @@ export const QuestionDetail = () => {
       startY: event.clientY,
       originX: imageOffset.x,
       originY: imageOffset.y,
-    }
-  }
+    };
+  };
 
   const handleImagePointerMove = (event: PointerEvent<HTMLDivElement>) => {
     if (!activePointers.current.has(event.pointerId)) {
-      return
+      return;
     }
     activePointers.current.set(event.pointerId, {
       x: event.clientX,
       y: event.clientY,
-    })
+    });
 
     if (activePointers.current.size === 2) {
-      const points = Array.from(activePointers.current.values())
-      const distance = Math.hypot(points[0].x - points[1].x, points[0].y - points[1].y)
-      const start = pinchState.current?.startDistance ?? (distance || 1)
-      const startZoom = pinchState.current?.startZoom ?? imageZoom
-      setImageZoom(clampZoom(startZoom * (distance / start)))
-      return
+      const points = Array.from(activePointers.current.values());
+      const distance = Math.hypot(
+        points[0].x - points[1].x,
+        points[0].y - points[1].y
+      );
+      const start = pinchState.current?.startDistance ?? (distance || 1);
+      const startZoom = pinchState.current?.startZoom ?? imageZoom;
+      setImageZoom(clampZoom(startZoom * (distance / start)));
+      return;
     }
 
     if (!dragState.current) {
-      return
+      return;
     }
-    const nextX = dragState.current.originX + (event.clientX - dragState.current.startX)
-    const nextY = dragState.current.originY + (event.clientY - dragState.current.startY)
-    setImageOffset({ x: nextX, y: nextY })
-  }
+    const nextX =
+      dragState.current.originX + (event.clientX - dragState.current.startX);
+    const nextY =
+      dragState.current.originY + (event.clientY - dragState.current.startY);
+    setImageOffset({ x: nextX, y: nextY });
+  };
 
   const handleImagePointerUp = (event: PointerEvent<HTMLDivElement>) => {
-    activePointers.current.delete(event.pointerId)
+    activePointers.current.delete(event.pointerId);
     if (activePointers.current.size < 2) {
-      pinchState.current = null
+      pinchState.current = null;
     }
-    dragState.current = null
-    event.currentTarget.releasePointerCapture(event.pointerId)
-  }
+    dragState.current = null;
+    event.currentTarget.releasePointerCapture(event.pointerId);
+  };
 
   const adjustFontScale = (delta: number) => {
-    setFontScale(fontScale + delta)
-  }
+    setFontScale(fontScale + delta);
+  };
 
   const togglePin = (id: string) => {
     if (!isAdmin) {
-      return
+      return;
     }
     setChatMessages((prevMessages) =>
       prevMessages.map((message) =>
-        message.id === id ? { ...message, pinned: !message.pinned } : message,
-      ),
-    )
-  }
+        message.id === id ? { ...message, pinned: !message.pinned } : message
+      )
+    );
+  };
 
   const deleteMessage = (id: string, author: string) => {
     if (!isAdmin && currentUser?.name !== author) {
-      return
+      return;
     }
     setChatMessages((prevMessages) =>
-      prevMessages.filter((message) => message.id !== id),
-    )
-  }
+      prevMessages.filter((message) => message.id !== id)
+    );
+  };
 
   const waitForImages = async (root: HTMLElement) => {
-    const images = Array.from(root.querySelectorAll('img'))
+    const images = Array.from(root.querySelectorAll("img"));
     if (images.length === 0) {
-      return
+      return;
     }
     await Promise.all(
       images.map(
         (img) =>
           new Promise<void>((resolve) => {
             if (img.complete && img.naturalWidth > 0) {
-              resolve()
-              return
+              resolve();
+              return;
             }
             const handleDone = () => {
-              img.removeEventListener('load', handleDone)
-              img.removeEventListener('error', handleDone)
-              resolve()
-            }
-            img.addEventListener('load', handleDone)
-            img.addEventListener('error', handleDone)
-          }),
-      ),
-    )
-  }
+              img.removeEventListener("load", handleDone);
+              img.removeEventListener("error", handleDone);
+              resolve();
+            };
+            img.addEventListener("load", handleDone);
+            img.addEventListener("error", handleDone);
+          })
+      )
+    );
+  };
 
   const cloneWithInlineStyles = (root: HTMLElement) => {
-    const clonedRoot = root.cloneNode(true) as HTMLElement
-    const sourceElements = [root, ...Array.from(root.querySelectorAll('*'))]
-    const targetElements = [clonedRoot, ...Array.from(clonedRoot.querySelectorAll('*'))]
+    const clonedRoot = root.cloneNode(true) as HTMLElement;
+    const sourceElements = [root, ...Array.from(root.querySelectorAll("*"))];
+    const targetElements = [
+      clonedRoot,
+      ...Array.from(clonedRoot.querySelectorAll("*")),
+    ];
 
     sourceElements.forEach((sourceElement, index) => {
-      const targetElement = targetElements[index]
+      const targetElement = targetElements[index];
       if (!targetElement) {
-        return
+        return;
       }
-      if (!(targetElement instanceof HTMLElement || targetElement instanceof SVGElement)) {
-        return
+      if (
+        !(
+          targetElement instanceof HTMLElement ||
+          targetElement instanceof SVGElement
+        )
+      ) {
+        return;
       }
-      const computed = window.getComputedStyle(sourceElement)
+      const computed = window.getComputedStyle(sourceElement);
       for (let i = 0; i < computed.length; i += 1) {
-        const prop = computed[i]
+        const prop = computed[i];
         targetElement.style.setProperty(
           prop,
           computed.getPropertyValue(prop),
-          computed.getPropertyPriority(prop),
-        )
+          computed.getPropertyPriority(prop)
+        );
       }
-    })
-    return clonedRoot
-  }
+    });
+    return clonedRoot;
+  };
 
   const renderQuestionImageBlob = async (root: HTMLElement) => {
     if (document.fonts?.ready) {
-      await document.fonts.ready
+      await document.fonts.ready;
     }
-    await waitForImages(root)
+    await waitForImages(root);
 
-    const clonedRoot = cloneWithInlineStyles(root)
-    const rect = root.getBoundingClientRect()
-    const contentWidth = Math.ceil(rect.width)
-    const contentHeight = Math.ceil(Math.max(rect.height, root.scrollHeight))
-    const padding = 16
+    const clonedRoot = cloneWithInlineStyles(root);
+    const rect = root.getBoundingClientRect();
+    const contentWidth = Math.ceil(rect.width);
+    const contentHeight = Math.ceil(Math.max(rect.height, root.scrollHeight));
+    const padding = 16;
 
-    const panel = root.closest('.app-panel') as HTMLElement | null
-    const panelStyles = panel ? window.getComputedStyle(panel) : window.getComputedStyle(root)
-    const background = panelStyles.backgroundColor || '#ffffff'
-    const foreground = panelStyles.color || '#111111'
-    const fontFamily = panelStyles.fontFamily || 'sans-serif'
+    const panel = root.closest(".app-panel") as HTMLElement | null;
+    const panelStyles = panel
+      ? window.getComputedStyle(panel)
+      : window.getComputedStyle(root);
+    const background = panelStyles.backgroundColor || "#ffffff";
+    const foreground = panelStyles.color || "#111111";
+    const fontFamily = panelStyles.fontFamily || "sans-serif";
 
-    clonedRoot.style.margin = '0'
-    clonedRoot.style.width = `${contentWidth}px`
-    clonedRoot.style.height = `${contentHeight}px`
-    clonedRoot.style.boxSizing = 'border-box'
+    clonedRoot.style.margin = "0";
+    clonedRoot.style.width = `${contentWidth}px`;
+    clonedRoot.style.height = `${contentHeight}px`;
+    clonedRoot.style.boxSizing = "border-box";
 
-    const wrapper = document.createElement('div')
-    wrapper.setAttribute('xmlns', 'http://www.w3.org/1999/xhtml')
-    wrapper.style.width = `${contentWidth + padding * 2}px`
-    wrapper.style.height = `${contentHeight + padding * 2}px`
-    wrapper.style.padding = `${padding}px`
-    wrapper.style.boxSizing = 'border-box'
-    wrapper.style.background = background
-    wrapper.style.color = foreground
-    wrapper.style.fontFamily = fontFamily
-    wrapper.style.display = 'block'
-    wrapper.style.setProperty('--reader-font-scale', String(fontScale))
-    wrapper.appendChild(clonedRoot)
+    const wrapper = document.createElement("div");
+    wrapper.setAttribute("xmlns", "http://www.w3.org/1999/xhtml");
+    wrapper.style.width = `${contentWidth + padding * 2}px`;
+    wrapper.style.height = `${contentHeight + padding * 2}px`;
+    wrapper.style.padding = `${padding}px`;
+    wrapper.style.boxSizing = "border-box";
+    wrapper.style.background = background;
+    wrapper.style.color = foreground;
+    wrapper.style.fontFamily = fontFamily;
+    wrapper.style.display = "block";
+    wrapper.style.setProperty("--reader-font-scale", String(fontScale));
+    wrapper.appendChild(clonedRoot);
 
-    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
-    svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg')
-    svg.setAttribute('width', `${contentWidth + padding * 2}`)
-    svg.setAttribute('height', `${contentHeight + padding * 2}`)
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+    svg.setAttribute("width", `${contentWidth + padding * 2}`);
+    svg.setAttribute("height", `${contentHeight + padding * 2}`);
     svg.setAttribute(
-      'viewBox',
-      `0 0 ${contentWidth + padding * 2} ${contentHeight + padding * 2}`,
-    )
+      "viewBox",
+      `0 0 ${contentWidth + padding * 2} ${contentHeight + padding * 2}`
+    );
 
     const foreignObject = document.createElementNS(
-      'http://www.w3.org/2000/svg',
-      'foreignObject',
-    )
-    foreignObject.setAttribute('x', '0')
-    foreignObject.setAttribute('y', '0')
-    foreignObject.setAttribute('width', '100%')
-    foreignObject.setAttribute('height', '100%')
-    foreignObject.appendChild(wrapper)
-    svg.appendChild(foreignObject)
+      "http://www.w3.org/2000/svg",
+      "foreignObject"
+    );
+    foreignObject.setAttribute("x", "0");
+    foreignObject.setAttribute("y", "0");
+    foreignObject.setAttribute("width", "100%");
+    foreignObject.setAttribute("height", "100%");
+    foreignObject.appendChild(wrapper);
+    svg.appendChild(foreignObject);
 
-    const svgString = new XMLSerializer().serializeToString(svg)
-    const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' })
-    const url = URL.createObjectURL(svgBlob)
+    const svgString = new XMLSerializer().serializeToString(svg);
+    const svgBlob = new Blob([svgString], {
+      type: "image/svg+xml;charset=utf-8",
+    });
+    const url = URL.createObjectURL(svgBlob);
 
     try {
       const image = await new Promise<HTMLImageElement>((resolve, reject) => {
-        const img = new Image()
-        img.onload = () => resolve(img)
-        img.onerror = () => reject(new Error('Unable to render question image'))
-        img.src = url
-      })
-      const dpr = window.devicePixelRatio || 1
-      const canvas = document.createElement('canvas')
-      canvas.width = Math.ceil((contentWidth + padding * 2) * dpr)
-      canvas.height = Math.ceil((contentHeight + padding * 2) * dpr)
-      const ctx = canvas.getContext('2d')
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = () =>
+          reject(new Error("Unable to render question image"));
+        img.src = url;
+      });
+      const dpr = window.devicePixelRatio || 1;
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.ceil((contentWidth + padding * 2) * dpr);
+      canvas.height = Math.ceil((contentHeight + padding * 2) * dpr);
+      const ctx = canvas.getContext("2d");
       if (!ctx) {
-        throw new Error('Canvas unavailable')
+        throw new Error("Canvas unavailable");
       }
-      ctx.scale(dpr, dpr)
-      ctx.drawImage(image, 0, 0)
+      ctx.scale(dpr, dpr);
+      ctx.drawImage(image, 0, 0);
       const blob = await new Promise<Blob | null>((resolve) =>
-        canvas.toBlob(resolve, 'image/png'),
-      )
+        canvas.toBlob(resolve, "image/png")
+      );
       if (!blob) {
-        throw new Error('Unable to create image blob')
+        throw new Error("Unable to create image blob");
       }
-      return blob
+      return blob;
     } finally {
-      URL.revokeObjectURL(url)
+      URL.revokeObjectURL(url);
     }
-  }
+  };
 
   const handleCopyQuestionImage = async () => {
-    const root = questionCopyRef.current
+    const root = questionCopyRef.current;
     if (!root) {
-      return
+      return;
     }
-    const ClipboardItemCtor = window.ClipboardItem
+    const ClipboardItemCtor = window.ClipboardItem;
     if (!navigator.clipboard || !ClipboardItemCtor) {
-      setMessage('Clipboard image copy is not supported in this browser.')
-      return
+      setMessage("Clipboard image copy is not supported in this browser.");
+      return;
     }
-    setIsCopying(true)
-    setMessage(null)
+    setIsCopying(true);
+    setMessage(null);
     try {
-      const blob = await renderQuestionImageBlob(root)
-      await navigator.clipboard.write([new ClipboardItemCtor({ 'image/png': blob })])
-      setMessage('Question image copied to clipboard.')
+      const blob = await renderQuestionImageBlob(root);
+      await navigator.clipboard.write([
+        new ClipboardItemCtor({ "image/png": blob }),
+      ]);
+      setMessage("Question image copied to clipboard.");
     } catch {
-      setMessage('Unable to copy question image. Try again.')
+      setMessage("Unable to copy question image. Try again.");
     } finally {
-      setIsCopying(false)
+      setIsCopying(false);
     }
-  }
+  };
 
   return (
-    <div className="flex h-[calc(100vh-144px)] flex-col gap-4 overflow-hidden">
+    <div className="flex h-[calc(100vh-90px)] flex-col gap-1 overflow-hidden">
+      {/* Question Detail Helper Buttons */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Button asChild variant="ghost" size="sm">
           <Link to={`/app/tests/${test.id}`}>Back to test</Link>
@@ -857,15 +914,15 @@ export const QuestionDetail = () => {
             onClick={handleBookmarkToggle}
             disabled={isBookmarking}
             aria-pressed={isBookmarked}
-            title={isBookmarked ? 'Remove star' : 'Star question'}
+            title={isBookmarked ? "Remove star" : "Star question"}
             className="h-8 w-8"
           >
             <Star
               className={cn(
-                'h-4 w-4',
-                isBookmarked ? 'text-amber-400' : 'text-muted-foreground',
+                "h-4 w-4",
+                isBookmarked ? "text-amber-400" : "text-muted-foreground"
               )}
-              fill={isBookmarked ? 'currentColor' : 'none'}
+              fill={isBookmarked ? "currentColor" : "none"}
             />
           </Button>
           <Button
@@ -874,7 +931,9 @@ export const QuestionDetail = () => {
             size="icon"
             onClick={handleCopyQuestionImage}
             disabled={isCopying}
-            title={isCopying ? 'Copying question image' : 'Copy question as image'}
+            title={
+              isCopying ? "Copying question image" : "Copy question as image"
+            }
             aria-label="Copy question as image"
             className="h-8 w-8"
           >
@@ -910,14 +969,16 @@ export const QuestionDetail = () => {
             <span>Dark mode</span>
             <Switch
               checked={isDark}
-              onCheckedChange={(checked) => setMode(checked ? 'dark' : 'light')}
+              onCheckedChange={(checked) => setMode(checked ? "dark" : "light")}
             />
           </div>
         </div>
       </div>
-      <section className="grid min-h-0 flex-1 gap-4 lg:grid-cols-[220px_minmax(0,1fr)_minmax(0,320px)]">
+
+      <section className="grid min-h-0 flex-1 gap-1 lg:grid-cols-[220px_minmax(0,1fr)_minmax(0,320px)]">
+        {/* Question Side Panel */}
         <Card className="app-panel h-full min-h-0">
-          <CardContent className="flex h-full min-h-0 flex-col gap-4 p-5">
+          <CardContent className="flex h-full min-h-0 flex-col gap-4 p-2 py-5">
             <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
               Questions
             </p>
@@ -934,24 +995,24 @@ export const QuestionDetail = () => {
                           key={item.id}
                           to={`/app/questions/${test.id}/${item.id}`}
                           className={cn(
-                            'relative flex aspect-square w-full items-center justify-center rounded-md border text-xs font-medium',
+                            "relative flex aspect-square w-full items-center justify-center rounded-md border text-xs font-medium",
                             item.id === question.id
-                              ? 'border-primary bg-primary text-primary-foreground'
+                              ? "border-primary bg-primary text-primary-foreground"
                               : item.bonus
-                                ? 'border-sky-500/60 bg-sky-500/15 text-foreground hover:border-sky-400'
-                                : item.status === 'Correct'
-                                  ? 'border-emerald-500/60 bg-emerald-500/15 text-foreground hover:border-emerald-400'
-                                  : item.status === 'Partial'
-                                    ? 'border-amber-400/60 bg-amber-400/15 text-foreground hover:border-amber-300'
-                                    : item.status === 'Incorrect'
-                                      ? 'border-rose-500/60 bg-rose-500/15 text-foreground hover:border-rose-400'
-                                      : 'border-border/60 text-muted-foreground hover:border-primary/60',
+                              ? "border-sky-500/60 bg-sky-500/15 text-foreground hover:border-sky-400"
+                              : item.status === "Correct"
+                              ? "border-emerald-500/60 bg-emerald-500/15 text-foreground hover:border-emerald-400"
+                              : item.status === "Partial"
+                              ? "border-amber-400/60 bg-amber-400/15 text-foreground hover:border-amber-300"
+                              : item.status === "Incorrect"
+                              ? "border-rose-500/60 bg-rose-500/15 text-foreground hover:border-rose-400"
+                              : "border-border/60 text-muted-foreground hover:border-primary/60"
                           )}
                         >
                           <span>{item.number}</span>
                           {item.bookmarked ? (
                             <Star
-                              className="absolute right-1 top-1 h-3 w-3 text-amber-400"
+                              className="absolute right-0 top-0 h-3 w-3 text-amber-400"
                               fill="currentColor"
                             />
                           ) : null}
@@ -963,25 +1024,81 @@ export const QuestionDetail = () => {
               </div>
             </div>
             <Separator />
-            <div className="space-y-2 text-xs text-muted-foreground">
-              <p>Attempted {status !== 'Unattempted' ? 'Yes' : 'No'}</p>
-              <p>Time {formatSeconds(timeSpent)}</p>
-              <p>Score {score}</p>
+            <div className="p-2 py-0">
+              <div className="grid grid-cols-2 gap-y-2">
+                <div className="flex flex-col">
+                  <span className="text-[8px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-tight">
+                    Correct
+                  </span>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
+                    <span className="text-xs font-black text-slate-700 dark:text-slate-300">
+                      {analysis?.correct || 0}
+                    </span>
+                  </div>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-[8px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-tight">
+                    Partial
+                  </span>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <div className="w-1.5 h-1.5 rounded-full bg-amber-400"></div>
+                    <span className="text-xs font-black text-slate-700 dark:text-slate-300">
+                      {analysis?.partial || 0}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-y-2">
+                <div className="flex flex-col">
+                  <span className="text-[8px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-tight">
+                    Incorrect
+                  </span>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <div className="w-1.5 h-1.5 rounded-full bg-rose-500"></div>
+                    <span className="text-xs font-black text-slate-700 dark:text-slate-300">
+                      {analysis?.incorrect || 0}
+                    </span>
+                  </div>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-[8px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-tight">
+                    Unattmpted
+                  </span>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <div className="w-1.5 h-1.5 rounded-full bg-slate-300"></div>
+                    <span className="text-xs font-black text-slate-700 dark:text-slate-300">
+                      {analysis?.unattempted || 0}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between transition-colors">
+              <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+                Total Score
+              </span>
+              <div className="px-2.5 py-1 rounded-lg text-xs font-black bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400">
+                {scoreLabel}
+              </div>
             </div>
           </CardContent>
         </Card>
 
+        {/* Question detailed view */}
         <Card className="app-panel h-full min-h-0">
-          <CardContent className="flex h-full min-h-0 flex-col gap-5 p-6">
+          <CardContent className="flex h-full min-h-0 flex-col gap-5 p-3 py-5">
             <div className="min-h-0 flex-1 overflow-y-auto pr-2">
               <div ref={questionCopyRef} className="space-y-5">
                 <div className="space-y-3">
                   <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                    Prompt
+                    Question
                   </p>
                   <div
-                    className="question-html rounded-lg border border-border bg-background p-4 leading-relaxed"
-                    dangerouslySetInnerHTML={{ __html: question.questionContent }}
+                    className="question-html rounded-lg bg-transparent leading-relaxed"
+                    dangerouslySetInnerHTML={{
+                      __html: question.questionContent,
+                    }}
                     onClick={handleRichContentClick}
                   />
                 </div>
@@ -992,57 +1109,63 @@ export const QuestionDetail = () => {
                   </p>
                   <div className="grid gap-3">
                     {[
-                      { label: 'A', value: question.optionContentA },
-                      { label: 'B', value: question.optionContentB },
-                      { label: 'C', value: question.optionContentC },
-                      { label: 'D', value: question.optionContentD },
+                      { label: "A", value: question.optionContentA },
+                      { label: "B", value: question.optionContentB },
+                      { label: "C", value: question.optionContentC },
+                      { label: "D", value: question.optionContentD },
                     ]
                       .filter((item) => item.value)
                       .map((item) => {
-                        const isSelected = selectedOptions.includes(item.label)
-                        const isCorrect = correctOptions.includes(item.label)
-                        const isSelectedCorrect = isSelected && isCorrect
-                        const isSelectedIncorrect = isSelected && !isCorrect
-                        const isUnselectedCorrect = !isSelected && isCorrect
+                        const isSelected = selectedOptions.includes(item.label);
+                        const isCorrect = correctOptions.includes(item.label);
+                        const isSelectedCorrect = isSelected && isCorrect;
+                        const isSelectedIncorrect = isSelected && !isCorrect;
+                        const isUnselectedCorrect = !isSelected && isCorrect;
                         return (
                           <div
                             key={item.label}
                             className={cn(
-                              'flex gap-3 rounded-lg border p-4 text-sm',
+                              "flex gap-3 rounded-lg border p-2 text-sm",
                               isSelectedCorrect &&
-                                'border-emerald-500/70 bg-emerald-500/20 text-foreground',
+                                "border-emerald-500/70 bg-emerald-500/20 text-foreground",
                               isSelectedIncorrect &&
-                                'border-rose-500/70 bg-rose-500/20 text-foreground',
+                                "border-rose-500/70 bg-rose-500/20 text-foreground",
                               isUnselectedCorrect &&
-                                'border-emerald-500/70 border-dashed bg-emerald-500/10 text-foreground',
+                                "border-emerald-500/70 border-dashed bg-emerald-500/10 text-foreground",
                               !isSelectedCorrect &&
                                 !isSelectedIncorrect &&
                                 !isUnselectedCorrect &&
-                                'border-border bg-background text-foreground',
+                                "border-border bg-background text-foreground"
                             )}
                           >
                             <span
                               className={cn(
-                                'flex h-7 w-7 flex-shrink-0 items-center justify-center border text-xs font-semibold',
-                                isMultiSelect ? 'rounded-md' : 'rounded-full',
-                                isSelectedCorrect && 'border-emerald-500 bg-emerald-500 text-emerald-950',
-                                isSelectedIncorrect && 'border-rose-500 bg-rose-500 text-white',
-                                isUnselectedCorrect && 'border-emerald-500 text-emerald-500',
+                                "flex h-7 w-7 flex-shrink-0 items-center justify-center border text-xs font-semibold",
+                                isMultiSelect ? "rounded-md" : "rounded-full",
+                                isSelectedCorrect &&
+                                  "border-emerald-500 bg-emerald-500 text-emerald-950",
+                                isSelectedIncorrect &&
+                                  "border-rose-500 bg-rose-500 text-white",
+                                isUnselectedCorrect &&
+                                  "border-emerald-500 text-emerald-500",
                                 !isSelectedCorrect &&
                                   !isSelectedIncorrect &&
                                   !isUnselectedCorrect &&
-                                  'border-border text-muted-foreground',
+                                  "border-border text-muted-foreground",
+                                "place-self-center"
                               )}
                             >
                               {item.label}
                             </span>
                             <div
                               className="question-html leading-relaxed"
-                              dangerouslySetInnerHTML={{ __html: item.value ?? '' }}
+                              dangerouslySetInnerHTML={{
+                                __html: item.value ?? "",
+                              }}
                               onClick={handleRichContentClick}
                             />
                           </div>
-                        )
+                        );
                       })}
                   </div>
                 </div>
@@ -1052,14 +1175,18 @@ export const QuestionDetail = () => {
             <div className="flex items-center justify-between">
               <Button asChild variant="outline" disabled={!prev}>
                 {prev ? (
-                  <Link to={`/app/questions/${test.id}/${prev.question.id}`}>Previous</Link>
+                  <Link to={`/app/questions/${test.id}/${prev.question.id}`}>
+                    Previous
+                  </Link>
                 ) : (
                   <span>Previous</span>
                 )}
               </Button>
               <Button asChild variant="outline" disabled={!next}>
                 {next ? (
-                  <Link to={`/app/questions/${test.id}/${next.question.id}`}>Next</Link>
+                  <Link to={`/app/questions/${test.id}/${next.question.id}`}>
+                    Next
+                  </Link>
                 ) : (
                   <span>Next</span>
                 )}
@@ -1068,14 +1195,73 @@ export const QuestionDetail = () => {
           </CardContent>
         </Card>
 
+        {/* Answer review */}
         <Card className="app-panel h-full min-h-0">
-          <CardContent className="flex h-full min-h-0 flex-col gap-4 p-6">
+          <CardContent className="flex h-full min-h-0 flex-col gap-4 p-2 py-5">
             <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
               Answer review
             </p>
             <div className="min-h-0 flex-1 space-y-4 overflow-y-auto pr-2">
-              <div className="space-y-2 text-sm">
-                <div className="flex items-center justify-between">
+              <div className="space-y-2 text-base">
+                <div className="p-2 py-0">
+                  <div className="grid grid-cols-2 gap-y-2">
+                    <div className="flex flex-col">
+                      <span className="text-xs font-normal text-slate-400 dark:text-slate-500 uppercase tracking-tight">
+                        Your Answer
+                      </span>
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
+                        <span className="text-sm font-black text-slate-700 dark:text-slate-300">
+                          {formatAnswerValue(answer)}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-xs font-normal text-slate-400 dark:text-slate-500 uppercase tracking-tight">
+                        Correct Answer
+                      </span>
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        <div className="w-1.5 h-1.5 rounded-full bg-amber-400"></div>
+                        <span className="text-sm font-black text-slate-700 dark:text-slate-300">
+                          {formatAnswerValue(question.keyUpdate)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-y-2">
+                    <div className="flex flex-col">
+                      <span className="text-xs font-normal text-slate-400 dark:text-slate-500 uppercase tracking-tight">
+                        Original Answer
+                      </span>
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        <div className="w-1.5 h-1.5 rounded-full bg-orange-500"></div>
+                        <span className="text-sm font-black text-slate-700 dark:text-slate-300">
+                          {formatAnswerValue(question.correctAnswer)}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-xs font-normal text-slate-400 dark:text-slate-500 uppercase tracking-tight">
+                        Marks
+                      </span>
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        <div className="w-1.5 h-1.5 rounded-full bg-slate-300"></div>
+                        <span className="text-sm font-black text-slate-700 dark:text-slate-300">
+                          {score}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between transition-colors">
+                  <span className="text-xs font-normal text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+                    Time Spent
+                  </span>
+                  <div className="px-2.5 py-1 rounded-lg text-xs font-black bg-emerald-50 dark:bg-emerald-900/30 text-blue-600 dark:text-blue-400">
+                    {formatSeconds(timeSpent)}
+                  </div>
+                </div>
+                {/* <div className="flex items-center justify-between">
                   <span>Your answer</span>
                   <span className="font-semibold text-foreground">
                     {formatAnswerValue(answer)}
@@ -1097,6 +1283,12 @@ export const QuestionDetail = () => {
                   <span>Marks</span>
                   <span className="font-semibold text-foreground">{score}</span>
                 </div>
+                <div className="flex items-center justify-between">
+                  <span>Time</span>
+                  <span className="font-semibold text-foreground">
+                    {formatSeconds(timeSpent)}
+                  </span>
+                </div> */}
               </div>
 
               <div className="space-y-2">
@@ -1124,13 +1316,15 @@ export const QuestionDetail = () => {
                       <div
                         key={chat.id}
                         className={cn(
-                          'rounded-lg border border-border p-3 text-xs',
-                          chat.pinned ? 'bg-amber-500/10' : 'bg-background',
+                          "rounded-lg border border-border p-3 text-xs",
+                          chat.pinned ? "bg-amber-500/10" : "bg-background"
                         )}
                       >
                         <div className="flex items-center justify-between gap-2">
                           <div className="space-y-1">
-                            <p className="font-semibold text-foreground">{chat.author}</p>
+                            <p className="font-semibold text-foreground">
+                              {chat.author}
+                            </p>
                             <p className="text-[11px] text-muted-foreground">
                               {new Date(chat.createdAt).toLocaleString()}
                             </p>
@@ -1142,27 +1336,33 @@ export const QuestionDetail = () => {
                               size="sm"
                               onClick={() => togglePin(chat.id)}
                               disabled={!isAdmin}
-                              title={isAdmin ? 'Toggle pin' : 'Admins only'}
+                              title={isAdmin ? "Toggle pin" : "Admins only"}
                             >
-                              {chat.pinned ? 'Unpin' : 'Pin'}
+                              {chat.pinned ? "Unpin" : "Pin"}
                             </Button>
                             <Button
                               type="button"
                               variant="ghost"
                               size="sm"
-                              onClick={() => deleteMessage(chat.id, chat.author)}
-                              disabled={!isAdmin && currentUser?.name !== chat.author}
+                              onClick={() =>
+                                deleteMessage(chat.id, chat.author)
+                              }
+                              disabled={
+                                !isAdmin && currentUser?.name !== chat.author
+                              }
                               title={
                                 isAdmin || currentUser?.name === chat.author
-                                  ? 'Delete message'
-                                  : 'Admins or message author only'
+                                  ? "Delete message"
+                                  : "Admins or message author only"
                               }
                             >
                               Delete
                             </Button>
                           </div>
                         </div>
-                        <p className="mt-2 text-xs text-foreground/90">{chat.body}</p>
+                        <p className="mt-2 text-xs text-foreground/90">
+                          {chat.body}
+                        </p>
                       </div>
                     ))
                   )}
@@ -1186,7 +1386,8 @@ export const QuestionDetail = () => {
                     <DialogHeader>
                       <DialogTitle>Update answer key</DialogTitle>
                       <DialogDescription>
-                        Add one or more valid answers. Each entry is treated as OR.
+                        Add one or more valid answers. Each entry is treated as
+                        OR.
                       </DialogDescription>
                     </DialogHeader>
                     <form className="space-y-4" onSubmit={handleKeyUpdate}>
@@ -1199,7 +1400,12 @@ export const QuestionDetail = () => {
                             Add multiple answers to represent OR alternatives.
                           </p>
                         </div>
-                        <div className={cn('space-y-3', keyUpdateBonus && 'opacity-60')}>
+                        <div
+                          className={cn(
+                            "space-y-3",
+                            keyUpdateBonus && "opacity-60"
+                          )}
+                        >
                           {keyAnswerGroups.map((group, index) => (
                             <div
                               key={group.id}
@@ -1214,7 +1420,9 @@ export const QuestionDetail = () => {
                                     type="button"
                                     variant="ghost"
                                     size="sm"
-                                    onClick={() => removeKeyAnswerGroup(group.id)}
+                                    onClick={() =>
+                                      removeKeyAnswerGroup(group.id)
+                                    }
                                     disabled={keyUpdateBonus}
                                   >
                                     Remove
@@ -1222,7 +1430,7 @@ export const QuestionDetail = () => {
                                 ) : null}
                               </div>
 
-                              {question.qtype === 'NAT' ? (
+                              {question.qtype === "NAT" ? (
                                 <div className="grid gap-3 sm:grid-cols-2">
                                   <div className="space-y-2">
                                     <label className="text-xs text-muted-foreground">
@@ -1236,8 +1444,8 @@ export const QuestionDetail = () => {
                                       onChange={(event) =>
                                         updateRangeGroup(
                                           group.id,
-                                          'min',
-                                          event.target.value,
+                                          "min",
+                                          event.target.value
                                         )
                                       }
                                       disabled={keyUpdateBonus}
@@ -1255,27 +1463,30 @@ export const QuestionDetail = () => {
                                       onChange={(event) =>
                                         updateRangeGroup(
                                           group.id,
-                                          'max',
-                                          event.target.value,
+                                          "max",
+                                          event.target.value
                                         )
                                       }
-                                      placeholder={group.min.trim() || 'Same as start'}
+                                      placeholder={
+                                        group.min.trim() || "Same as start"
+                                      }
                                       disabled={keyUpdateBonus}
                                     />
                                   </div>
                                 </div>
-                              ) : question.qtype === 'MAQ' ? (
+                              ) : question.qtype === "MAQ" ? (
                                 <div className="flex flex-wrap gap-2">
                                   {keyOptions.length > 0 ? (
                                     keyOptions.map((option) => (
                                       <label
                                         key={option}
                                         className={cn(
-                                          'flex items-center gap-2 rounded-md border px-3 py-2 text-xs',
+                                          "flex items-center gap-2 rounded-md border px-3 py-2 text-xs",
                                           group.multi.includes(option)
-                                            ? 'border-primary/60 bg-primary/10 text-foreground'
-                                            : 'border-border text-muted-foreground',
-                                          keyUpdateBonus && 'pointer-events-none',
+                                            ? "border-primary/60 bg-primary/10 text-foreground"
+                                            : "border-border text-muted-foreground",
+                                          keyUpdateBonus &&
+                                            "pointer-events-none"
                                         )}
                                       >
                                         <input
@@ -1283,11 +1494,16 @@ export const QuestionDetail = () => {
                                           className="h-3 w-3"
                                           checked={group.multi.includes(option)}
                                           onChange={() =>
-                                            toggleMultiGroupOption(group.id, option)
+                                            toggleMultiGroupOption(
+                                              group.id,
+                                              option
+                                            )
                                           }
                                           disabled={keyUpdateBonus}
                                         />
-                                        <span className="font-semibold">{option}</span>
+                                        <span className="font-semibold">
+                                          {option}
+                                        </span>
                                       </label>
                                     ))
                                   ) : (
@@ -1303,11 +1519,12 @@ export const QuestionDetail = () => {
                                       <label
                                         key={option}
                                         className={cn(
-                                          'flex items-center gap-2 rounded-md border px-3 py-2 text-xs',
+                                          "flex items-center gap-2 rounded-md border px-3 py-2 text-xs",
                                           group.single === option
-                                            ? 'border-primary/60 bg-primary/10 text-foreground'
-                                            : 'border-border text-muted-foreground',
-                                          keyUpdateBonus && 'pointer-events-none',
+                                            ? "border-primary/60 bg-primary/10 text-foreground"
+                                            : "border-border text-muted-foreground",
+                                          keyUpdateBonus &&
+                                            "pointer-events-none"
                                         )}
                                       >
                                         <input
@@ -1320,7 +1537,9 @@ export const QuestionDetail = () => {
                                           }
                                           disabled={keyUpdateBonus}
                                         />
-                                        <span className="font-semibold">{option}</span>
+                                        <span className="font-semibold">
+                                          {option}
+                                        </span>
                                       </label>
                                     ))
                                   ) : (
@@ -1345,7 +1564,9 @@ export const QuestionDetail = () => {
                       </Button>
                       <div className="flex items-center justify-between gap-3 rounded-lg border border-border/60 px-3 py-2 text-xs text-muted-foreground">
                         <div>
-                          <p className="font-medium text-foreground">Bonus question</p>
+                          <p className="font-medium text-foreground">
+                            Bonus question
+                          </p>
                           <p>Give full marks to everyone for this question.</p>
                         </div>
                         <Switch
@@ -1378,10 +1599,10 @@ export const QuestionDetail = () => {
       <Dialog
         open={isImageOpen}
         onOpenChange={(open) => {
-          setIsImageOpen(open)
+          setIsImageOpen(open);
           if (!open) {
-            setImageSrc(null)
-            resetImageView()
+            setImageSrc(null);
+            resetImageView();
           }
         }}
       >
@@ -1396,8 +1617,8 @@ export const QuestionDetail = () => {
                 variant="ghost"
                 size="sm"
                 onClick={(event) => {
-                  event.stopPropagation()
-                  resetImageView()
+                  event.stopPropagation();
+                  resetImageView();
                 }}
               >
                 Reset
@@ -1405,15 +1626,15 @@ export const QuestionDetail = () => {
             </div>
             <div
               className={cn(
-                'relative flex h-full w-full touch-none items-center justify-center overflow-hidden cursor-grab',
+                "relative flex h-full w-full touch-none items-center justify-center overflow-hidden cursor-grab"
               )}
               onClick={(event) => {
                 if (event.target !== event.currentTarget) {
-                  return
+                  return;
                 }
-                setIsImageOpen(false)
-                setImageSrc(null)
-                resetImageView()
+                setIsImageOpen(false);
+                setImageSrc(null);
+                resetImageView();
               }}
               onWheel={handleImageWheel}
               onPointerDown={handleImagePointerDown}
@@ -1431,7 +1652,7 @@ export const QuestionDetail = () => {
                   onClick={(event) => event.stopPropagation()}
                   style={{
                     transform: `translate(${imageOffset.x}px, ${imageOffset.y}px) scale(${imageZoom})`,
-                    transformOrigin: 'center',
+                    transformOrigin: "center",
                   }}
                 />
               ) : null}
@@ -1440,5 +1661,5 @@ export const QuestionDetail = () => {
         </DialogContent>
       </Dialog>
     </div>
-  )
-}
+  );
+};
