@@ -2,9 +2,18 @@ import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAppStore } from '@/lib/store'
 import { buildAnalysis } from '@/lib/analysis'
+import { buildDisplayQuestions } from '@/lib/questionDisplay'
 import { TestSummaryCard } from '@/components/TestSummaryCard'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import {
   Select,
@@ -21,15 +30,34 @@ type SubjectFilter = (typeof subjects)[number]
 type SortOption = 'date-desc' | 'date-asc' | 'score-desc' | 'score-asc'
 
 export const Tests = () => {
-  const { state } = useAppStore()
+  const { state, currentUser, resyncTest, resyncAllTests } = useAppStore()
   const [query, setQuery] = useState('')
   const [subject, setSubject] = useState<SubjectFilter>('ALL')
   const [sort, setSort] = useState<SortOption>('date-desc')
+  const [resyncingId, setResyncingId] = useState<string | null>(null)
+  const [isResyncingAll, setIsResyncingAll] = useState(false)
+  const [resyncAllMessage, setResyncAllMessage] = useState<string | null>(null)
+  const [confirmResyncAllOpen, setConfirmResyncAllOpen] = useState(false)
+  const [confirmResyncId, setConfirmResyncId] = useState<string | null>(null)
+
+  const account = state.externalAccounts.find(
+    (item) => item.userId === currentUser?.id && item.provider === 'test.z7i.in',
+  )
+  const isSyncing = account?.syncStatus === 'syncing'
+  const canResyncAll = Boolean(account && !isSyncing && state.tests.length > 0)
 
   const analysisMap = useMemo(() => {
     const map = new Map<string, ReturnType<typeof buildAnalysis>>()
     state.tests.forEach((test) => {
       map.set(test.id, buildAnalysis(test))
+    })
+    return map
+  }, [state.tests])
+  const questionOrderMap = useMemo(() => {
+    const map = new Map<string, string>()
+    state.tests.forEach((test) => {
+      const first = buildDisplayQuestions(test.questions)[0]
+      map.set(test.id, first?.question.id ?? '')
     })
     return map
   }, [state.tests])
@@ -77,10 +105,24 @@ export const Tests = () => {
               Filter, compare, and open each test with a single click.
             </p>
           </div>
-          <Button asChild>
-            <Link to="/app/analysis">View analytics</Link>
+          <Button
+            type="button"
+            disabled={!canResyncAll || isResyncingAll}
+            onClick={async () => {
+              if (!canResyncAll || isResyncingAll) {
+                return
+              }
+              setConfirmResyncAllOpen(true)
+            }}
+          >
+            {isResyncingAll ? 'Resyncing all...' : 'Resync all tests'}
           </Button>
         </div>
+        {resyncAllMessage ? (
+          <div className="rounded-lg border border-border bg-background p-3 text-xs text-muted-foreground">
+            {resyncAllMessage}
+          </div>
+        ) : null}
 
         <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,3fr)]">
           <Card className="app-panel">
@@ -131,6 +173,8 @@ export const Tests = () => {
           <div className="space-y-4">
             {visibleTests.map((test) => {
               const analysis = analysisMap.get(test.id)
+              const canResync = Boolean(test.externalExamId && account && !isSyncing)
+              const firstQuestionId = questionOrderMap.get(test.id) ?? ''
               return (
                 <TestSummaryCard
                   key={test.id}
@@ -142,9 +186,23 @@ export const Tests = () => {
                         <Link to={`/app/tests/${test.id}`}>Open review</Link>
                       </Button>
                       <Button asChild size="sm">
-                        <Link to={`/app/questions/${test.id}/${test.questions[0]?.id ?? ''}`}>
+                        <Link to={`/app/questions/${test.id}/${firstQuestionId}`}>
                           Open questions
                         </Link>
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        disabled={!canResync || resyncingId === test.id}
+                        onClick={() => {
+                          if (!canResync) {
+                            return
+                          }
+                          setConfirmResyncId(test.id)
+                        }}
+                      >
+                        {resyncingId === test.id ? 'Resyncing...' : 'Resync exam'}
                       </Button>
                     </>
                   }
@@ -166,6 +224,75 @@ export const Tests = () => {
           </div>
         </div>
       </section>
+
+      <Dialog open={confirmResyncAllOpen} onOpenChange={setConfirmResyncAllOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Resync all tests?</DialogTitle>
+            <DialogDescription>
+              This will replace your current attempts with the latest data.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirmResyncAllOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={async () => {
+                setConfirmResyncAllOpen(false)
+                setResyncAllMessage(null)
+                setIsResyncingAll(true)
+                const result = await resyncAllTests()
+                setIsResyncingAll(false)
+                setResyncAllMessage(
+                  result.ok
+                    ? 'Resync started. Your tests will refresh shortly.'
+                    : result.message ?? 'Resync failed.',
+                )
+              }}
+            >
+              Resync all
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={Boolean(confirmResyncId)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setConfirmResyncId(null)
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Resync this exam?</DialogTitle>
+            <DialogDescription>
+              This will replace your current attempt for this exam.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirmResyncId(null)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={async () => {
+                if (!confirmResyncId) {
+                  return
+                }
+                const targetId = confirmResyncId
+                setConfirmResyncId(null)
+                setResyncingId(targetId)
+                await resyncTest(targetId)
+                setResyncingId(null)
+              }}
+            >
+              Resync exam
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

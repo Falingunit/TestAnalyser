@@ -85,6 +85,7 @@ export type TestRecord = {
   examDate: string
   answers: Record<string, AnswerValue>
   timings: Record<string, number>
+  bookmarks: Record<string, boolean>
   questions: QuestionRecord[]
 }
 

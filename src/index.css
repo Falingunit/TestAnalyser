@@ -6,6 +6,35 @@
 
 @layer base {
   :root {
+    --background: 0 0% 98%;
+    --foreground: 0 0% 10%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 10%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 10%;
+    --primary: 0 0% 12%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 0 0% 92%;
+    --secondary-foreground: 0 0% 12%;
+    --muted: 0 0% 92%;
+    --muted-foreground: 0 0% 42%;
+    --accent: 0 0% 90%;
+    --accent-foreground: 0 0% 12%;
+    --destructive: 0 72% 50%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 86%;
+    --input: 0 0% 86%;
+    --ring: 0 0% 12%;
+    --radius: 0.5rem;
+    --chart-1: 0 0% 12%;
+    --chart-2: 0 0% 28%;
+    --chart-3: 0 0% 44%;
+    --chart-4: 0 0% 60%;
+    --chart-5: 0 0% 72%;
+    --reader-font-scale: 1;
+  }
+
+  .dark {
     --background: 0 0% 5%;
     --foreground: 0 0% 98%;
     --card: 0 0% 8%;
@@ -25,13 +54,11 @@
     --border: 0 0% 24%;
     --input: 0 0% 24%;
     --ring: 0 0% 83.1%;
-    --radius: 0.5rem;
     --chart-1: 0 0% 98%;
     --chart-2: 0 0% 72%;
     --chart-3: 0 0% 56%;
     --chart-4: 0 0% 40%;
     --chart-5: 0 0% 28%;
-    --reader-font-scale: 1;
   }
 
   * {

@@ -3,6 +3,7 @@ import { prisma } from '../db'
 import { requireAuth, type AuthRequest } from '../middleware/auth'
 import { decryptSecret, encryptSecret } from '../utils/crypto'
 import { syncExternalAccount } from '../services/syncService'
+import { verifyTestZ7iLogin } from '../scraper/testZ7iScraperV2'
 
 const router = Router()
 
@@ -55,10 +56,11 @@ router.get('/', requireAuth, async (req: AuthRequest, res, next) => {
 
 router.post('/connect', requireAuth, async (req: AuthRequest, res, next) => {
   try {
-    const { username, password, provider } = req.body as {
+    const { username, password, provider, verificationCode } = req.body as {
       username?: string
       password?: string
       provider?: string
+      verificationCode?: string
     }
 
     if (!req.user) {
@@ -70,6 +72,22 @@ router.post('/connect', requireAuth, async (req: AuthRequest, res, next) => {
     }
 
     const providerValue = provider?.trim() || 'test.z7i.in'
+    if (providerValue !== 'test.z7i.in') {
+      return res.status(400).json({ error: 'Unsupported provider.' })
+    }
+
+    try {
+      await verifyTestZ7iLogin({
+        username: username.trim(),
+        password,
+        verificationCode:
+          typeof verificationCode === 'string' ? verificationCode.trim() : undefined,
+      })
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'Login failed. Check credentials.'
+      return res.status(401).json({ error: message })
+    }
 
     const account = await prisma.externalAccount.upsert({
       where: {
@@ -129,6 +147,13 @@ router.post('/sync', requireAuth, async (req: AuthRequest, res, next) => {
       typeof req.body?.verificationCode === 'string'
         ? req.body.verificationCode.trim()
         : undefined
+    const forceAttemptExamIds = Array.isArray(req.body?.forceAttemptExamIds)
+      ? req.body.forceAttemptExamIds.filter(
+          (value: unknown): value is string =>
+            typeof value === 'string' && value.trim().length > 0,
+        )
+      : undefined
+    const attemptsOnly = Boolean(req.body?.attemptsOnly)
 
     const account = await prisma.externalAccount.findUnique({
       where: {
@@ -174,6 +199,8 @@ router.post('/sync', requireAuth, async (req: AuthRequest, res, next) => {
       username: account.username,
       password,
       verificationCode,
+      forceAttemptExamIds,
+      attemptsOnly,
       onProgress: async (progress) => {
         try {
           await prisma.externalAccount.update({

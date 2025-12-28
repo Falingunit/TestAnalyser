@@ -49,8 +49,15 @@ type Store = {
   connectExternalAccount: (payload: {
     username: string
     password: string
-  }) => Promise<void>
+  }) => Promise<AuthResult>
+  resyncAllTests: () => Promise<AuthResult>
   syncExternalAccount: () => Promise<void>
+  resyncTest: (testId: string) => Promise<void>
+  toggleQuestionBookmark: (payload: {
+    testId: string
+    questionId: string
+    bookmarked?: boolean
+  }) => Promise<AuthResult>
   updateAnswerKey: (payload: {
     testId: string
     questionId: string
@@ -115,7 +122,7 @@ const saveUi = (ui: AppState['ui']) => {
 const loadAdminOverride = () => {
   const raw = localStorage.getItem(ADMIN_OVERRIDE_KEY)
   if (raw === null) {
-    return true
+    return false
   }
   return raw === 'true'
 }
@@ -513,11 +520,11 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
 
   const connectExternalAccount: Store['connectExternalAccount'] = async (payload) => {
     if (!currentUser) {
-      return
+      return { ok: false, message: 'Not signed in.' }
     }
     const token = loadToken()
     if (!token) {
-      return
+      return { ok: false, message: 'Missing session token.' }
     }
 
     try {
@@ -534,8 +541,72 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
         },
       )
       upsertAccount(normalizeAccount(data.account))
+      return { ok: true }
     } catch (error) {
-      console.error(error)
+      const message =
+        error instanceof ApiError
+          ? error.message
+          : error instanceof Error
+            ? error.message
+            : 'Unable to connect account.'
+      return { ok: false, message }
+    }
+  }
+
+  const resyncAllTests: Store['resyncAllTests'] = async () => {
+    if (!currentUser) {
+      return { ok: false, message: 'Not signed in.' }
+    }
+    const token = loadToken()
+    if (!token) {
+      return { ok: false, message: 'Missing session token.' }
+    }
+
+    const account = state.externalAccounts.find(
+      (item) => item.userId === currentUser.id && item.provider === 'test.z7i.in',
+    )
+    if (!account) {
+      return { ok: false, message: 'External account not connected.' }
+    }
+    if (account.syncStatus === 'syncing') {
+      return { ok: false, message: 'Sync already in progress.' }
+    }
+
+    const forceAttemptExamIds = Array.from(
+      new Set(
+        state.tests
+          .map((test) => test.externalExamId)
+          .filter((value): value is string => Boolean(value)),
+      ),
+    )
+
+    if (forceAttemptExamIds.length === 0) {
+      return { ok: false, message: 'No external tests available to resync.' }
+    }
+
+    try {
+      const data = await requestJson<{
+        account: ExternalAccount
+      }>('/api/external/sync', {
+        method: 'POST',
+        token,
+        body: JSON.stringify({
+          provider: 'test.z7i.in',
+          forceAttemptExamIds,
+          attemptsOnly: true,
+        }),
+      })
+      upsertAccount(normalizeAccount(data.account))
+      await refreshTests(token)
+      return { ok: true }
+    } catch (error) {
+      const message =
+        error instanceof ApiError
+          ? error.message
+          : error instanceof Error
+            ? error.message
+            : 'Unable to resync tests.'
+      return { ok: false, message }
     }
   }
 
@@ -638,6 +709,70 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
       }))
     } catch (error) {
       console.error(error)
+    }
+  }
+
+  const resyncTest: Store['resyncTest'] = async (testId) => {
+    const token = loadToken()
+    if (!token) {
+      return
+    }
+
+    try {
+      const data = await requestJson<{ test: TestRecord }>(
+        `/api/tests/${testId}/resync`,
+        {
+          method: 'POST',
+          token,
+        },
+      )
+      setState((prev) => {
+        const hasId = prev.tests.some((item) => item.id === data.test.id)
+        if (hasId) {
+          return { ...prev, tests: replaceTest(prev.tests, data.test) }
+        }
+        const filtered = prev.tests.filter(
+          (item) => item.externalExamId !== data.test.externalExamId,
+        )
+        return { ...prev, tests: [...filtered, data.test] }
+      })
+    } catch (error) {
+      console.error(error)
+    }
+  }
+
+  const toggleQuestionBookmark: Store['toggleQuestionBookmark'] = async ({
+    testId,
+    questionId,
+    bookmarked,
+  }) => {
+    const token = loadToken()
+    if (!token) {
+      return { ok: false, message: 'Missing session token.' }
+    }
+
+    try {
+      const data = await requestJson<{ test: TestRecord }>(
+        `/api/tests/${testId}/questions/${questionId}/bookmarks`,
+        {
+          method: 'PATCH',
+          token,
+          body: JSON.stringify({ bookmarked }),
+        },
+      )
+      setState((prev) => ({
+        ...prev,
+        tests: replaceTest(prev.tests, data.test),
+      }))
+      return { ok: true }
+    } catch (error) {
+      const message =
+        error instanceof ApiError
+          ? error.message
+          : error instanceof Error
+            ? error.message
+            : 'Unable to update bookmark.'
+      return { ok: false, message }
     }
   }
 
@@ -794,6 +929,9 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
     logout,
     connectExternalAccount,
     syncExternalAccount,
+    resyncAllTests,
+    resyncTest,
+    toggleQuestionBookmark,
     updateAnswerKey,
     updateMarkingScheme,
     setTheme,

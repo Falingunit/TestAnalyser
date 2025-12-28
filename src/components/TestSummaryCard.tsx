@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn, formatQuestionType } from "@/lib/utils";
+import { buildDisplayQuestions } from "@/lib/questionDisplay";
 
 type TestAnalysis = ReturnType<typeof buildAnalysis>;
 
@@ -18,6 +19,7 @@ type TestSummaryCardProps = {
   className?: string;
   collapsedAction?: ReactNode;
   defaultExpanded?: boolean;
+  reviewAction?: ReactNode;
 };
 
 const subjectOrder = [
@@ -54,6 +56,7 @@ export const TestSummaryCard = ({
   className,
   collapsedAction,
   defaultExpanded = false,
+  reviewAction,
 }: TestSummaryCardProps) => {
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
   const overallTypeStats = useMemo(() => {
@@ -170,11 +173,16 @@ export const TestSummaryCard = ({
       <Link to={`/app/tests/${test.id}`}>Open review</Link>
     </Button>
   );
+  const firstQuestionId = useMemo(() => {
+    const first = buildDisplayQuestions(test.questions)[0]
+    return first?.question.id ?? ""
+  }, [test.questions])
+  const headerReviewAction = reviewAction ?? openReview;
   const actionContent = actions ?? (
     <>
-      {openReview}
+      {headerReviewAction}
       <Button asChild size="sm">
-        <Link to={`/app/questions/${test.id}/${test.questions[0]?.id ?? ""}`}>
+        <Link to={`/app/questions/${test.id}/${firstQuestionId}`}>
           Open questions
         </Link>
       </Button>
@@ -242,7 +250,7 @@ export const TestSummaryCard = ({
             ) : (
               <Badge variant="secondary">Key changes verified</Badge>
             )}
-            {openReview}
+            {headerReviewAction}
             <Button
               type="button"
               variant="ghost"

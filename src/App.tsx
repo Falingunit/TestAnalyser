@@ -1,7 +1,6 @@
 import { Navigate, Outlet, Route, Routes } from 'react-router-dom'
 import { AppShell } from '@/components/AppShell'
 import { useAppStore } from '@/lib/store'
-import { AdminPanel } from '@/pages/AdminPanel'
 import { Auth } from '@/pages/Auth'
 import { Dashboard } from '@/pages/Dashboard'
 import { NotFound } from '@/pages/NotFound'
@@ -26,18 +25,6 @@ const ProtectedLayout = () => {
   )
 }
 
-const AdminGate = () => {
-  const { currentUser, isBootstrapped, isAdmin } = useAppStore()
-  if (!isBootstrapped) {
-    return null
-  }
-  if (!currentUser || !isAdmin) {
-    return <Navigate to="/app" replace />
-  }
-
-  return <AdminPanel />
-}
-
 export const App = () => {
   const { currentUser, isBootstrapped } = useAppStore()
   if (!isBootstrapped) {
@@ -59,7 +46,6 @@ export const App = () => {
           element={<QuestionDetail />}
         />
         <Route path="profile" element={<Profile />} />
-        <Route path="admin" element={<AdminGate />} />
       </Route>
       <Route path="*" element={<NotFound />} />
     </Routes>

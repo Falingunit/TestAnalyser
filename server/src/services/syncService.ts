@@ -1,19 +1,12 @@
 ﻿import { prisma } from '../db'
-import { scrapeTestZ7i } from '../scraper/testZ7iScraper'
+import { scrapeTestZ7iV2 } from '../scraper/testZ7iScraperV2'
 import type {
   ScrapeProgress,
   ScrapedAnswer,
   ScrapedQuestion,
   ScrapedQuestionType,
   ScrapedReport,
-  ScrapedSubject,
 } from '../scraper/types'
-
-const subjectOrder: ScrapedSubject[] = [
-  'PHYSICS',
-  'CHEMISTRY',
-  'MATHEMATICS',
-]
 
 const normalizeDate = (value: string) => {
   const trimmed = value.trim()
@@ -122,24 +115,18 @@ const ensureAnswerValue = (
 }
 
 const assignQuestionNumbers = (questions: ScrapedQuestion[]) => {
-  const bySubject = new Map<ScrapedSubject, ScrapedQuestion[]>()
-  for (const question of questions) {
-    const list = bySubject.get(question.subject) ?? []
-    list.push(question)
-    bySubject.set(question.subject, list)
-  }
-
-  const ordered: Array<ScrapedQuestion & { questionNumber: number }> = []
-  let questionNumber = 1
-  for (const subject of subjectOrder) {
-    const list = bySubject.get(subject) ?? []
-    for (const question of list) {
-      ordered.push({ ...question, questionNumber })
-      questionNumber += 1
-    }
-  }
-
-  return ordered
+  const ordered = [...questions].sort(
+    (a, b) => a.sourceNumber - b.sourceNumber,
+  )
+  let fallbackNumber = 1
+  return ordered.map((question) => {
+    const derived =
+      Number.isFinite(question.sourceNumber) && question.sourceNumber > 0
+        ? question.sourceNumber
+        : fallbackNumber
+    fallbackNumber += 1
+    return { ...question, questionNumber: derived }
+  })
 }
 
 const upsertExam = async (report: ScrapedReport) => {
@@ -348,6 +335,7 @@ const upsertAttempt = async (payload: {
       examId: payload.examId,
       answers: serializeJson(answerByQuestionId),
       timings: serializeJson(timingByQuestionId),
+      bookmarks: serializeJson({}),
     },
   })
 
@@ -360,6 +348,9 @@ export const syncExternalAccount = async (payload: {
   username: string
   password: string
   verificationCode?: string
+  onlyExamIds?: string[]
+  forceAttemptExamIds?: string[]
+  attemptsOnly?: boolean
   onProgress?: (progress: ScrapeProgress) => Promise<void> | void
 }) => {
   if (payload.provider !== 'test.z7i.in') {
@@ -375,6 +366,10 @@ export const syncExternalAccount = async (payload: {
       .map((attempt) => attempt.exam.externalExamId)
       .filter(Boolean) as string[],
   )
+  const forceAttemptExamIds = new Set(payload.forceAttemptExamIds ?? [])
+  forceAttemptExamIds.forEach((examId) => {
+    attemptedExamIds.delete(examId)
+  })
 
   const existingExams = await prisma.exam.findMany({
     select: {
@@ -391,13 +386,14 @@ export const syncExternalAccount = async (payload: {
       .map((exam) => exam.externalExamId as string),
   )
 
-  const result = await scrapeTestZ7i({
+  const result = await scrapeTestZ7iV2({
     username: payload.username,
     password: payload.password,
     verificationCode: payload.verificationCode,
     existingExamIds: Array.from(existingIds),
     forceFullExamIds: Array.from(forceFullIds),
     skipExamIds: Array.from(attemptedExamIds),
+    onlyExamIds: payload.onlyExamIds,
     onProgress: payload.onProgress,
   })
 
@@ -411,6 +407,7 @@ export const syncExternalAccount = async (payload: {
       continue
     }
 
+    const useQuestions = payload.attemptsOnly ? [] : normalized.questions
     let examId = ''
     let questionByNumber = new Map<
       number,
@@ -420,8 +417,14 @@ export const syncExternalAccount = async (payload: {
       | Map<number, { id: string; qtype: ScrapedQuestionType; keyUpdate: unknown }>
       | undefined
 
-    if (normalized.questions.length > 0) {
-      const created = await upsertExam(report)
+    if (useQuestions.length > 0) {
+      const created = await upsertExam({
+        externalExamId: normalized.externalExamId,
+        title: normalized.title,
+        examDate: normalized.examDate,
+        questions: useQuestions,
+        answers: normalized.answers,
+      })
       examId = created.examId
       questionByNumber = created.questionBySourceNumber
       fallbackByNumber = created.questionByNumber

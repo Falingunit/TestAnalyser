@@ -51,13 +51,19 @@ export const Dashboard = () => {
             <Badge variant={account ? 'secondary' : 'outline'}>
               {account ? `${account.provider} - ${account.status}` : 'No account connected'}
             </Badge>
-            <Button
-              variant="outline"
-              onClick={syncExternalAccount}
-              disabled={!account || account.syncStatus === 'syncing'}
-            >
-              {account?.syncStatus === 'syncing' ? 'Syncing...' : 'Sync latest'}
-            </Button>
+            {account ? (
+              <Button
+                variant="outline"
+                onClick={syncExternalAccount}
+                disabled={account.syncStatus === 'syncing'}
+              >
+                {account.syncStatus === 'syncing' ? 'Syncing...' : 'Sync latest'}
+              </Button>
+            ) : (
+              <Button variant="outline" asChild>
+                <Link to="/app/profile?connect=1">Connect account</Link>
+              </Button>
+            )}
           </div>
         </div>
 
@@ -93,9 +99,15 @@ export const Dashboard = () => {
                 <p className="text-sm text-muted-foreground">
                   No tests found yet. Connect your exam account and start syncing.
                 </p>
-                <Button onClick={syncExternalAccount} disabled={!account}>
-                  Sync latest
-                </Button>
+                {account ? (
+                  <Button onClick={syncExternalAccount} disabled={account.syncStatus === 'syncing'}>
+                    {account.syncStatus === 'syncing' ? 'Syncing...' : 'Sync latest'}
+                  </Button>
+                ) : (
+                  <Button asChild>
+                    <Link to="/app/profile?connect=1">Connect account</Link>
+                  </Button>
+                )}
               </CardContent>
             </Card>
           )}

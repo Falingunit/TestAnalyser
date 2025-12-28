@@ -8,6 +8,7 @@ import {
   type PointerEvent,
 } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import { Star } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
 import {
   formatAnswerValue,
@@ -17,6 +18,11 @@ import {
   getTimeForQuestion,
   isBonusKey,
 } from '@/lib/analysis'
+import type { Subject } from '@/lib/types'
+import {
+  buildDisplayQuestions,
+  subjectDisplayOrder,
+} from '@/lib/questionDisplay'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -89,47 +95,128 @@ type ChatMessage = {
   pinned?: boolean
 }
 
+type KeyAnswerGroup = {
+  id: string
+  single: string
+  multi: string[]
+  min: string
+  max: string
+}
+
+const buildKeyGroup = (): KeyAnswerGroup => ({
+  id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+  single: '',
+  multi: [],
+  min: '',
+  max: '',
+})
+
+const parseNumberValue = (value: string) => {
+  const trimmed = value.trim()
+  if (!trimmed) {
+    return null
+  }
+  const parsed = Number(trimmed)
+  return Number.isFinite(parsed) ? parsed : null
+}
+
+const parseNumericGroup = (value: string) => {
+  const trimmed = value.trim()
+  if (!trimmed) {
+    return null
+  }
+  const rangeMatch = trimmed.match(
+    /(-?\d+(?:\.\d+)?)\s*(?:to|-)\s*(-?\d+(?:\.\d+)?)/i,
+  )
+  if (rangeMatch) {
+    return { min: rangeMatch[1], max: rangeMatch[2] }
+  }
+  return { min: trimmed, max: '' }
+}
+
+const keyOptionLabels = ['A', 'B', 'C', 'D'] as const
+
 export const QuestionDetail = () => {
   const { testId, questionId } = useParams()
-  const { state, updateAnswerKey, currentUser, isAdmin, fontScale, setFontScale, setMode } =
+  const {
+    state,
+    updateAnswerKey,
+    toggleQuestionBookmark,
+    currentUser,
+    isAdmin,
+    fontScale,
+    setFontScale,
+    setMode,
+  } =
     useAppStore()
   const test = state.tests.find((item) => item.id === testId)
-  const questions = useMemo(() => {
+  const displayQuestions = useMemo(() => {
     if (!test) {
       return []
     }
-    return [...test.questions].sort(
-      (a, b) => a.questionNumber - b.questionNumber,
-    )
+    return buildDisplayQuestions(test.questions)
   }, [test])
 
-  const currentIndex = questions.findIndex((item) => item.id === questionId)
-  const question = currentIndex >= 0 ? questions[currentIndex] : null
+  const currentIndex = displayQuestions.findIndex(
+    (item) => item.question.id === questionId,
+  )
+  const questionEntry = currentIndex >= 0 ? displayQuestions[currentIndex] : null
+  const question = questionEntry?.question ?? null
   const status = question && test ? getQuestionStatus(test, question) : 'Unattempted'
   const timeSpent = question && test ? getTimeForQuestion(test, question) : 0
   const answer = question && test ? getAnswerForQuestion(test, question) : null
   const score = question && test ? getQuestionMark(test, question) : 0
+  const displayNumber = questionEntry?.displayNumber ?? 0
+  const isBookmarked = Boolean(
+    test && question ? test.bookmarks?.[question.id] : false,
+  )
   const mode = currentUser?.preferences.mode ?? state.ui.mode
   const isDark = mode === 'dark'
+  const keyOptions = keyOptionLabels
+  const keyOptionOrder = keyOptionLabels
 
-  const statuses = useMemo(() => {
+  const paletteSections = useMemo(() => {
     if (!test) {
       return []
     }
-    return questions.map((item) => ({
-      id: item.id,
-      number: item.questionNumber,
-      status: getQuestionStatus(test, item),
-      bonus: isBonusKey(item.keyUpdate),
-    }))
-  }, [questions, test])
+    const map = new Map<Subject, Array<{
+      id: string
+      number: number
+      status: string
+      bonus: boolean
+      bookmarked: boolean
+    }>>()
+    displayQuestions.forEach((entry) => {
+      const { question: item, displayNumber } = entry
+      const subject = item.subject as Subject
+      const current = map.get(subject) ?? []
+      current.push({
+        id: item.id,
+        number: displayNumber,
+        status: getQuestionStatus(test, item),
+        bonus: isBonusKey(item.keyUpdate),
+        bookmarked: Boolean(test.bookmarks?.[item.id]),
+      })
+      map.set(subject, current)
+    })
+    return subjectDisplayOrder
+      .map((subject) => ({
+        subject,
+        items: map.get(subject) ?? [],
+      }))
+      .filter((section) => section.items.length > 0)
+  }, [displayQuestions, test])
 
   const [message, setMessage] = useState<string | null>(null)
-  const [keyUpdateValue, setKeyUpdateValue] = useState('')
   const [keyUpdateBonus, setKeyUpdateBonus] = useState(false)
+  const [keyAnswerGroups, setKeyAnswerGroups] = useState<KeyAnswerGroup[]>([
+    buildKeyGroup(),
+  ])
   const [notes, setNotes] = useState('')
   const [chatInput, setChatInput] = useState('')
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([])
+  const [chatKeyLoaded, setChatKeyLoaded] = useState<string | null>(null)
+  const [isBookmarking, setIsBookmarking] = useState(false)
   const [isImageOpen, setIsImageOpen] = useState(false)
   const [imageSrc, setImageSrc] = useState<string | null>(null)
   const [imageZoom, setImageZoom] = useState(1)
@@ -146,8 +233,122 @@ export const QuestionDetail = () => {
     startZoom: number
   } | null>(null)
 
+  const addKeyAnswerGroup = () => {
+    setKeyAnswerGroups((prev) => [...prev, buildKeyGroup()])
+  }
+
+  const removeKeyAnswerGroup = (groupId: string) => {
+    setKeyAnswerGroups((prev) =>
+      prev.length > 1 ? prev.filter((group) => group.id !== groupId) : prev,
+    )
+  }
+
+  const updateSingleGroup = (groupId: string, value: string) => {
+    setKeyAnswerGroups((prev) =>
+      prev.map((group) =>
+        group.id === groupId ? { ...group, single: value } : group,
+      ),
+    )
+  }
+
+  const toggleMultiGroupOption = (groupId: string, value: string) => {
+    setKeyAnswerGroups((prev) =>
+      prev.map((group) => {
+        if (group.id !== groupId) {
+          return group
+        }
+        const exists = group.multi.includes(value)
+        return {
+          ...group,
+          multi: exists
+            ? group.multi.filter((item) => item !== value)
+            : [...group.multi, value],
+        }
+      }),
+    )
+  }
+
+  const updateRangeGroup = (
+    groupId: string,
+    field: 'min' | 'max',
+    value: string,
+  ) => {
+    setKeyAnswerGroups((prev) =>
+      prev.map((group) =>
+        group.id === groupId ? { ...group, [field]: value } : group,
+      ),
+    )
+  }
+
+  const sortOptions = (values: string[]) => {
+    if (keyOptionOrder.length === 0) {
+      return values
+    }
+    return [...values].sort((a, b) => {
+      const ai = keyOptionOrder.indexOf(a)
+      const bi = keyOptionOrder.indexOf(b)
+      const safeA = ai === -1 ? Number.MAX_SAFE_INTEGER : ai
+      const safeB = bi === -1 ? Number.MAX_SAFE_INTEGER : bi
+      return safeA - safeB
+    })
+  }
+
+  const buildKeyUpdateValue = () => {
+    if (!question) {
+      return null
+    }
+
+    if (question.qtype === 'NAT') {
+      const ranges: string[] = []
+      let hasInvalid = false
+      keyAnswerGroups.forEach((group) => {
+        const minRaw = group.min.trim()
+        const maxRaw = group.max.trim()
+        if (!minRaw && !maxRaw) {
+          return
+        }
+        const minValue = parseNumberValue(minRaw)
+        if (minValue === null) {
+          hasInvalid = true
+          return
+        }
+        const maxValue = maxRaw.length > 0 ? parseNumberValue(maxRaw) : minValue
+        if (maxValue === null) {
+          hasInvalid = true
+          return
+        }
+        ranges.push(
+          minValue === maxValue ? String(minValue) : `${minValue}-${maxValue}`,
+        )
+      })
+      if (hasInvalid) {
+        return null
+      }
+      return ranges.length > 0 ? ranges.join(' OR ') : null
+    }
+
+    if (question.qtype === 'MAQ') {
+      const groups = keyAnswerGroups
+        .map((group) => {
+          const selections = group.multi.map((item) => item.trim().toUpperCase())
+          if (selections.length === 0) {
+            return null
+          }
+          return sortOptions(selections).join('')
+        })
+        .filter((value): value is string => Boolean(value))
+      return groups.length > 0 ? groups.join(' OR ') : null
+    }
+
+    const singles = keyAnswerGroups
+      .map((group) => group.single.trim().toUpperCase())
+      .filter(Boolean)
+    return singles.length > 0 ? singles.join(' OR ') : null
+  }
+
   const handleKeyUpdate = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    setMessage(null)
     if (!isAdmin) {
       setMessage('Only admins can update answer keys.')
       return
@@ -155,19 +356,34 @@ export const QuestionDetail = () => {
     if (!test || !question) {
       return
     }
-    const trimmedKey = keyUpdateValue.trim()
-    if (!keyUpdateBonus && !trimmedKey) {
-      setMessage('Enter a new key or mark this question as bonus.')
+    const keyValue = buildKeyUpdateValue()
+    if (!keyUpdateBonus && !keyValue) {
+      setMessage('Enter a valid key or mark this question as bonus.')
       return
     }
     await updateAnswerKey({
       testId: test.id,
       questionId: question.id,
-      newKey: keyUpdateBonus ? { bonus: true } : trimmedKey,
+      newKey: keyUpdateBonus ? { bonus: true } : keyValue,
     })
     setMessage('Answer key updated.')
-    setKeyUpdateValue('')
     setKeyUpdateBonus(false)
+  }
+
+  const handleBookmarkToggle = async () => {
+    if (!test || !question || isBookmarking) {
+      return
+    }
+    setIsBookmarking(true)
+    const result = await toggleQuestionBookmark({
+      testId: test.id,
+      questionId: question.id,
+      bookmarked: !isBookmarked,
+    })
+    if (!result.ok) {
+      setMessage(result.message ?? 'Unable to update bookmark.')
+    }
+    setIsBookmarking(false)
   }
 
   if (!test || !question) {
@@ -183,8 +399,12 @@ export const QuestionDetail = () => {
     )
   }
 
-  const prev = currentIndex > 0 ? questions[currentIndex - 1] : null
-  const next = currentIndex < questions.length - 1 ? questions[currentIndex + 1] : null
+  const prev =
+    currentIndex > 0 ? displayQuestions[currentIndex - 1] : null
+  const next =
+    currentIndex < displayQuestions.length - 1
+      ? displayQuestions[currentIndex + 1]
+      : null
   const selectedOptions = toOptionArray(answer)
   const correctOptions = question ? toOptionArray(question.keyUpdate) : []
   const isMultiSelect = question?.qtype === 'MAQ'
@@ -201,6 +421,7 @@ export const QuestionDetail = () => {
       return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
     })
   }, [chatMessages])
+  const activeMessages = chatKeyLoaded === chatKey ? orderedMessages : []
 
   useEffect(() => {
     if (!notesKey) {
@@ -212,10 +433,75 @@ export const QuestionDetail = () => {
   }, [notesKey])
 
   useEffect(() => {
-    if (keyUpdateBonus) {
-      setKeyUpdateValue('')
+    if (!question) {
+      setKeyAnswerGroups([buildKeyGroup()])
+      setKeyUpdateBonus(false)
+      return
     }
-  }, [keyUpdateBonus])
+    const bonusActive = isBonusKey(question.keyUpdate)
+    setKeyUpdateBonus(bonusActive)
+    if (bonusActive) {
+      setKeyAnswerGroups([buildKeyGroup()])
+      return
+    }
+
+    const nextGroups: KeyAnswerGroup[] = []
+    const rawKey = question.keyUpdate ?? question.correctAnswer
+
+    if (question.qtype === 'NAT') {
+      if (typeof rawKey === 'number') {
+        nextGroups.push({ ...buildKeyGroup(), min: String(rawKey), max: '' })
+      } else if (
+        rawKey &&
+        typeof rawKey === 'object' &&
+        'min' in rawKey &&
+        'max' in rawKey
+      ) {
+        nextGroups.push({
+          ...buildKeyGroup(),
+          min: String(rawKey.min ?? ''),
+          max: String(rawKey.max ?? ''),
+        })
+      } else if (typeof rawKey === 'string') {
+        splitByOr(rawKey).forEach((segment) => {
+          const parsed = parseNumericGroup(segment)
+          if (parsed) {
+            nextGroups.push({
+              ...buildKeyGroup(),
+              min: parsed.min,
+              max: parsed.max,
+            })
+          }
+        })
+      }
+    } else if (question.qtype === 'MAQ') {
+      if (Array.isArray(rawKey)) {
+        nextGroups.push({
+          ...buildKeyGroup(),
+          multi: rawKey.map((item) => String(item).trim().toUpperCase()),
+        })
+      } else if (typeof rawKey === 'string') {
+        splitByOr(rawKey).forEach((segment) => {
+          const selections = toOptionArray(segment)
+          if (selections.length > 0) {
+            nextGroups.push({ ...buildKeyGroup(), multi: selections })
+          }
+        })
+      }
+    } else if (typeof rawKey === 'string') {
+      splitByOr(rawKey).forEach((segment) => {
+        const selection = toOptionArray(segment)[0]
+        if (selection) {
+          nextGroups.push({ ...buildKeyGroup(), single: selection })
+        }
+      })
+    } else if (Array.isArray(rawKey)) {
+      const selection = rawKey[0] ? String(rawKey[0]).trim().toUpperCase() : ''
+      nextGroups.push({ ...buildKeyGroup(), single: selection })
+    }
+
+    setKeyAnswerGroups(nextGroups.length > 0 ? nextGroups : [buildKeyGroup()])
+  }, [question])
 
   useEffect(() => {
     if (!notesKey) {
@@ -227,11 +513,13 @@ export const QuestionDetail = () => {
   useEffect(() => {
     if (!chatKey) {
       setChatMessages([])
+      setChatKeyLoaded(null)
       return
     }
     const raw = localStorage.getItem(chatKey)
     if (!raw) {
       setChatMessages([])
+      setChatKeyLoaded(chatKey)
       return
     }
     try {
@@ -240,14 +528,15 @@ export const QuestionDetail = () => {
     } catch {
       setChatMessages([])
     }
+    setChatKeyLoaded(chatKey)
   }, [chatKey])
 
   useEffect(() => {
-    if (!chatKey) {
+    if (!chatKey || chatKeyLoaded !== chatKey) {
       return
     }
     localStorage.setItem(chatKey, JSON.stringify(chatMessages))
-  }, [chatKey, chatMessages])
+  }, [chatKey, chatKeyLoaded, chatMessages])
 
   const handleChatSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -267,7 +556,7 @@ export const QuestionDetail = () => {
     setChatInput('')
   }
 
-  const clampZoom = (value: number) => Math.min(4, Math.max(1, value))
+  const clampZoom = (value: number) => Math.min(4, Math.max(0.1, value))
 
   const resetImageView = () => {
     setImageZoom(1)
@@ -292,10 +581,6 @@ export const QuestionDetail = () => {
         handleImageOpen(src)
       }
     }
-  }
-
-  const handleZoomStep = (delta: number) => {
-    setImageZoom((prev) => clampZoom(prev + delta))
   }
 
   const handleImageWheel = (event: React.WheelEvent<HTMLDivElement>) => {
@@ -323,13 +608,11 @@ export const QuestionDetail = () => {
       return
     }
 
-    if (imageZoom > 1) {
-      dragState.current = {
-        startX: event.clientX,
-        startY: event.clientY,
-        originX: imageOffset.x,
-        originY: imageOffset.y,
-      }
+    dragState.current = {
+      startX: event.clientX,
+      startY: event.clientY,
+      originX: imageOffset.x,
+      originY: imageOffset.y,
     }
   }
 
@@ -345,7 +628,7 @@ export const QuestionDetail = () => {
     if (activePointers.current.size === 2) {
       const points = Array.from(activePointers.current.values())
       const distance = Math.hypot(points[0].x - points[1].x, points[0].y - points[1].y)
-      const start = pinchState.current?.startDistance ?? distance || 1
+      const start = pinchState.current?.startDistance ?? (distance || 1)
       const startZoom = pinchState.current?.startZoom ?? imageZoom
       setImageZoom(clampZoom(startZoom * (distance / start)))
       return
@@ -400,8 +683,26 @@ export const QuestionDetail = () => {
         </Button>
         <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
           <span>
-            Q{question.questionNumber} - {question.subject}
+            Q{displayNumber} - {question.subject}
           </span>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={handleBookmarkToggle}
+            disabled={isBookmarking}
+            aria-pressed={isBookmarked}
+            title={isBookmarked ? 'Remove star' : 'Star question'}
+            className="h-8 w-8"
+          >
+            <Star
+              className={cn(
+                'h-4 w-4',
+                isBookmarked ? 'text-amber-400' : 'text-muted-foreground',
+              )}
+              fill={isBookmarked ? 'currentColor' : 'none'}
+            />
+          </Button>
           <div className="flex items-center gap-2 rounded-full border border-border/60 bg-muted/30 px-3 py-1 text-xs text-muted-foreground">
             <span>Text size</span>
             <Button
@@ -444,28 +745,43 @@ export const QuestionDetail = () => {
               Questions
             </p>
             <div className="min-h-0 flex-1 overflow-y-auto pr-1">
-              <div className="grid grid-cols-5 gap-2">
-                {statuses.map((item) => (
-                  <Link
-                    key={item.id}
-                    to={`/app/questions/${test.id}/${item.id}`}
-                    className={cn(
-                      'flex h-9 items-center justify-center rounded-lg border text-xs font-medium',
-                      item.id === question.id
-                        ? 'border-primary bg-primary text-primary-foreground'
-                        : item.bonus
-                          ? 'border-sky-500/60 bg-sky-500/15 text-foreground hover:border-sky-400'
-                          : item.status === 'Correct'
-                            ? 'border-emerald-500/60 bg-emerald-500/15 text-foreground hover:border-emerald-400'
-                            : item.status === 'Partial'
-                              ? 'border-amber-400/60 bg-amber-400/15 text-foreground hover:border-amber-300'
-                              : item.status === 'Incorrect'
-                                ? 'border-rose-500/60 bg-rose-500/15 text-foreground hover:border-rose-400'
-                                : 'border-border/60 text-muted-foreground hover:border-primary/60',
-                    )}
-                  >
-                    {item.number}
-                  </Link>
+              <div className="space-y-3">
+                {paletteSections.map((section) => (
+                  <div key={section.subject} className="space-y-2">
+                    <p className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
+                      {section.subject}
+                    </p>
+                    <div className="grid grid-cols-5 gap-2">
+                      {section.items.map((item) => (
+                        <Link
+                          key={item.id}
+                          to={`/app/questions/${test.id}/${item.id}`}
+                          className={cn(
+                            'relative flex aspect-square w-full items-center justify-center rounded-md border text-xs font-medium',
+                            item.id === question.id
+                              ? 'border-primary bg-primary text-primary-foreground'
+                              : item.bonus
+                                ? 'border-sky-500/60 bg-sky-500/15 text-foreground hover:border-sky-400'
+                                : item.status === 'Correct'
+                                  ? 'border-emerald-500/60 bg-emerald-500/15 text-foreground hover:border-emerald-400'
+                                  : item.status === 'Partial'
+                                    ? 'border-amber-400/60 bg-amber-400/15 text-foreground hover:border-amber-300'
+                                    : item.status === 'Incorrect'
+                                      ? 'border-rose-500/60 bg-rose-500/15 text-foreground hover:border-rose-400'
+                                      : 'border-border/60 text-muted-foreground hover:border-primary/60',
+                          )}
+                        >
+                          <span>{item.number}</span>
+                          {item.bookmarked ? (
+                            <Star
+                              className="absolute right-1 top-1 h-3 w-3 text-amber-400"
+                              fill="currentColor"
+                            />
+                          ) : null}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
                 ))}
               </div>
             </div>
@@ -557,14 +873,14 @@ export const QuestionDetail = () => {
             <div className="flex items-center justify-between">
               <Button asChild variant="outline" disabled={!prev}>
                 {prev ? (
-                  <Link to={`/app/questions/${test.id}/${prev.id}`}>Previous</Link>
+                  <Link to={`/app/questions/${test.id}/${prev.question.id}`}>Previous</Link>
                 ) : (
                   <span>Previous</span>
                 )}
               </Button>
               <Button asChild variant="outline" disabled={!next}>
                 {next ? (
-                  <Link to={`/app/questions/${test.id}/${next.id}`}>Next</Link>
+                  <Link to={`/app/questions/${test.id}/${next.question.id}`}>Next</Link>
                 ) : (
                   <span>Next</span>
                 )}
@@ -620,12 +936,12 @@ export const QuestionDetail = () => {
                   Key discussion
                 </p>
                 <div className="space-y-2">
-                  {orderedMessages.length === 0 ? (
+                  {activeMessages.length === 0 ? (
                     <p className="text-xs text-muted-foreground">
                       No messages yet. Start the discussion.
                     </p>
                   ) : (
-                    orderedMessages.map((chat) => (
+                    activeMessages.map((chat) => (
                       <div
                         key={chat.id}
                         className={cn(
@@ -691,22 +1007,163 @@ export const QuestionDetail = () => {
                     <DialogHeader>
                       <DialogTitle>Update answer key</DialogTitle>
                       <DialogDescription>
-                        Enter the corrected key and apply it to this question.
+                        Add one or more valid answers. Each entry is treated as OR.
                       </DialogDescription>
                     </DialogHeader>
                     <form className="space-y-4" onSubmit={handleKeyUpdate}>
-                      <div className="space-y-2">
-                        <label className="text-sm text-muted-foreground" htmlFor="newKey">
-                          New key
-                        </label>
-                        <Input
-                          id="newKey"
-                          placeholder="Example: B or 2.5-3.5"
-                          value={keyUpdateValue}
-                          onChange={(event) => setKeyUpdateValue(event.target.value)}
-                          disabled={keyUpdateBonus}
-                        />
+                      <div className="space-y-3">
+                        <div className="space-y-1">
+                          <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                            Answer options
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            Add multiple answers to represent OR alternatives.
+                          </p>
+                        </div>
+                        <div className={cn('space-y-3', keyUpdateBonus && 'opacity-60')}>
+                          {keyAnswerGroups.map((group, index) => (
+                            <div
+                              key={group.id}
+                              className="space-y-3 rounded-lg border border-border/60 p-3"
+                            >
+                              <div className="flex items-center justify-between gap-2">
+                                <span className="text-xs font-semibold text-foreground">
+                                  Answer {index + 1}
+                                </span>
+                                {index > 0 ? (
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => removeKeyAnswerGroup(group.id)}
+                                    disabled={keyUpdateBonus}
+                                  >
+                                    Remove
+                                  </Button>
+                                ) : null}
+                              </div>
+
+                              {question.qtype === 'NAT' ? (
+                                <div className="grid gap-3 sm:grid-cols-2">
+                                  <div className="space-y-2">
+                                    <label className="text-xs text-muted-foreground">
+                                      Lower range
+                                    </label>
+                                    <Input
+                                      type="number"
+                                      inputMode="decimal"
+                                      step="any"
+                                      value={group.min}
+                                      onChange={(event) =>
+                                        updateRangeGroup(
+                                          group.id,
+                                          'min',
+                                          event.target.value,
+                                        )
+                                      }
+                                      disabled={keyUpdateBonus}
+                                    />
+                                  </div>
+                                  <div className="space-y-2">
+                                    <label className="text-xs text-muted-foreground">
+                                      Upper range
+                                    </label>
+                                    <Input
+                                      type="number"
+                                      inputMode="decimal"
+                                      step="any"
+                                      value={group.max}
+                                      onChange={(event) =>
+                                        updateRangeGroup(
+                                          group.id,
+                                          'max',
+                                          event.target.value,
+                                        )
+                                      }
+                                      placeholder={group.min.trim() || 'Same as start'}
+                                      disabled={keyUpdateBonus}
+                                    />
+                                  </div>
+                                </div>
+                              ) : question.qtype === 'MAQ' ? (
+                                <div className="flex flex-wrap gap-2">
+                                  {keyOptions.length > 0 ? (
+                                    keyOptions.map((option) => (
+                                      <label
+                                        key={option}
+                                        className={cn(
+                                          'flex items-center gap-2 rounded-md border px-3 py-2 text-xs',
+                                          group.multi.includes(option)
+                                            ? 'border-primary/60 bg-primary/10 text-foreground'
+                                            : 'border-border text-muted-foreground',
+                                          keyUpdateBonus && 'pointer-events-none',
+                                        )}
+                                      >
+                                        <input
+                                          type="checkbox"
+                                          className="h-3 w-3"
+                                          checked={group.multi.includes(option)}
+                                          onChange={() =>
+                                            toggleMultiGroupOption(group.id, option)
+                                          }
+                                          disabled={keyUpdateBonus}
+                                        />
+                                        <span className="font-semibold">{option}</span>
+                                      </label>
+                                    ))
+                                  ) : (
+                                    <p className="text-xs text-muted-foreground">
+                                      No options available for this question.
+                                    </p>
+                                  )}
+                                </div>
+                              ) : (
+                                <div className="flex flex-wrap gap-2">
+                                  {keyOptions.length > 0 ? (
+                                    keyOptions.map((option) => (
+                                      <label
+                                        key={option}
+                                        className={cn(
+                                          'flex items-center gap-2 rounded-md border px-3 py-2 text-xs',
+                                          group.single === option
+                                            ? 'border-primary/60 bg-primary/10 text-foreground'
+                                            : 'border-border text-muted-foreground',
+                                          keyUpdateBonus && 'pointer-events-none',
+                                        )}
+                                      >
+                                        <input
+                                          type="radio"
+                                          name={`key-single-${group.id}`}
+                                          className="h-3 w-3"
+                                          checked={group.single === option}
+                                          onChange={() =>
+                                            updateSingleGroup(group.id, option)
+                                          }
+                                          disabled={keyUpdateBonus}
+                                        />
+                                        <span className="font-semibold">{option}</span>
+                                      </label>
+                                    ))
+                                  ) : (
+                                    <p className="text-xs text-muted-foreground">
+                                      No options available for this question.
+                                    </p>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
                       </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={addKeyAnswerGroup}
+                        disabled={keyUpdateBonus}
+                      >
+                        Add another answer (OR)
+                      </Button>
                       <div className="flex items-center justify-between gap-3 rounded-lg border border-border/60 px-3 py-2 text-xs text-muted-foreground">
                         <div>
                           <p className="font-medium text-foreground">Bonus question</p>
@@ -750,64 +1207,56 @@ export const QuestionDetail = () => {
         }}
       >
         <DialogContent
-          className="max-w-5xl border-0 bg-transparent p-4 shadow-none"
-          overlayClassName="bg-transparent backdrop-blur-md"
+          className="inset-0 h-screen w-screen max-w-none translate-x-0 translate-y-0 rounded-none border-0 bg-transparent p-0 shadow-none"
+          overlayClassName="bg-black/80 backdrop-blur-none"
         >
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                Image viewer
-              </p>
-              <p className="text-xs text-muted-foreground">
-                Pinch or scroll to zoom, drag to pan.
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
+          <div className="relative h-full w-full">
+            <div className="absolute right-4 top-4 z-10">
               <Button
                 type="button"
-                variant="outline"
+                variant="ghost"
                 size="sm"
-                onClick={() => handleZoomStep(-0.2)}
+                onClick={(event) => {
+                  event.stopPropagation()
+                  resetImageView()
+                }}
               >
-                Zoom out
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => handleZoomStep(0.2)}
-              >
-                Zoom in
-              </Button>
-              <Button type="button" variant="ghost" size="sm" onClick={resetImageView}>
                 Reset
               </Button>
             </div>
-          </div>
-          <div
-            className={cn(
-              'relative mt-4 flex h-[70vh] touch-none items-center justify-center overflow-hidden',
-              imageZoom > 1 ? 'cursor-grab' : 'cursor-zoom-in',
-            )}
-            onWheel={handleImageWheel}
-            onPointerDown={handleImagePointerDown}
-            onPointerMove={handleImagePointerMove}
-            onPointerUp={handleImagePointerUp}
-            onPointerLeave={handleImagePointerUp}
-            onPointerCancel={handleImagePointerUp}
-          >
-            {imageSrc ? (
-              <img
-                src={imageSrc}
-                alt="Question attachment"
-                className="max-h-full max-w-full select-none"
-                draggable={false}
-                style={{
-                  transform: `translate(${imageOffset.x}px, ${imageOffset.y}px) scale(${imageZoom})`,
-                  transformOrigin: 'center',
-                }}
-              />
-            ) : null}
+            <div
+              className={cn(
+                'relative flex h-full w-full touch-none items-center justify-center overflow-hidden cursor-grab',
+              )}
+              onClick={(event) => {
+                if (event.target !== event.currentTarget) {
+                  return
+                }
+                setIsImageOpen(false)
+                setImageSrc(null)
+                resetImageView()
+              }}
+              onWheel={handleImageWheel}
+              onPointerDown={handleImagePointerDown}
+              onPointerMove={handleImagePointerMove}
+              onPointerUp={handleImagePointerUp}
+              onPointerLeave={handleImagePointerUp}
+              onPointerCancel={handleImagePointerUp}
+            >
+              {imageSrc ? (
+                <img
+                  src={imageSrc}
+                  alt="Question attachment"
+                  className="max-h-full max-w-full select-none"
+                  draggable={false}
+                  onClick={(event) => event.stopPropagation()}
+                  style={{
+                    transform: `translate(${imageOffset.x}px, ${imageOffset.y}px) scale(${imageZoom})`,
+                    transformOrigin: 'center',
+                  }}
+                />
+              ) : null}
+            </div>
           </div>
         </DialogContent>
       </Dialog>

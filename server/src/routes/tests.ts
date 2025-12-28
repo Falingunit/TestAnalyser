@@ -1,6 +1,8 @@
 ﻿import { Router } from 'express'
 import { prisma } from '../db'
 import { requireAuth, type AuthRequest } from '../middleware/auth'
+import { decryptSecret } from '../utils/crypto'
+import { syncExternalAccount } from '../services/syncService'
 
 const router = Router()
 
@@ -22,6 +24,7 @@ const serializeAttempt = (attempt: {
   userId: string
   answers: string
   timings: string
+  bookmarks: string
   exam: {
     id: string
     externalExamId: string | null
@@ -52,6 +55,11 @@ const serializeAttempt = (attempt: {
   )
   const answers = parseStoredJson(attempt.answers) ?? {}
   const timings = parseStoredJson(attempt.timings) ?? {}
+  const rawBookmarks = parseStoredJson(attempt.bookmarks)
+  const bookmarks =
+    rawBookmarks && typeof rawBookmarks === 'object'
+      ? (rawBookmarks as Record<string, boolean>)
+      : {}
 
   return {
     id: attempt.id,
@@ -61,6 +69,7 @@ const serializeAttempt = (attempt: {
     examDate: attempt.exam.examDate,
     answers,
     timings,
+    bookmarks,
     questions: sortedQuestions.map((question) => ({
       id: question.id,
       subject: question.subject,
@@ -239,6 +248,77 @@ router.post('/:id/answer-key', requireAuth, async (req: AuthRequest, res, next) 
   }
 })
 
+router.patch(
+  '/:id/questions/:questionId/bookmarks',
+  requireAuth,
+  async (req: AuthRequest, res, next) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: 'Unauthorized.' })
+      }
+
+      const { questionId } = req.params
+      const bookmarked =
+        typeof req.body?.bookmarked === 'boolean' ? req.body.bookmarked : undefined
+
+      if (!isNonEmptyString(questionId)) {
+        return res.status(400).json({ error: 'questionId is required.' })
+      }
+
+      const attempt = await prisma.attempt.findFirst({
+        where: { id: req.params.id, userId: req.user.userId },
+        include: {
+          exam: { include: { questions: true } },
+        },
+      })
+
+      if (!attempt) {
+        return res.status(404).json({ error: 'Test not found.' })
+      }
+
+      const examQuestion = attempt.exam.questions.find(
+        (item) => item.id === questionId,
+      )
+      if (!examQuestion) {
+        return res.status(404).json({ error: 'Question not found.' })
+      }
+
+      const rawBookmarks = parseStoredJson(attempt.bookmarks)
+      const bookmarkMap =
+        rawBookmarks && typeof rawBookmarks === 'object'
+          ? { ...(rawBookmarks as Record<string, boolean>) }
+          : {}
+      const isBookmarked = Boolean(bookmarkMap[questionId])
+      const nextValue = bookmarked ?? !isBookmarked
+      if (nextValue) {
+        bookmarkMap[questionId] = true
+      } else {
+        delete bookmarkMap[questionId]
+      }
+
+      await prisma.attempt.update({
+        where: { id: attempt.id },
+        data: { bookmarks: serializeJson(bookmarkMap) },
+      })
+
+      const refreshed = await prisma.attempt.findFirst({
+        where: { id: attempt.id, userId: req.user.userId },
+        include: {
+          exam: { include: { questions: true } },
+        },
+      })
+
+      if (!refreshed) {
+        return res.status(404).json({ error: 'Test not found.' })
+      }
+
+      return res.json({ test: serializeAttempt(refreshed) })
+    } catch (error) {
+      return next(error)
+    }
+  },
+)
+
 router.post('/:id/marking-scheme', requireAuth, async (req: AuthRequest, res, next) => {
   try {
     if (!req.user) {
@@ -288,6 +368,124 @@ router.post('/:id/marking-scheme', requireAuth, async (req: AuthRequest, res, ne
 
     return res.json({ test: serializeAttempt(updated) })
   } catch (error) {
+    return next(error)
+  }
+})
+
+router.post('/:id/resync', requireAuth, async (req: AuthRequest, res, next) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ error: 'Unauthorized.' })
+    }
+
+    const attempt = await prisma.attempt.findFirst({
+      where: { id: req.params.id, userId: req.user.userId },
+      include: { exam: true },
+    })
+
+    if (!attempt) {
+      return res.status(404).json({ error: 'Test not found.' })
+    }
+
+    const externalExamId = attempt.exam.externalExamId
+    if (!externalExamId) {
+      return res.status(400).json({ error: 'External exam id missing.' })
+    }
+
+    const account = await prisma.externalAccount.findUnique({
+      where: {
+        userId_provider: { userId: req.user.userId, provider: 'test.z7i.in' },
+      },
+      include: { credential: true },
+    })
+
+    if (!account || !account.credential) {
+      return res.status(404).json({ error: 'External account not connected.' })
+    }
+
+    if (account.syncStatus === 'SYNCING') {
+      return res.status(409).json({ error: 'Sync already in progress.' })
+    }
+
+    const syncStartedAt = new Date()
+    await prisma.externalAccount.update({
+      where: { id: account.id },
+      data: {
+        status: 'CONNECTED',
+        statusMessage: null,
+        syncStatus: 'SYNCING',
+        syncTotal: 0,
+        syncCompleted: 0,
+        syncStartedAt,
+        syncFinishedAt: null,
+      },
+    })
+
+    const password = decryptSecret({
+      encrypted: account.credential.encryptedPassword,
+      iv: account.credential.iv,
+      tag: account.credential.tag,
+    })
+
+    await syncExternalAccount({
+      userId: req.user.userId,
+      provider: account.provider,
+      username: account.username,
+      password,
+      onlyExamIds: [externalExamId],
+      forceAttemptExamIds: [externalExamId],
+      onProgress: async (progress) => {
+        try {
+          await prisma.externalAccount.update({
+            where: { id: account.id },
+            data: {
+              syncTotal: progress.total,
+              syncCompleted: progress.completed,
+            },
+          })
+        } catch (progressError) {
+          console.error(progressError)
+        }
+      },
+    })
+
+    const now = new Date()
+    await prisma.externalAccount.update({
+      where: { id: account.id },
+      data: {
+        status: 'CONNECTED',
+        statusMessage: null,
+        lastSyncAt: now,
+        syncStatus: 'IDLE',
+        syncFinishedAt: now,
+      },
+    })
+
+    const refreshed = await prisma.attempt.findFirst({
+      where: { userId: req.user.userId, examId: attempt.examId },
+      include: {
+        exam: { include: { questions: true } },
+      },
+    })
+
+    if (!refreshed) {
+      return res.status(404).json({ error: 'Test not found.' })
+    }
+
+    return res.json({ test: serializeAttempt(refreshed) })
+  } catch (error) {
+    if (req.user) {
+      await prisma.externalAccount.updateMany({
+        where: { userId: req.user.userId, provider: 'test.z7i.in' },
+        data: {
+          status: 'ERROR',
+          statusMessage:
+            error instanceof Error ? error.message : 'Resync failed. Check logs.',
+          syncStatus: 'ERROR',
+          syncFinishedAt: new Date(),
+        },
+      })
+    }
     return next(error)
   }
 })

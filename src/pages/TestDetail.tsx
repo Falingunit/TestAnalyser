@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import { Star } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
 import {
   buildAnalysis,
@@ -25,7 +26,16 @@ import {
 } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
 import { Separator } from '@/components/ui/separator'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { formatQuestionType } from '@/lib/utils'
+import { buildDisplayQuestions } from '@/lib/questionDisplay'
 
 const formatSeconds = (value: number) => {
   if (!Number.isFinite(value)) {
@@ -84,9 +94,22 @@ const buildEmptyMarkingDraft = (): MarkingDraft => ({
 
 export const TestDetail = () => {
   const { testId } = useParams()
-  const { state, currentUser, acknowledgeKeyUpdates, updateMarkingScheme, isAdmin } =
-    useAppStore()
+  const {
+    state,
+    currentUser,
+    acknowledgeKeyUpdates,
+    updateMarkingScheme,
+    isAdmin,
+    resyncTest,
+  } = useAppStore()
   const test = state.tests.find((item) => item.id === testId)
+  const displayQuestions = useMemo(() => {
+    if (!test) {
+      return []
+    }
+    return buildDisplayQuestions(test.questions)
+  }, [test])
+  const firstQuestionId = displayQuestions[0]?.question.id ?? ''
   const [query, setQuery] = useState('')
   const [subject, setSubject] = useState<SubjectFilter>('ALL')
   const [type, setType] = useState<TypeFilter>('ALL')
@@ -96,6 +119,15 @@ export const TestDetail = () => {
     buildEmptyMarkingDraft(),
   )
   const [markingMessage, setMarkingMessage] = useState<string | null>(null)
+  const [isResyncing, setIsResyncing] = useState(false)
+  const [confirmResyncOpen, setConfirmResyncOpen] = useState(false)
+  const [collapsedSubjects, setCollapsedSubjects] = useState<
+    Record<Subject, boolean>
+  >({
+    PHYSICS: false,
+    CHEMISTRY: false,
+    MATHEMATICS: false,
+  })
 
   useEffect(() => {
     if (!test) {
@@ -141,6 +173,12 @@ export const TestDetail = () => {
   const hasNewKeyUpdates = Boolean(
     analysis.latestKeyUpdate &&
       (!acknowledgedAt || acknowledgedAt < analysis.latestKeyUpdate),
+  )
+  const account = state.externalAccounts.find(
+    (item) => item.userId === currentUser?.id && item.provider === 'test.z7i.in',
+  )
+  const canResync = Boolean(
+    test.externalExamId && account && account.syncStatus !== 'syncing' && !isResyncing,
   )
 
   const availableTypes = useMemo(() => {
@@ -190,31 +228,35 @@ export const TestDetail = () => {
   }
 
   const questionSnapshots = useMemo(() => {
-    return [...test.questions]
-      .sort((a, b) => a.questionNumber - b.questionNumber)
-      .map((question) => {
-        const statusLabel = getQuestionStatus(test, question)
-        const time = getTimeForQuestion(test, question)
-        const answer = getAnswerForQuestion(test, question)
-        const score = getQuestionMark(test, question)
-        return {
-          question,
-          status: statusLabel,
-          time,
-          answer,
-          score,
-          keyChanged: hasKeyChange(question),
-          bonus: isBonusKey(question.keyUpdate),
-        }
-      })
-  }, [test])
+    if (!test) {
+      return []
+    }
+    return displayQuestions.map(({ question, displayNumber }) => {
+      const statusLabel = getQuestionStatus(test, question)
+      const time = getTimeForQuestion(test, question)
+      const answer = getAnswerForQuestion(test, question)
+      const score = getQuestionMark(test, question)
+      return {
+        question,
+        displayNumber,
+        status: statusLabel,
+        time,
+        answer,
+        score,
+        keyChanged: hasKeyChange(question),
+        bonus: isBonusKey(question.keyUpdate),
+        bookmarked: Boolean(test.bookmarks?.[question.id]),
+      }
+    })
+  }, [displayQuestions, test])
 
   const filteredQuestions = useMemo(() => {
     const queryValue = query.trim().toLowerCase()
-    return questionSnapshots.filter(({ question, status: statusLabel, keyChanged }) => {
+    return questionSnapshots.filter(
+      ({ question, status: statusLabel, keyChanged, displayNumber }) => {
       const matchesQuery =
         queryValue.length === 0 ||
-        String(question.questionNumber).includes(queryValue) ||
+        String(displayNumber).includes(queryValue) ||
         question.questionContent.toLowerCase().includes(queryValue)
       const matchesSubject =
         subject === 'ALL' || question.subject === (subject as Subject)
@@ -222,8 +264,25 @@ export const TestDetail = () => {
       const matchesStatus = status === 'ALL' || statusLabel === status
       const matchesKey = !onlyKeyUpdates || keyChanged
       return matchesQuery && matchesSubject && matchesType && matchesStatus && matchesKey
-    })
+    },
+    )
   }, [onlyKeyUpdates, query, questionSnapshots, status, subject, type])
+
+  const groupedQuestions = useMemo(() => {
+    const map = new Map<Subject, typeof filteredQuestions>()
+    filteredQuestions.forEach((item) => {
+      const current = map.get(item.question.subject) ?? []
+      current.push(item)
+      map.set(item.question.subject, current)
+    })
+    return subjects
+      .filter((item): item is Subject => item !== 'ALL')
+      .map((item) => ({
+        subject: item,
+        items: map.get(item) ?? [],
+      }))
+      .filter((group) => group.items.length > 0)
+  }, [filteredQuestions])
 
   return (
     <div className="space-y-6">
@@ -238,14 +297,22 @@ export const TestDetail = () => {
           <Link to="/app/tests">Back to tests</Link>
         </Button>
       </div>
-      <section>
+      <section className='grid grid-cols-6 gap-2'>
         <TestSummaryCard
+          className='col-span-4'
           test={test}
           analysis={analysis}
           defaultExpanded
+          reviewAction={
+            <Button asChild variant="outline" size="sm">
+              <Link to={`/app/questions/${test.id}/${firstQuestionId}`}>
+                Open questions
+              </Link>
+            </Button>
+          }
           collapsedAction={
             <Button asChild variant="outline" size="sm">
-              <Link to={`/app/questions/${test.id}/${test.questions[0]?.id ?? ''}`}>
+              <Link to={`/app/questions/${test.id}/${firstQuestionId}`}>
                 Open questions
               </Link>
             </Button>
@@ -257,13 +324,24 @@ export const TestDetail = () => {
                   Mark updates reviewed
                 </Button>
               ) : null}
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                disabled={!canResync}
+                onClick={() => {
+                  if (!canResync) {
+                    return
+                  }
+                  setConfirmResyncOpen(true)
+                }}
+              >
+                {isResyncing ? 'Resyncing...' : 'Resync exam'}
+              </Button>
             </>
           }
         />
-      </section>
-
-      <section>
-        <Card className="app-panel">
+        <Card className="app-panel col-span-2">
           <CardContent className="space-y-4 p-6">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="space-y-1">
@@ -371,6 +449,36 @@ export const TestDetail = () => {
         </Card>
       </section>
 
+      <Dialog open={confirmResyncOpen} onOpenChange={setConfirmResyncOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Resync this exam?</DialogTitle>
+            <DialogDescription>
+              This will replace your current attempt with the latest data.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirmResyncOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={async () => {
+                setConfirmResyncOpen(false)
+                setIsResyncing(true)
+                await resyncTest(test.id)
+                setIsResyncing(false)
+              }}
+            >
+              Resync exam
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <section>
+        
+      </section>
+
       <section>
         <Card className="app-panel">
           <CardContent className="space-y-5 p-6">
@@ -384,7 +492,7 @@ export const TestDetail = () => {
                 </p>
               </div>
               <Button asChild size="sm">
-                <Link to={`/app/questions/${test.id}/${test.questions[0]?.id ?? ''}`}>
+                <Link to={`/app/questions/${test.id}/${firstQuestionId}`}>
                   Open question view
                 </Link>
               </Button>
@@ -454,41 +562,94 @@ export const TestDetail = () => {
 
             <Separator />
 
-            <div className="grid gap-3 md:grid-cols-2">
-              {filteredQuestions.map(
-                ({ question, status: statusLabel, time, score, keyChanged, answer, bonus }) => (
-                <Link
-                  key={question.id}
-                  to={`/app/questions/${test.id}/${question.id}`}
-                  className="app-panel flex flex-col gap-3 p-4 transition hover:border-primary/60"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="text-sm font-semibold text-foreground">
-                        Q{question.questionNumber} - {question.subject}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {formatQuestionType(question.qtype)} - {formatSeconds(time)}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {bonus ? (
-                        <Badge className="border-sky-500/60 bg-sky-500/20 text-sky-100">
-                          Bonus
-                        </Badge>
-                      ) : null}
-                      {keyChanged ? <Badge variant="destructive">Key update</Badge> : null}
-                      <Badge variant={getStatusVariant(statusLabel)}>{statusLabel}</Badge>
+            <div className="space-y-5">
+              {groupedQuestions.map((group) => (
+                <div key={group.subject} className="space-y-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                      {group.subject}
+                    </p>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <span>{group.items.length} questions</span>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 px-2 text-[11px]"
+                        onClick={() =>
+                          setCollapsedSubjects((prev) => ({
+                            ...prev,
+                            [group.subject]: !prev[group.subject],
+                          }))
+                        }
+                        aria-expanded={!collapsedSubjects[group.subject]}
+                      >
+                        {collapsedSubjects[group.subject] ? 'Show' : 'Hide'}
+                      </Button>
                     </div>
                   </div>
-                  <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-                    <span>Score {score}</span>
-                    <span>Answer {formatAnswerValue(answer)}</span>
-                    <span>Correct {formatAnswerValue(question.keyUpdate)}</span>
-                  </div>
-                </Link>
-              ),
-            )}
+                  {!collapsedSubjects[group.subject] ? (
+                    <div className="grid gap-3 md:grid-cols-2">
+                      {group.items.map(
+                        ({
+                          question,
+                          displayNumber,
+                          status: statusLabel,
+                          time,
+                          score,
+                          keyChanged,
+                          answer,
+                          bonus,
+                          bookmarked,
+                        }) => (
+                          <Link
+                            key={question.id}
+                            to={`/app/questions/${test.id}/${question.id}`}
+                            className="app-panel flex flex-col gap-3 p-4 transition hover:border-primary/60"
+                          >
+                            <div className="flex items-start justify-between gap-3">
+                              <div>
+                                <div className="flex items-center gap-2">
+                                  {bookmarked ? (
+                                    <Star
+                                      className="h-4 w-4 text-amber-400"
+                                      fill="currentColor"
+                                    />
+                                  ) : null}
+                                  <p className="text-sm font-semibold text-foreground">
+                                    Q{displayNumber} - {question.subject}
+                                  </p>
+                                </div>
+                                <p className="text-xs text-muted-foreground">
+                                  {formatQuestionType(question.qtype)} - {formatSeconds(time)}
+                                </p>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                {bonus ? (
+                                  <Badge className="border-sky-500/60 bg-sky-500/20 text-sky-100">
+                                    Bonus
+                                  </Badge>
+                                ) : null}
+                                {keyChanged ? (
+                                  <Badge variant="destructive">Key update</Badge>
+                                ) : null}
+                                <Badge variant={getStatusVariant(statusLabel)}>
+                                  {statusLabel}
+                                </Badge>
+                              </div>
+                            </div>
+                            <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+                              <span>Score {score}</span>
+                              <span>Answer {formatAnswerValue(answer)}</span>
+                              <span>Correct {formatAnswerValue(question.keyUpdate)}</span>
+                            </div>
+                          </Link>
+                        ),
+                      )}
+                    </div>
+                  ) : null}
+                </div>
+              ))}
             </div>
 
             {filteredQuestions.length === 0 ? (

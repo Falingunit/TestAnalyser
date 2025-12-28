@@ -95,6 +95,7 @@ model Attempt {
   examId       String
   answers      String
   timings      String
+  bookmarks    String           @default("{}")
   user         User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   exam         Exam             @relation(fields: [examId], references: [id], onDelete: Cascade)
 

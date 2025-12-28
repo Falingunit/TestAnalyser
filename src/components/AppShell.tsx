@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import { Link, NavLink } from 'react-router-dom'
-import { LayoutDashboard, ListChecks, Settings, Shield } from 'lucide-react'
+import { LayoutDashboard, ListChecks, Settings } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -31,19 +31,21 @@ const navItems = [
 ]
 
 export const AppShell = ({ children }: { children: ReactNode }) => {
-  const { currentUser, logout, state, syncExternalAccount, isAdmin } =
-    useAppStore()
+  const { currentUser, logout, state, syncExternalAccount } = useAppStore()
   const account = state.externalAccounts.find(
     (item) => item.userId === currentUser?.id,
   )
   const isSyncing = account?.syncStatus === 'syncing'
   const syncTotal = account?.syncTotal ?? 0
   const syncCompleted = account?.syncCompleted ?? 0
-  const syncLabel = isSyncing
-    ? `Syncing ${syncCompleted}/${syncTotal || '?'}`
-    : 'Sync latest'
-  const syncTitle = !account
-    ? 'Connect an account first'
+  const needsConnect = !account
+  const syncLabel = needsConnect
+    ? 'Connect account'
+    : isSyncing
+      ? `Syncing ${syncCompleted}/${syncTotal || '?'}`
+      : 'Sync latest'
+  const syncTitle = needsConnect
+    ? 'Connect an external account'
     : isSyncing
       ? 'Sync in progress'
       : 'Sync latest tests'
@@ -72,22 +74,6 @@ export const AppShell = ({ children }: { children: ReactNode }) => {
                   <span className="font-medium">{item.label}</span>
                 </NavLink>
               ))}
-              {isAdmin ? (
-                <NavLink
-                  to="/app/admin"
-                  className={({ isActive }) =>
-                    cn(
-                      'inline-flex items-center gap-2 rounded-full px-4 py-2 transition',
-                      isActive
-                        ? 'bg-secondary text-foreground'
-                        : 'text-muted-foreground hover:bg-accent hover:text-foreground',
-                    )
-                  }
-                >
-                  <Shield className="h-4 w-4" />
-                  <span className="font-medium">Admin</span>
-                </NavLink>
-              ) : null}
             </nav>
           </div>
           <div className="flex items-center gap-3">
@@ -103,11 +89,6 @@ export const AppShell = ({ children }: { children: ReactNode }) => {
                     <Link to={item.to}>{item.label}</Link>
                   </DropdownMenuItem>
                 ))}
-                {isAdmin ? (
-                  <DropdownMenuItem asChild>
-                    <Link to="/app/admin">Admin panel</Link>
-                  </DropdownMenuItem>
-                ) : null}
               </DropdownMenuContent>
             </DropdownMenu>
             {account ? (
@@ -117,14 +98,20 @@ export const AppShell = ({ children }: { children: ReactNode }) => {
             ) : (
               <Badge variant="outline">Connect your test account</Badge>
             )}
-            <Button
-              size="sm"
-              onClick={syncExternalAccount}
-              disabled={!account || isSyncing}
-              title={syncTitle}
-            >
-              {syncLabel}
-            </Button>
+            {needsConnect ? (
+              <Button size="sm" asChild variant="secondary" title={syncTitle}>
+                <Link to="/app/profile?connect=1">{syncLabel}</Link>
+              </Button>
+            ) : (
+              <Button
+                size="sm"
+                onClick={syncExternalAccount}
+                disabled={isSyncing}
+                title={syncTitle}
+              >
+                {syncLabel}
+              </Button>
+            )}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm">

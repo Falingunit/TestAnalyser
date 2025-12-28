@@ -939,6 +939,7 @@ export const scrapeTestZ7i = async (payload: {
   existingExamIds?: string[]
   forceFullExamIds?: string[]
   skipExamIds?: string[]
+  onlyExamIds?: string[]
   onProgress?: (progress: ScrapeProgress) => Promise<void> | void
 }): Promise<ScrapeResult> => {
   const baseUrl = env.scraperBaseUrl
@@ -968,22 +969,31 @@ export const scrapeTestZ7i = async (payload: {
     await saveDebugHtml('results', resultsHtml)
 
     const results = parseResultsPage(baseUrl, resultsHtml)
-    if (results.length === 0) {
+      .map((result) => ({
+        ...result,
+        reportId: result.reportUrl.split('/').pop() ?? result.title,
+      }))
+    const onlyExamIds = new Set(payload.onlyExamIds ?? [])
+    const filteredResults =
+      onlyExamIds.size > 0
+        ? results.filter((result) => onlyExamIds.has(result.reportId))
+        : results
+    if (filteredResults.length === 0) {
       throw new Error('No reports found on the results page.')
     }
 
-    await payload.onProgress?.({ completed: 0, total: results.length })
+    await payload.onProgress?.({ completed: 0, total: filteredResults.length })
     const reports: ScrapedReport[] = []
     let completed = 0
 
-    for (const result of results) {
-      const reportId = result.reportUrl.split('/').pop() ?? result.title
+    for (const result of filteredResults) {
+      const reportId = result.reportId
       if (skipExamIds.has(reportId)) {
         warnings.push(`Skipping ${result.title} (already synced for this user).`)
         completed += 1
         await payload.onProgress?.({
           completed,
-          total: results.length,
+          total: filteredResults.length,
           currentTitle: result.title,
         })
         continue
@@ -1155,7 +1165,7 @@ export const scrapeTestZ7i = async (payload: {
       completed += 1
       await payload.onProgress?.({
         completed,
-        total: results.length,
+        total: filteredResults.length,
         currentTitle: result.title,
       })
     }

@@ -1,5 +1,5 @@
-import { useState, type FormEvent } from 'react'
-import { Link } from 'react-router-dom'
+import { useEffect, useState, type FormEvent } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
 import { useAppStore } from '@/lib/store'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -33,6 +33,8 @@ export const Profile = () => {
   const [passwordMessage, setPasswordMessage] = useState<string | null>(null)
   const [connectMessage, setConnectMessage] = useState<string | null>(null)
   const [isConnectOpen, setIsConnectOpen] = useState(false)
+  const [isConnecting, setIsConnecting] = useState(false)
+  const [searchParams, setSearchParams] = useSearchParams()
 
   const account = state.externalAccounts.find(
     (item) => item.userId === currentUser?.id,
@@ -64,14 +66,43 @@ export const Profile = () => {
   const handleConnect = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setConnectMessage(null)
+    setIsConnecting(true)
     const form = new FormData(event.currentTarget)
     const username = String(form.get('username') ?? '')
     const password = String(form.get('password') ?? '')
-    await connectExternalAccount({ username, password })
-    setConnectMessage('Connection request sent.')
-    event.currentTarget.reset()
-    setIsConnectOpen(false)
+    try {
+      const result = await connectExternalAccount({ username, password })
+      if (result.ok) {
+        setConnectMessage('Connected successfully.')
+        event.currentTarget.reset()
+        closeConnectDialog()
+      } else {
+        setConnectMessage(result.message ?? 'Unable to connect account.')
+      }
+    } finally {
+      setIsConnecting(false)
+    }
   }
+
+  const clearConnectParam = () => {
+    if (searchParams.get('connect') !== '1') {
+      return
+    }
+    const nextParams = new URLSearchParams(searchParams)
+    nextParams.delete('connect')
+    setSearchParams(nextParams, { replace: true })
+  }
+
+  const closeConnectDialog = () => {
+    setIsConnectOpen(false)
+    clearConnectParam()
+  }
+
+  useEffect(() => {
+    if (searchParams.get('connect') === '1') {
+      setIsConnectOpen(true)
+    }
+  }, [searchParams])
 
   return (
     <div className="space-y-6">
@@ -205,7 +236,7 @@ export const Profile = () => {
                   Enable admin privileges
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  Enabled by default for testing.
+                  Enable to unlock admin-only tools.
                 </p>
               </div>
               <Switch checked={adminOverride} onCheckedChange={setAdminOverride} />
@@ -233,7 +264,15 @@ export const Profile = () => {
                 </div>
               </div>
             </div>
-            <Dialog open={isConnectOpen} onOpenChange={setIsConnectOpen}>
+            <Dialog
+              open={isConnectOpen}
+              onOpenChange={(nextOpen) => {
+                setIsConnectOpen(nextOpen)
+                if (!nextOpen) {
+                  clearConnectParam()
+                }
+              }}
+            >
               <DialogTrigger asChild>
                 <Button variant="secondary">
                   {account ? 'Change external account' : 'Connect account'}
@@ -253,17 +292,37 @@ export const Profile = () => {
                       id="username"
                       name="username"
                       placeholder="External username"
+                      disabled={isConnecting}
                     />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="password">Password</Label>
-                    <Input id="password" name="password" type="password" />
+                    <Input
+                      id="password"
+                      name="password"
+                      type="password"
+                      disabled={isConnecting}
+                    />
                   </div>
-                  <Button type="submit">Connect account</Button>
+                  <Button type="submit" disabled={isConnecting}>
+                    {isConnecting ? (
+                      <span className="flex items-center gap-2">
+                        <span className="h-4 w-4 animate-spin rounded-full border-2 border-background/70 border-t-transparent" />
+                        Verifying...
+                      </span>
+                    ) : (
+                      'Connect account'
+                    )}
+                  </Button>
+                  {connectMessage ? (
+                    <div className="rounded-lg border border-border bg-background p-3 text-xs text-muted-foreground">
+                      {connectMessage}
+                    </div>
+                  ) : null}
                 </form>
               </DialogContent>
             </Dialog>
-            {connectMessage ? (
+            {connectMessage && !isConnectOpen ? (
               <div className="rounded-lg border border-border bg-background p-3 text-xs text-muted-foreground">
                 {connectMessage}
               </div>
