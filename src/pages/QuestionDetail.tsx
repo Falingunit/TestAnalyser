@@ -8,7 +8,7 @@ import {
   type PointerEvent,
 } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { Star } from 'lucide-react'
+import { Copy, Star } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
 import {
   formatAnswerValue,
@@ -217,10 +217,12 @@ export const QuestionDetail = () => {
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([])
   const [chatKeyLoaded, setChatKeyLoaded] = useState<string | null>(null)
   const [isBookmarking, setIsBookmarking] = useState(false)
+  const [isCopying, setIsCopying] = useState(false)
   const [isImageOpen, setIsImageOpen] = useState(false)
   const [imageSrc, setImageSrc] = useState<string | null>(null)
   const [imageZoom, setImageZoom] = useState(1)
   const [imageOffset, setImageOffset] = useState({ x: 0, y: 0 })
+  const questionCopyRef = useRef<HTMLDivElement | null>(null)
   const dragState = useRef<{
     startX: number
     startY: number
@@ -675,6 +677,169 @@ export const QuestionDetail = () => {
     )
   }
 
+  const waitForImages = async (root: HTMLElement) => {
+    const images = Array.from(root.querySelectorAll('img'))
+    if (images.length === 0) {
+      return
+    }
+    await Promise.all(
+      images.map(
+        (img) =>
+          new Promise<void>((resolve) => {
+            if (img.complete && img.naturalWidth > 0) {
+              resolve()
+              return
+            }
+            const handleDone = () => {
+              img.removeEventListener('load', handleDone)
+              img.removeEventListener('error', handleDone)
+              resolve()
+            }
+            img.addEventListener('load', handleDone)
+            img.addEventListener('error', handleDone)
+          }),
+      ),
+    )
+  }
+
+  const cloneWithInlineStyles = (root: HTMLElement) => {
+    const clonedRoot = root.cloneNode(true) as HTMLElement
+    const sourceElements = [root, ...Array.from(root.querySelectorAll('*'))]
+    const targetElements = [clonedRoot, ...Array.from(clonedRoot.querySelectorAll('*'))]
+
+    sourceElements.forEach((sourceElement, index) => {
+      const targetElement = targetElements[index]
+      if (!targetElement) {
+        return
+      }
+      if (!(targetElement instanceof HTMLElement || targetElement instanceof SVGElement)) {
+        return
+      }
+      const computed = window.getComputedStyle(sourceElement)
+      for (let i = 0; i < computed.length; i += 1) {
+        const prop = computed[i]
+        targetElement.style.setProperty(
+          prop,
+          computed.getPropertyValue(prop),
+          computed.getPropertyPriority(prop),
+        )
+      }
+    })
+    return clonedRoot
+  }
+
+  const renderQuestionImageBlob = async (root: HTMLElement) => {
+    if (document.fonts?.ready) {
+      await document.fonts.ready
+    }
+    await waitForImages(root)
+
+    const clonedRoot = cloneWithInlineStyles(root)
+    const rect = root.getBoundingClientRect()
+    const contentWidth = Math.ceil(rect.width)
+    const contentHeight = Math.ceil(Math.max(rect.height, root.scrollHeight))
+    const padding = 16
+
+    const panel = root.closest('.app-panel') as HTMLElement | null
+    const panelStyles = panel ? window.getComputedStyle(panel) : window.getComputedStyle(root)
+    const background = panelStyles.backgroundColor || '#ffffff'
+    const foreground = panelStyles.color || '#111111'
+    const fontFamily = panelStyles.fontFamily || 'sans-serif'
+
+    clonedRoot.style.margin = '0'
+    clonedRoot.style.width = `${contentWidth}px`
+    clonedRoot.style.height = `${contentHeight}px`
+    clonedRoot.style.boxSizing = 'border-box'
+
+    const wrapper = document.createElement('div')
+    wrapper.setAttribute('xmlns', 'http://www.w3.org/1999/xhtml')
+    wrapper.style.width = `${contentWidth + padding * 2}px`
+    wrapper.style.height = `${contentHeight + padding * 2}px`
+    wrapper.style.padding = `${padding}px`
+    wrapper.style.boxSizing = 'border-box'
+    wrapper.style.background = background
+    wrapper.style.color = foreground
+    wrapper.style.fontFamily = fontFamily
+    wrapper.style.display = 'block'
+    wrapper.style.setProperty('--reader-font-scale', String(fontScale))
+    wrapper.appendChild(clonedRoot)
+
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+    svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg')
+    svg.setAttribute('width', `${contentWidth + padding * 2}`)
+    svg.setAttribute('height', `${contentHeight + padding * 2}`)
+    svg.setAttribute(
+      'viewBox',
+      `0 0 ${contentWidth + padding * 2} ${contentHeight + padding * 2}`,
+    )
+
+    const foreignObject = document.createElementNS(
+      'http://www.w3.org/2000/svg',
+      'foreignObject',
+    )
+    foreignObject.setAttribute('x', '0')
+    foreignObject.setAttribute('y', '0')
+    foreignObject.setAttribute('width', '100%')
+    foreignObject.setAttribute('height', '100%')
+    foreignObject.appendChild(wrapper)
+    svg.appendChild(foreignObject)
+
+    const svgString = new XMLSerializer().serializeToString(svg)
+    const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' })
+    const url = URL.createObjectURL(svgBlob)
+
+    try {
+      const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+        const img = new Image()
+        img.onload = () => resolve(img)
+        img.onerror = () => reject(new Error('Unable to render question image'))
+        img.src = url
+      })
+      const dpr = window.devicePixelRatio || 1
+      const canvas = document.createElement('canvas')
+      canvas.width = Math.ceil((contentWidth + padding * 2) * dpr)
+      canvas.height = Math.ceil((contentHeight + padding * 2) * dpr)
+      const ctx = canvas.getContext('2d')
+      if (!ctx) {
+        throw new Error('Canvas unavailable')
+      }
+      ctx.scale(dpr, dpr)
+      ctx.drawImage(image, 0, 0)
+      const blob = await new Promise<Blob | null>((resolve) =>
+        canvas.toBlob(resolve, 'image/png'),
+      )
+      if (!blob) {
+        throw new Error('Unable to create image blob')
+      }
+      return blob
+    } finally {
+      URL.revokeObjectURL(url)
+    }
+  }
+
+  const handleCopyQuestionImage = async () => {
+    const root = questionCopyRef.current
+    if (!root) {
+      return
+    }
+    const ClipboardItemCtor = window.ClipboardItem
+    if (!navigator.clipboard || !ClipboardItemCtor) {
+      setMessage('Clipboard image copy is not supported in this browser.')
+      return
+    }
+    setIsCopying(true)
+    setMessage(null)
+    try {
+      const blob = await renderQuestionImageBlob(root)
+      await navigator.clipboard.write([new ClipboardItemCtor({ 'image/png': blob })])
+      setMessage('Question image copied to clipboard.')
+    } catch {
+      setMessage('Unable to copy question image. Try again.')
+    } finally {
+      setIsCopying(false)
+    }
+  }
+
   return (
     <div className="flex h-[calc(100vh-144px)] flex-col gap-4 overflow-hidden">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -702,6 +867,18 @@ export const QuestionDetail = () => {
               )}
               fill={isBookmarked ? 'currentColor' : 'none'}
             />
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={handleCopyQuestionImage}
+            disabled={isCopying}
+            title={isCopying ? 'Copying question image' : 'Copy question as image'}
+            aria-label="Copy question as image"
+            className="h-8 w-8"
+          >
+            <Copy className="h-4 w-4 text-muted-foreground" />
           </Button>
           <div className="flex items-center gap-2 rounded-full border border-border/60 bg-muted/30 px-3 py-1 text-xs text-muted-foreground">
             <span>Text size</span>
@@ -796,76 +973,78 @@ export const QuestionDetail = () => {
 
         <Card className="app-panel h-full min-h-0">
           <CardContent className="flex h-full min-h-0 flex-col gap-5 p-6">
-            <div className="min-h-0 flex-1 space-y-5 overflow-y-auto pr-2">
-              <div className="space-y-3">
-                <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                  Prompt
-                </p>
-                <div
-                  className="question-html rounded-lg border border-border bg-background p-4 leading-relaxed"
-                  dangerouslySetInnerHTML={{ __html: question.questionContent }}
-                  onClick={handleRichContentClick}
-                />
-              </div>
+            <div className="min-h-0 flex-1 overflow-y-auto pr-2">
+              <div ref={questionCopyRef} className="space-y-5">
+                <div className="space-y-3">
+                  <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                    Prompt
+                  </p>
+                  <div
+                    className="question-html rounded-lg border border-border bg-background p-4 leading-relaxed"
+                    dangerouslySetInnerHTML={{ __html: question.questionContent }}
+                    onClick={handleRichContentClick}
+                  />
+                </div>
 
-              <div className="space-y-3">
-                <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                  Options
-                </p>
-                <div className="grid gap-3">
-                  {[
-                    { label: 'A', value: question.optionContentA },
-                    { label: 'B', value: question.optionContentB },
-                    { label: 'C', value: question.optionContentC },
-                    { label: 'D', value: question.optionContentD },
-                  ]
-                    .filter((item) => item.value)
-                    .map((item) => {
-                      const isSelected = selectedOptions.includes(item.label)
-                      const isCorrect = correctOptions.includes(item.label)
-                      const isSelectedCorrect = isSelected && isCorrect
-                      const isSelectedIncorrect = isSelected && !isCorrect
-                      const isUnselectedCorrect = !isSelected && isCorrect
-                      return (
-                        <div
-                          key={item.label}
-                          className={cn(
-                            'flex gap-3 rounded-lg border p-4 text-sm',
-                            isSelectedCorrect &&
-                              'border-emerald-500/70 bg-emerald-500/20 text-foreground',
-                            isSelectedIncorrect &&
-                              'border-rose-500/70 bg-rose-500/20 text-foreground',
-                            isUnselectedCorrect &&
-                              'border-emerald-500/70 border-dashed bg-emerald-500/10 text-foreground',
-                            !isSelectedCorrect &&
-                              !isSelectedIncorrect &&
-                              !isUnselectedCorrect &&
-                              'border-border bg-background text-foreground',
-                          )}
-                        >
-                          <span
+                <div className="space-y-3">
+                  <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                    Options
+                  </p>
+                  <div className="grid gap-3">
+                    {[
+                      { label: 'A', value: question.optionContentA },
+                      { label: 'B', value: question.optionContentB },
+                      { label: 'C', value: question.optionContentC },
+                      { label: 'D', value: question.optionContentD },
+                    ]
+                      .filter((item) => item.value)
+                      .map((item) => {
+                        const isSelected = selectedOptions.includes(item.label)
+                        const isCorrect = correctOptions.includes(item.label)
+                        const isSelectedCorrect = isSelected && isCorrect
+                        const isSelectedIncorrect = isSelected && !isCorrect
+                        const isUnselectedCorrect = !isSelected && isCorrect
+                        return (
+                          <div
+                            key={item.label}
                             className={cn(
-                              'flex h-7 w-7 flex-shrink-0 items-center justify-center border text-xs font-semibold',
-                              isMultiSelect ? 'rounded-md' : 'rounded-full',
-                              isSelectedCorrect && 'border-emerald-500 bg-emerald-500 text-emerald-950',
-                              isSelectedIncorrect && 'border-rose-500 bg-rose-500 text-white',
-                              isUnselectedCorrect && 'border-emerald-500 text-emerald-500',
+                              'flex gap-3 rounded-lg border p-4 text-sm',
+                              isSelectedCorrect &&
+                                'border-emerald-500/70 bg-emerald-500/20 text-foreground',
+                              isSelectedIncorrect &&
+                                'border-rose-500/70 bg-rose-500/20 text-foreground',
+                              isUnselectedCorrect &&
+                                'border-emerald-500/70 border-dashed bg-emerald-500/10 text-foreground',
                               !isSelectedCorrect &&
                                 !isSelectedIncorrect &&
                                 !isUnselectedCorrect &&
-                                'border-border text-muted-foreground',
+                                'border-border bg-background text-foreground',
                             )}
                           >
-                            {item.label}
-                        </span>
-                        <div
-                          className="question-html leading-relaxed"
-                          dangerouslySetInnerHTML={{ __html: item.value ?? '' }}
-                          onClick={handleRichContentClick}
-                        />
-                      </div>
-                    )
-                  })}
+                            <span
+                              className={cn(
+                                'flex h-7 w-7 flex-shrink-0 items-center justify-center border text-xs font-semibold',
+                                isMultiSelect ? 'rounded-md' : 'rounded-full',
+                                isSelectedCorrect && 'border-emerald-500 bg-emerald-500 text-emerald-950',
+                                isSelectedIncorrect && 'border-rose-500 bg-rose-500 text-white',
+                                isUnselectedCorrect && 'border-emerald-500 text-emerald-500',
+                                !isSelectedCorrect &&
+                                  !isSelectedIncorrect &&
+                                  !isUnselectedCorrect &&
+                                  'border-border text-muted-foreground',
+                              )}
+                            >
+                              {item.label}
+                            </span>
+                            <div
+                              className="question-html leading-relaxed"
+                              dangerouslySetInnerHTML={{ __html: item.value ?? '' }}
+                              onClick={handleRichContentClick}
+                            />
+                          </div>
+                        )
+                      })}
+                  </div>
                 </div>
               </div>
             </div>
