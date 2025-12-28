@@ -173,7 +173,7 @@ export const QuestionDetail = () => {
   const mode = currentUser?.preferences.mode ?? state.ui.mode
   const isDark = mode === 'dark'
   const keyOptions = keyOptionLabels
-  const keyOptionOrder = keyOptionLabels
+  const keyOptionOrder: readonly string[] = keyOptionLabels
 
   const paletteSections = useMemo(() => {
     if (!test) {
@@ -281,7 +281,7 @@ export const QuestionDetail = () => {
   }
 
   const sortOptions = (values: string[]) => {
-    if (keyOptionOrder.length === 0) {
+    if (values.length === 0) {
       return values
     }
     return [...values].sort((a, b) => {

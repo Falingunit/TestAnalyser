@@ -364,6 +364,7 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
           ui: {
             theme: normalized.preferences.theme,
             mode: normalized.preferences.mode,
+            fontScale: normalized.preferences.fontScale,
           },
         }))
       } catch (error) {
