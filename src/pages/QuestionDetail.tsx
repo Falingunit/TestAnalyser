@@ -185,8 +185,6 @@ export const QuestionDetail = () => {
   const questionEntry =
     currentIndex >= 0 ? displayQuestions[currentIndex] : null;
   const question = questionEntry?.question ?? null;
-  const status =
-    question && test ? getQuestionStatus(test, question) : "Unattempted";
   const timeSpent = question && test ? getTimeForQuestion(test, question) : 0;
   const answer = question && test ? getAnswerForQuestion(test, question) : null;
   const score = question && test ? getQuestionMark(test, question) : 0;
