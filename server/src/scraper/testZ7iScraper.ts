@@ -1,8 +1,9 @@
-import { load, type Cheerio, type Element } from 'cheerio'
+import { load, type Cheerio } from 'cheerio'
+import type { Element } from 'domhandler'
 import { chromium, type Page } from 'playwright'
 import { mkdir, writeFile } from 'fs/promises'
 import { join } from 'path'
-import { env } from '../config'
+import { env } from '../config.js'
 import type {
   ScrapeProgress,
   ScrapeResult,
@@ -11,7 +12,7 @@ import type {
   ScrapedReport,
   ScrapedQuestionType,
   ScrapedSubject,
-} from './types'
+} from './types.js'
 
 const normalizeDate = (value: string) => {
   const trimmed = value.trim()
@@ -138,14 +139,18 @@ const normalizeSubject = (value: string): ScrapedSubject | null => {
   return null
 }
 
-const extractMetaValue = ($row: Cheerio<Element>, labels: string[]) => {
+const extractMetaValue = (
+  $: ReturnType<typeof load>,
+  $row: Cheerio<Element>,
+  labels: string[],
+) => {
   const normalizedLabels = labels.map((label) =>
     collapseText(label).toLowerCase().replace(/:$/, ''),
   )
   const labelSpan = $row
     .find('p span')
     .filter((_, el) => {
-      const text = collapseText(el.textContent ?? '')
+      const text = collapseText($(el).text())
         .toLowerCase()
         .replace(/:$/, '')
       return normalizedLabels.includes(text)
@@ -658,7 +663,7 @@ const parseSolutionQuestions = (html: string, subject: ScrapedSubject) => {
       })
     }
 
-    let listOptions = $row
+    let listOptions: Array<string | null> = $row
       .find('ol[type="a"] li, ol[type="A"] li')
       .map((_i, el) => extractHtmlOrText($(el)))
       .get()
@@ -685,14 +690,14 @@ const parseSolutionQuestions = (html: string, subject: ScrapedSubject) => {
     }
 
     const correctAnswerRaw = normalizeAnswer(
-      extractMetaValue($row, [
+      extractMetaValue($, $row, [
         'Correct Ans',
         'Correct Answer',
         'Correct Answer(s)',
         'Correct Ans.',
       ]),
     )
-    const questionTypeText = extractMetaValue($row, [
+    const questionTypeText = extractMetaValue($, $row, [
       'Question Type',
       'Q Type',
       'Type',

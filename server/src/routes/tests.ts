@@ -1,8 +1,9 @@
 ﻿import { Router } from 'express'
-import { prisma } from '../db'
-import { requireAuth, type AuthRequest } from '../middleware/auth'
-import { decryptSecret } from '../utils/crypto'
-import { syncExternalAccount } from '../services/syncService'
+import { prisma } from '../db.js'
+import { requireAuth, type AuthRequest } from '../middleware/auth.js'
+import type { ScrapeProgress } from '../scraper/types.js'
+import { syncExternalAccount } from '../services/syncService.js'
+import { decryptSecret } from '../utils/crypto.js'
 
 const router = Router()
 
@@ -207,7 +208,7 @@ router.post('/:id/answer-key', requireAuth, async (req: AuthRequest, res, next) 
     }
 
     const examQuestion = attempt.exam.questions.find(
-      (item) => item.id === questionId,
+      (item: { id: string }) => item.id === questionId,
     )
     if (!examQuestion) {
       return res.status(404).json({ error: 'Question not found.' })
@@ -277,7 +278,7 @@ router.patch(
       }
 
       const examQuestion = attempt.exam.questions.find(
-        (item) => item.id === questionId,
+        (item: { id: string }) => item.id === questionId,
       )
       if (!examQuestion) {
         return res.status(404).json({ error: 'Question not found.' })
@@ -434,7 +435,7 @@ router.post('/:id/resync', requireAuth, async (req: AuthRequest, res, next) => {
       password,
       onlyExamIds: [externalExamId],
       forceAttemptExamIds: [externalExamId],
-      onProgress: async (progress) => {
+      onProgress: async (progress: ScrapeProgress) => {
         try {
           await prisma.externalAccount.update({
             where: { id: account.id },

@@ -1,5 +1,5 @@
 import crypto from 'crypto'
-import { env } from '../config'
+import { env } from '../config.js'
 
 type EncryptedPayload = {
   encrypted: string

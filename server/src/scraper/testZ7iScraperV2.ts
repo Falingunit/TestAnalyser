@@ -1,7 +1,7 @@
 import { mkdir, writeFile } from 'fs/promises'
 import { join } from 'path'
 import { chromium, type Page } from 'playwright'
-import { env } from '../config'
+import { env } from '../config.js'
 import type {
   ScrapeProgress,
   ScrapeResult,
@@ -10,7 +10,7 @@ import type {
   ScrapedQuestionType,
   ScrapedReport,
   ScrapedSubject,
-} from './types'
+} from './types.js'
 
 const normalizeDate = (value: string) => {
   const trimmed = value.trim()

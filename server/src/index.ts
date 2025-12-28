@@ -1,10 +1,10 @@
 import express from 'express'
 import cors from 'cors'
-import { env } from './config'
-import authRouter from './routes/auth'
-import externalRouter from './routes/external'
-import testsRouter from './routes/tests'
-import { errorHandler } from './middleware/error'
+import { env } from './config.js'
+import authRouter from './routes/auth.js'
+import externalRouter from './routes/external.js'
+import testsRouter from './routes/tests.js'
+import { errorHandler } from './middleware/error.js'
 
 const app = express()
 

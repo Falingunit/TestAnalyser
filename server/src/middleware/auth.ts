@@ -1,5 +1,5 @@
 import type { NextFunction, Response } from 'express'
-import { verifyToken, type TokenPayload } from '../auth/token'
+import { verifyToken, type TokenPayload } from '../auth/token.js'
 import type { Request } from 'express'
 
 export type AuthRequest = Request & { user?: TokenPayload }

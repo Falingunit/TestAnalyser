@@ -1,8 +1,8 @@
 import { Router } from 'express'
-import { prisma } from '../db'
-import { hashPassword, verifyPassword } from '../auth/password'
-import { signToken } from '../auth/token'
-import { requireAuth, type AuthRequest } from '../middleware/auth'
+import { prisma } from '../db.js'
+import { hashPassword, verifyPassword } from '../auth/password.js'
+import { signToken } from '../auth/token.js'
+import { requireAuth, type AuthRequest } from '../middleware/auth.js'
 
 const router = Router()
 
@@ -15,7 +15,7 @@ const defaultPreferences = {
 
 const sanitizeEmail = (email: string) => email.trim().toLowerCase()
 
-const isNonEmptyString = (value: unknown) =>
+const isNonEmptyString = (value: unknown): value is string =>
   typeof value === 'string' && value.trim().length > 0
 
 const allowedThemes = new Set(['ember', 'ocean', 'forest', 'slate'])

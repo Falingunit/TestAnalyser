@@ -1,13 +1,14 @@
 import { Router } from 'express'
-import { prisma } from '../db'
-import { requireAuth, type AuthRequest } from '../middleware/auth'
-import { decryptSecret, encryptSecret } from '../utils/crypto'
-import { syncExternalAccount } from '../services/syncService'
-import { verifyTestZ7iLogin } from '../scraper/testZ7iScraperV2'
+import { prisma } from '../db.js'
+import { requireAuth, type AuthRequest } from '../middleware/auth.js'
+import type { ScrapeProgress } from '../scraper/types.js'
+import { verifyTestZ7iLogin } from '../scraper/testZ7iScraperV2.js'
+import { syncExternalAccount } from '../services/syncService.js'
+import { decryptSecret, encryptSecret } from '../utils/crypto.js'
 
 const router = Router()
 
-const isNonEmptyString = (value: unknown) =>
+const isNonEmptyString = (value: unknown): value is string =>
   typeof value === 'string' && value.trim().length > 0
 
 const serializeAccount = (account: {
@@ -201,7 +202,7 @@ router.post('/sync', requireAuth, async (req: AuthRequest, res, next) => {
       verificationCode,
       forceAttemptExamIds,
       attemptsOnly,
-      onProgress: async (progress) => {
+      onProgress: async (progress: ScrapeProgress) => {
         try {
           await prisma.externalAccount.update({
             where: { id: account.id },

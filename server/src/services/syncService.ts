@@ -1,12 +1,19 @@
-﻿import { prisma } from '../db'
-import { scrapeTestZ7iV2 } from '../scraper/testZ7iScraperV2'
+﻿import { prisma } from '../db.js'
+import { scrapeTestZ7iV2 } from '../scraper/testZ7iScraperV2.js'
 import type {
   ScrapeProgress,
   ScrapedAnswer,
   ScrapedQuestion,
   ScrapedQuestionType,
   ScrapedReport,
-} from '../scraper/types'
+} from '../scraper/types.js'
+
+type ExistingQuestion = {
+  id: string
+  questionNumber: number
+  correctAnswer: string | null
+  keyUpdate: string | null
+}
 
 const normalizeDate = (value: string) => {
   const trimmed = value.trim()
@@ -158,8 +165,11 @@ const upsertExam = async (report: ScrapedReport) => {
   const existingQuestions = await prisma.question.findMany({
     where: { examId: exam.id },
   })
-  const existingByNumber = new Map(
-    existingQuestions.map((question) => [question.questionNumber, question]),
+  const existingByNumber = new Map<number, ExistingQuestion>(
+    existingQuestions.map((question: ExistingQuestion) => [
+      question.questionNumber,
+      question,
+    ]),
   )
 
   const questionBySourceNumber = new Map<
@@ -363,7 +373,9 @@ export const syncExternalAccount = async (payload: {
   })
   const attemptedExamIds = new Set(
     existingAttempts
-      .map((attempt) => attempt.exam.externalExamId)
+      .map((attempt: { exam: { externalExamId: string | null } }) =>
+        attempt.exam.externalExamId,
+      )
       .filter(Boolean) as string[],
   )
   const forceAttemptExamIds = new Set(payload.forceAttemptExamIds ?? [])
@@ -378,12 +390,17 @@ export const syncExternalAccount = async (payload: {
     },
   })
   const existingIds = new Set(
-    existingExams.map((exam) => exam.externalExamId).filter(Boolean) as string[],
+    existingExams
+      .map((exam: { externalExamId: string | null }) => exam.externalExamId)
+      .filter(Boolean) as string[],
   )
   const forceFullIds = new Set(
     existingExams
-      .filter((exam) => exam.externalExamId && exam.questions.length === 0)
-      .map((exam) => exam.externalExamId as string),
+      .filter(
+        (exam: { externalExamId: string | null; questions: Array<{ id: string }> }) =>
+          exam.externalExamId && exam.questions.length === 0,
+      )
+      .map((exam: { externalExamId: string | null }) => exam.externalExamId as string),
   )
 
   const result = await scrapeTestZ7iV2({
