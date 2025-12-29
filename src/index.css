@@ -35,7 +35,7 @@
   }
 
   .dark {
-    --background: 0 0% 5%;
+    --background: 0 0% 2%;
     --foreground: 0 0% 98%;
     --card: 0 0% 8%;
     --card-foreground: 0 0% 98%;
@@ -51,7 +51,7 @@
     --accent-foreground: 0 0% 98%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 24%;
+    --border: 0 0% 20%;
     --input: 0 0% 24%;
     --ring: 0 0% 83.1%;
     --chart-1: 0 0% 98%;

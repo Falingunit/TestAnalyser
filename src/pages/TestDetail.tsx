@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react'
-import { Link, useParams } from 'react-router-dom'
-import { Star } from 'lucide-react'
-import { useAppStore } from '@/lib/store'
+import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { Link, useParams } from "react-router-dom";
+import { Star } from "lucide-react";
+import { useAppStore } from "@/lib/store";
 import {
   buildAnalysis,
   formatAnswerValue,
@@ -10,22 +10,22 @@ import {
   getQuestionStatus,
   getTimeForQuestion,
   isBonusKey,
-} from '@/lib/analysis'
-import type { QuestionType, Subject } from '@/lib/types'
-import { TestSummaryCard } from '@/components/TestSummaryCard'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
+} from "@/lib/analysis";
+import type { QuestionType, Subject } from "@/lib/types";
+import { TestSummaryCard } from "@/components/TestSummaryCard";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
-import { Switch } from '@/components/ui/switch'
-import { Separator } from '@/components/ui/separator'
+} from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Separator } from "@/components/ui/separator";
 import {
   Dialog,
   DialogContent,
@@ -33,67 +33,76 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog'
-import { formatQuestionType } from '@/lib/utils'
-import { buildDisplayQuestions } from '@/lib/questionDisplay'
+} from "@/components/ui/dialog";
+import { formatQuestionType } from "@/lib/utils";
+import { buildDisplayQuestions } from "@/lib/questionDisplay";
 
 const formatSeconds = (value: number) => {
   if (!Number.isFinite(value)) {
-    return '0s'
+    return "0s";
   }
   if (value < 60) {
-    return `${Math.round(value)}s`
+    return `${Math.round(value)}s`;
   }
-  const minutes = Math.floor(value / 60)
-  const seconds = Math.round(value % 60)
-  return seconds ? `${minutes}m ${seconds}s` : `${minutes}m`
-}
+  const minutes = Math.floor(value / 60);
+  const seconds = Math.round(value % 60);
+  return seconds ? `${minutes}m ${seconds}s` : `${minutes}m`;
+};
 
-const subjects = ['ALL', 'PHYSICS', 'CHEMISTRY', 'MATHEMATICS'] as const
+const subjects = ["ALL", "PHYSICS", "CHEMISTRY", "MATHEMATICS"] as const;
 const typeOptions = [
-  { value: 'ALL', label: 'All types' },
-  { value: 'MCQ', label: formatQuestionType('MCQ') },
-  { value: 'MAQ', label: formatQuestionType('MAQ') },
-  { value: 'NAT', label: formatQuestionType('NAT') },
-  { value: 'VMAQ', label: formatQuestionType('VMAQ') },
-] as const
-const questionTypes = ['MCQ', 'MAQ', 'NAT', 'VMAQ'] as const
-const statuses = ['ALL', 'Correct', 'Incorrect', 'Partial', 'Unattempted'] as const
+  { value: "ALL", label: "All types" },
+  { value: "MCQ", label: formatQuestionType("MCQ") },
+  { value: "MAQ", label: formatQuestionType("MAQ") },
+  { value: "NAT", label: formatQuestionType("NAT") },
+  { value: "VMAQ", label: formatQuestionType("VMAQ") },
+] as const;
+const questionTypes = ["MCQ", "MAQ", "NAT", "VMAQ"] as const;
+const statuses = [
+  "ALL",
+  "Correct",
+  "Incorrect",
+  "Partial",
+  "Unattempted",
+] as const;
 
-type SubjectFilter = (typeof subjects)[number]
-type TypeFilter = (typeof typeOptions)[number]['value']
-type StatusFilter = (typeof statuses)[number]
+type SubjectFilter = (typeof subjects)[number];
+type TypeFilter = (typeof typeOptions)[number]["value"];
+type StatusFilter = (typeof statuses)[number];
 type MarkingDraft = Record<
   QuestionType,
   { correct: string; incorrect: string; unattempted: string }
->
+>;
 
-const hasKeyChange = (question: { correctAnswer: unknown; keyUpdate: unknown }) =>
+const hasKeyChange = (question: {
+  correctAnswer: unknown;
+  keyUpdate: unknown;
+}) =>
   JSON.stringify(question.correctAnswer ?? null) !==
-  JSON.stringify(question.keyUpdate ?? null)
+  JSON.stringify(question.keyUpdate ?? null);
 
 const getStatusVariant = (status: string) => {
-  if (status === 'Correct') {
-    return 'secondary'
+  if (status === "Correct") {
+    return "secondary";
   }
-  if (status === 'Incorrect') {
-    return 'destructive'
+  if (status === "Incorrect") {
+    return "destructive";
   }
-  if (status === 'Partial') {
-    return 'outline'
+  if (status === "Partial") {
+    return "outline";
   }
-  return 'outline'
-}
+  return "outline";
+};
 
 const buildEmptyMarkingDraft = (): MarkingDraft => ({
-  MCQ: { correct: '', incorrect: '', unattempted: '' },
-  MAQ: { correct: '', incorrect: '', unattempted: '' },
-  NAT: { correct: '', incorrect: '', unattempted: '' },
-  VMAQ: { correct: '', incorrect: '', unattempted: '' },
-})
+  MCQ: { correct: "", incorrect: "", unattempted: "" },
+  MAQ: { correct: "", incorrect: "", unattempted: "" },
+  NAT: { correct: "", incorrect: "", unattempted: "" },
+  VMAQ: { correct: "", incorrect: "", unattempted: "" },
+});
 
 export const TestDetail = () => {
-  const { testId } = useParams()
+  const { testId } = useParams();
   const {
     state,
     currentUser,
@@ -101,58 +110,58 @@ export const TestDetail = () => {
     updateMarkingScheme,
     isAdmin,
     resyncTest,
-  } = useAppStore()
-  const test = state.tests.find((item) => item.id === testId)
+  } = useAppStore();
+  const test = state.tests.find((item) => item.id === testId);
   const displayQuestions = useMemo(() => {
     if (!test) {
-      return []
+      return [];
     }
-    return buildDisplayQuestions(test.questions)
-  }, [test])
-  const firstQuestionId = displayQuestions[0]?.question.id ?? ''
-  const [query, setQuery] = useState('')
-  const [subject, setSubject] = useState<SubjectFilter>('ALL')
-  const [type, setType] = useState<TypeFilter>('ALL')
-  const [status, setStatus] = useState<StatusFilter>('ALL')
-  const [onlyKeyUpdates, setOnlyKeyUpdates] = useState(false)
+    return buildDisplayQuestions(test.questions);
+  }, [test]);
+  const firstQuestionId = displayQuestions[0]?.question.id ?? "";
+  const [query, setQuery] = useState("");
+  const [subject, setSubject] = useState<SubjectFilter>("ALL");
+  const [type, setType] = useState<TypeFilter>("ALL");
+  const [status, setStatus] = useState<StatusFilter>("ALL");
+  const [onlyKeyUpdates, setOnlyKeyUpdates] = useState(false);
   const [markingDraft, setMarkingDraft] = useState<MarkingDraft>(() =>
-    buildEmptyMarkingDraft(),
-  )
-  const [markingMessage, setMarkingMessage] = useState<string | null>(null)
-  const [isResyncing, setIsResyncing] = useState(false)
-  const [confirmResyncOpen, setConfirmResyncOpen] = useState(false)
+    buildEmptyMarkingDraft()
+  );
+  const [markingMessage, setMarkingMessage] = useState<string | null>(null);
+  const [isResyncing, setIsResyncing] = useState(false);
+  const [confirmResyncOpen, setConfirmResyncOpen] = useState(false);
   const [collapsedSubjects, setCollapsedSubjects] = useState<
     Record<Subject, boolean>
   >({
     PHYSICS: false,
     CHEMISTRY: false,
     MATHEMATICS: false,
-  })
+  });
 
   useEffect(() => {
     if (!test) {
-      setMarkingDraft(buildEmptyMarkingDraft())
-      setMarkingMessage(null)
-      return
+      setMarkingDraft(buildEmptyMarkingDraft());
+      setMarkingMessage(null);
+      return;
     }
-    const nextDraft = buildEmptyMarkingDraft()
+    const nextDraft = buildEmptyMarkingDraft();
     test.questions.forEach((question) => {
-      const qtype = question.qtype as QuestionType
+      const qtype = question.qtype as QuestionType;
       if (!questionTypes.includes(qtype)) {
-        return
+        return;
       }
       if (nextDraft[qtype].correct) {
-        return
+        return;
       }
       nextDraft[qtype] = {
         correct: String(question.correctMarking),
         incorrect: String(question.incorrectMarking),
         unattempted: String(question.unattemptedMarking),
-      }
-    })
-    setMarkingDraft(nextDraft)
-    setMarkingMessage(null)
-  }, [test])
+      };
+    });
+    setMarkingDraft(nextDraft);
+    setMarkingMessage(null);
+  }, [test]);
 
   if (!test) {
     return (
@@ -164,78 +173,83 @@ export const TestDetail = () => {
           </Button>
         </CardContent>
       </Card>
-    )
+    );
   }
 
-  const analysis = buildAnalysis(test)
+  const analysis = buildAnalysis(test);
   const acknowledgedAt =
-    currentUser?.preferences.acknowledgedKeyUpdates[test.id] ?? null
+    currentUser?.preferences.acknowledgedKeyUpdates[test.id] ?? null;
   const hasNewKeyUpdates = Boolean(
     analysis.latestKeyUpdate &&
-      (!acknowledgedAt || acknowledgedAt < analysis.latestKeyUpdate),
-  )
+      (!acknowledgedAt || acknowledgedAt < analysis.latestKeyUpdate)
+  );
   const account = state.externalAccounts.find(
-    (item) => item.userId === currentUser?.id && item.provider === 'test.z7i.in',
-  )
+    (item) => item.userId === currentUser?.id && item.provider === "test.z7i.in"
+  );
   const canResync = Boolean(
-    test.externalExamId && account && account.syncStatus !== 'syncing' && !isResyncing,
-  )
+    test.externalExamId &&
+      account &&
+      account.syncStatus !== "syncing" &&
+      !isResyncing
+  );
 
   const availableTypes = useMemo(() => {
     if (!test) {
-      return []
+      return [];
     }
-    const types = new Set<QuestionType>()
+    const types = new Set<QuestionType>();
     test.questions.forEach((question) => {
-      const qtype = question.qtype as QuestionType
+      const qtype = question.qtype as QuestionType;
       if (questionTypes.includes(qtype)) {
-        types.add(qtype)
+        types.add(qtype);
       }
-    })
-    return questionTypes.filter((type) => types.has(type))
-  }, [test])
+    });
+    return questionTypes.filter((type) => types.has(type));
+  }, [test]);
 
   const handleMarkingSchemeSave = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
+    event.preventDefault();
     if (!isAdmin) {
-      setMarkingMessage('Only admins can update marking schemes.')
-      return
+      setMarkingMessage("Only admins can update marking schemes.");
+      return;
     }
     if (!test) {
-      return
+      return;
     }
     const scheme: Record<
       string,
       { correct: number; incorrect: number; unattempted: number }
-    > = {}
+    > = {};
     for (const qtype of availableTypes) {
-      const entry = markingDraft[qtype]
-      const correct = Number(entry.correct)
-      const incorrect = Number(entry.incorrect)
-      const unattempted = Number(entry.unattempted)
+      const entry = markingDraft[qtype];
+      const correct = Number(entry.correct);
+      const incorrect = Number(entry.incorrect);
+      const unattempted = Number(entry.unattempted);
       if (
         !Number.isFinite(correct) ||
         !Number.isFinite(incorrect) ||
         !Number.isFinite(unattempted)
       ) {
-        setMarkingMessage(`Enter valid numbers for ${formatQuestionType(qtype)}.`)
-        return
+        setMarkingMessage(
+          `Enter valid numbers for ${formatQuestionType(qtype)}.`
+        );
+        return;
       }
-      scheme[qtype] = { correct, incorrect, unattempted }
+      scheme[qtype] = { correct, incorrect, unattempted };
     }
-    await updateMarkingScheme({ testId: test.id, scheme })
-    setMarkingMessage('Marking scheme updated.')
-  }
+    await updateMarkingScheme({ testId: test.id, scheme });
+    setMarkingMessage("Marking scheme updated.");
+  };
 
   const questionSnapshots = useMemo(() => {
     if (!test) {
-      return []
+      return [];
     }
     return displayQuestions.map(({ question, displayNumber }) => {
-      const statusLabel = getQuestionStatus(test, question)
-      const time = getTimeForQuestion(test, question)
-      const answer = getAnswerForQuestion(test, question)
-      const score = getQuestionMark(test, question)
+      const statusLabel = getQuestionStatus(test, question);
+      const time = getTimeForQuestion(test, question);
+      const answer = getAnswerForQuestion(test, question);
+      const score = getQuestionMark(test, question);
       return {
         question,
         displayNumber,
@@ -246,43 +260,50 @@ export const TestDetail = () => {
         keyChanged: hasKeyChange(question),
         bonus: isBonusKey(question.keyUpdate),
         bookmarked: Boolean(test.bookmarks?.[question.id]),
-      }
-    })
-  }, [displayQuestions, test])
+      };
+    });
+  }, [displayQuestions, test]);
 
   const filteredQuestions = useMemo(() => {
-    const queryValue = query.trim().toLowerCase()
+    const queryValue = query.trim().toLowerCase();
     return questionSnapshots.filter(
       ({ question, status: statusLabel, keyChanged, displayNumber }) => {
-      const matchesQuery =
-        queryValue.length === 0 ||
-        String(displayNumber).includes(queryValue) ||
-        question.questionContent.toLowerCase().includes(queryValue)
-      const matchesSubject =
-        subject === 'ALL' || question.subject === (subject as Subject)
-      const matchesType = type === 'ALL' || question.qtype === (type as QuestionType)
-      const matchesStatus = status === 'ALL' || statusLabel === status
-      const matchesKey = !onlyKeyUpdates || keyChanged
-      return matchesQuery && matchesSubject && matchesType && matchesStatus && matchesKey
-    },
-    )
-  }, [onlyKeyUpdates, query, questionSnapshots, status, subject, type])
+        const matchesQuery =
+          queryValue.length === 0 ||
+          String(displayNumber).includes(queryValue) ||
+          question.questionContent.toLowerCase().includes(queryValue);
+        const matchesSubject =
+          subject === "ALL" || question.subject === (subject as Subject);
+        const matchesType =
+          type === "ALL" || question.qtype === (type as QuestionType);
+        const matchesStatus = status === "ALL" || statusLabel === status;
+        const matchesKey = !onlyKeyUpdates || keyChanged;
+        return (
+          matchesQuery &&
+          matchesSubject &&
+          matchesType &&
+          matchesStatus &&
+          matchesKey
+        );
+      }
+    );
+  }, [onlyKeyUpdates, query, questionSnapshots, status, subject, type]);
 
   const groupedQuestions = useMemo(() => {
-    const map = new Map<Subject, typeof filteredQuestions>()
+    const map = new Map<Subject, typeof filteredQuestions>();
     filteredQuestions.forEach((item) => {
-      const current = map.get(item.question.subject) ?? []
-      current.push(item)
-      map.set(item.question.subject, current)
-    })
+      const current = map.get(item.question.subject) ?? [];
+      current.push(item);
+      map.set(item.question.subject, current);
+    });
     return subjects
-      .filter((item): item is Subject => item !== 'ALL')
+      .filter((item): item is Subject => item !== "ALL")
       .map((item) => ({
         subject: item,
         items: map.get(item) ?? [],
       }))
-      .filter((group) => group.items.length > 0)
-  }, [filteredQuestions])
+      .filter((group) => group.items.length > 0);
+  }, [filteredQuestions]);
 
   return (
     <div className="space-y-6">
@@ -291,15 +312,17 @@ export const TestDetail = () => {
           <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
             Test review
           </p>
-          <h1 className="text-xl font-semibold text-foreground">{test.title}</h1>
+          <h1 className="text-xl font-semibold text-foreground">
+            {test.title}
+          </h1>
         </div>
         <Button asChild variant="ghost" size="sm">
           <Link to="/app/tests">Back to tests</Link>
         </Button>
       </div>
-      <section className='grid grid-cols-6 gap-2'>
+      <section className="grid grid-cols-6 gap-2">
         <TestSummaryCard
-          className='col-span-4'
+          className="col-span-4"
           test={test}
           analysis={analysis}
           defaultExpanded
@@ -320,7 +343,10 @@ export const TestDetail = () => {
           actions={
             <>
               {hasNewKeyUpdates ? (
-                <Button size="sm" onClick={() => acknowledgeKeyUpdates(test.id)}>
+                <Button
+                  size="sm"
+                  onClick={() => acknowledgeKeyUpdates(test.id)}
+                >
                   Mark updates reviewed
                 </Button>
               ) : null}
@@ -331,17 +357,18 @@ export const TestDetail = () => {
                 disabled={!canResync}
                 onClick={() => {
                   if (!canResync) {
-                    return
+                    return;
                   }
-                  setConfirmResyncOpen(true)
+                  setConfirmResyncOpen(true);
                 }}
               >
-                {isResyncing ? 'Resyncing...' : 'Resync exam'}
+                {isResyncing ? "Resyncing..." : "Resync exam"}
               </Button>
             </>
           }
         />
-        <Card className="app-panel col-span-2">
+        {/* Marking Scheme */}
+        <Card className="app-panel col-span-2 border-none">
           <CardContent className="space-y-4 p-6">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="space-y-1">
@@ -352,7 +379,12 @@ export const TestDetail = () => {
                   Update marks for each question type in this test.
                 </p>
               </div>
-              <Button type="submit" size="sm" form="marking-scheme-form" disabled={!isAdmin}>
+              <Button
+                type="submit"
+                size="sm"
+                form="marking-scheme-form"
+                disabled={!isAdmin}
+              >
                 Save scheme
               </Button>
             </div>
@@ -458,15 +490,18 @@ export const TestDetail = () => {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setConfirmResyncOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setConfirmResyncOpen(false)}
+            >
               Cancel
             </Button>
             <Button
               onClick={async () => {
-                setConfirmResyncOpen(false)
-                setIsResyncing(true)
-                await resyncTest(test.id)
-                setIsResyncing(false)
+                setConfirmResyncOpen(false);
+                setIsResyncing(true);
+                await resyncTest(test.id);
+                setIsResyncing(false);
               }}
             >
               Resync exam
@@ -475,9 +510,7 @@ export const TestDetail = () => {
         </DialogContent>
       </Dialog>
 
-      <section>
-        
-      </section>
+      <section></section>
 
       <section>
         <Card className="app-panel">
@@ -509,8 +542,15 @@ export const TestDetail = () => {
               </div>
               <div className="grid gap-2 md:grid-cols-3">
                 <div className="space-y-2">
-                  <label className="text-xs text-muted-foreground">Subject</label>
-                  <Select value={subject} onValueChange={(value) => setSubject(value as SubjectFilter)}>
+                  <label className="text-xs text-muted-foreground">
+                    Subject
+                  </label>
+                  <Select
+                    value={subject}
+                    onValueChange={(value) =>
+                      setSubject(value as SubjectFilter)
+                    }
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="All" />
                     </SelectTrigger>
@@ -525,7 +565,10 @@ export const TestDetail = () => {
                 </div>
                 <div className="space-y-2">
                   <label className="text-xs text-muted-foreground">Type</label>
-                  <Select value={type} onValueChange={(value) => setType(value as TypeFilter)}>
+                  <Select
+                    value={type}
+                    onValueChange={(value) => setType(value as TypeFilter)}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="All" />
                     </SelectTrigger>
@@ -539,8 +582,13 @@ export const TestDetail = () => {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-xs text-muted-foreground">Status</label>
-                  <Select value={status} onValueChange={(value) => setStatus(value as StatusFilter)}>
+                  <label className="text-xs text-muted-foreground">
+                    Status
+                  </label>
+                  <Select
+                    value={status}
+                    onValueChange={(value) => setStatus(value as StatusFilter)}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="All" />
                     </SelectTrigger>
@@ -555,7 +603,10 @@ export const TestDetail = () => {
                 </div>
               </div>
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <Switch checked={onlyKeyUpdates} onCheckedChange={setOnlyKeyUpdates} />
+                <Switch
+                  checked={onlyKeyUpdates}
+                  onCheckedChange={setOnlyKeyUpdates}
+                />
                 <span>Show key updates only</span>
               </div>
             </div>
@@ -584,7 +635,7 @@ export const TestDetail = () => {
                         }
                         aria-expanded={!collapsedSubjects[group.subject]}
                       >
-                        {collapsedSubjects[group.subject] ? 'Show' : 'Hide'}
+                        {collapsedSubjects[group.subject] ? "Show" : "Hide"}
                       </Button>
                     </div>
                   </div>
@@ -621,7 +672,8 @@ export const TestDetail = () => {
                                   </p>
                                 </div>
                                 <p className="text-xs text-muted-foreground">
-                                  {formatQuestionType(question.qtype)} - {formatSeconds(time)}
+                                  {formatQuestionType(question.qtype)} -{" "}
+                                  {formatSeconds(time)}
                                 </p>
                               </div>
                               <div className="flex items-center gap-2">
@@ -631,7 +683,9 @@ export const TestDetail = () => {
                                   </Badge>
                                 ) : null}
                                 {keyChanged ? (
-                                  <Badge variant="destructive">Key update</Badge>
+                                  <Badge variant="destructive">
+                                    Key update
+                                  </Badge>
                                 ) : null}
                                 <Badge variant={getStatusVariant(statusLabel)}>
                                   {statusLabel}
@@ -641,10 +695,12 @@ export const TestDetail = () => {
                             <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
                               <span>Score {score}</span>
                               <span>Answer {formatAnswerValue(answer)}</span>
-                              <span>Correct {formatAnswerValue(question.keyUpdate)}</span>
+                              <span>
+                                Correct {formatAnswerValue(question.keyUpdate)}
+                              </span>
                             </div>
                           </Link>
-                        ),
+                        )
                       )}
                     </div>
                   ) : null}
@@ -661,5 +717,5 @@ export const TestDetail = () => {
         </Card>
       </section>
     </div>
-  )
-}
+  );
+};

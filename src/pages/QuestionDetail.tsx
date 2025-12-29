@@ -159,44 +159,6 @@ export const QuestionDetail = () => {
     return buildDisplayQuestions(test.questions);
   }, [test]);
 
-  if (!test) {
-    return;
-    <Card className="app-panel">
-      <CardContent className="space-y-3 p-6">
-        <p className="text-sm text-muted-foreground">Test not found.</p>
-        <Button asChild variant="outline">
-          <Link to="/app/tests">Back to tests</Link>
-        </Button>
-      </CardContent>
-    </Card>;
-  }
-  const analysis = buildAnalysis(test);
-  const totalScore = test.questions.reduce(
-    (sum, question) => sum + question.correctMarking,
-    0
-  );
-  const scoreLabel = analysis
-    ? `${analysis.scoreCurrent}/${totalScore}`
-    : "n/a";
-
-  const currentIndex = displayQuestions.findIndex(
-    (item) => item.question.id === questionId
-  );
-  const questionEntry =
-    currentIndex >= 0 ? displayQuestions[currentIndex] : null;
-  const question = questionEntry?.question ?? null;
-  const timeSpent = question && test ? getTimeForQuestion(test, question) : 0;
-  const answer = question && test ? getAnswerForQuestion(test, question) : null;
-  const score = question && test ? getQuestionMark(test, question) : 0;
-  const displayNumber = questionEntry?.displayNumber ?? 0;
-  const isBookmarked = Boolean(
-    test && question ? test.bookmarks?.[question.id] : false
-  );
-  const mode = currentUser?.preferences.mode ?? state.ui.mode;
-  const isDark = mode === "dark";
-  const keyOptions = keyOptionLabels;
-  const keyOptionOrder: readonly string[] = keyOptionLabels;
-
   const paletteSections = useMemo(() => {
     if (!test) {
       return [];
@@ -259,6 +221,32 @@ export const QuestionDetail = () => {
     startDistance: number;
     startZoom: number;
   } | null>(null);
+
+  const analysis = test ? buildAnalysis(test) : null;
+  const totalScore = test
+    ? test.questions.reduce((sum, question) => sum + question.correctMarking, 0)
+    : 0;
+  const scoreLabel = analysis
+    ? `${analysis.scoreCurrent}/${totalScore}`
+    : "n/a";
+
+  const currentIndex = displayQuestions.findIndex(
+    (item) => item.question.id === questionId
+  );
+  const questionEntry =
+    currentIndex >= 0 ? displayQuestions[currentIndex] : null;
+  const question = questionEntry?.question ?? null;
+  const timeSpent = question && test ? getTimeForQuestion(test, question) : 0;
+  const answer = question && test ? getAnswerForQuestion(test, question) : null;
+  const score = question && test ? getQuestionMark(test, question) : 0;
+  const displayNumber = questionEntry?.displayNumber ?? 0;
+  const isBookmarked = Boolean(
+    test && question ? test.bookmarks?.[question.id] : false
+  );
+  const mode = currentUser?.preferences.mode ?? state.ui.mode;
+  const isDark = mode === "dark";
+  const keyOptions = keyOptionLabels;
+  const keyOptionOrder: readonly string[] = keyOptionLabels;
 
   const addKeyAnswerGroup = () => {
     setKeyAnswerGroups((prev) => [...prev, buildKeyGroup()]);
@@ -415,19 +403,6 @@ export const QuestionDetail = () => {
     }
     setIsBookmarking(false);
   };
-
-  if (!test || !question) {
-    return (
-      <Card className="app-panel">
-        <CardContent className="space-y-3 p-6">
-          <p className="text-sm text-muted-foreground">Question not found.</p>
-          <Button asChild variant="outline">
-            <Link to="/app/tests">Back to tests</Link>
-          </Button>
-        </CardContent>
-      </Card>
-    );
-  }
 
   const prev = currentIndex > 0 ? displayQuestions[currentIndex - 1] : null;
   const next =
@@ -894,6 +869,19 @@ export const QuestionDetail = () => {
     }
   };
 
+  if (!test || !question) {
+    return (
+      <Card className="app-panel">
+        <CardContent className="space-y-3 p-6">
+          <p className="text-sm text-muted-foreground">Question not found.</p>
+          <Button asChild variant="outline">
+            <Link to="/app/tests">Back to tests</Link>
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <div className="flex h-[calc(100vh-90px)] flex-col gap-1 overflow-hidden">
       {/* Question Detail Helper Buttons */}
@@ -975,7 +963,7 @@ export const QuestionDetail = () => {
 
       <section className="grid min-h-0 flex-1 gap-1 lg:grid-cols-[220px_minmax(0,1fr)_minmax(0,320px)]">
         {/* Question Side Panel */}
-        <Card className="app-panel h-full min-h-0">
+        <Card className="app-panel h-full min-h-0 border-none max-sm:hidden">
           <CardContent className="flex h-full min-h-0 flex-col gap-4 p-2 py-5">
             <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
               Questions
@@ -1084,7 +1072,7 @@ export const QuestionDetail = () => {
         </Card>
 
         {/* Question detailed view */}
-        <Card className="app-panel h-full min-h-0">
+        <Card className="app-panel h-full min-h-0 border-0">
           <CardContent className="flex h-full min-h-0 flex-col gap-5 p-3 py-5">
             <div className="min-h-0 flex-1 overflow-y-auto pr-2">
               <div ref={questionCopyRef} className="space-y-5">
@@ -1194,7 +1182,7 @@ export const QuestionDetail = () => {
         </Card>
 
         {/* Answer review */}
-        <Card className="app-panel h-full min-h-0">
+        <Card className="app-panel h-full min-h-0 border-none">
           <CardContent className="flex h-full min-h-0 flex-col gap-4 p-2 py-5">
             <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
               Answer review
