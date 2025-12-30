@@ -237,6 +237,12 @@ export const QuestionDetail = () => {
     currentIndex >= 0 ? displayQuestions[currentIndex] : null;
   const question = questionEntry?.question ?? null;
   const timeSpent = question && test ? getTimeForQuestion(test, question) : 0;
+  const peerTimeSpent =
+    question && test ? test.peerTimings?.[question.id] : undefined;
+  const peerTimeLabel =
+    typeof peerTimeSpent === "number" && Number.isFinite(peerTimeSpent)
+      ? formatSeconds(peerTimeSpent)
+      : "n/a";
   const answer = question && test ? getAnswerForQuestion(test, question) : null;
   const score = question && test ? getQuestionMark(test, question) : 0;
   const displayNumber = questionEntry?.displayNumber ?? 0;
@@ -1013,23 +1019,23 @@ export const QuestionDetail = () => {
             <div className="p-2 py-0">
               <div className="grid grid-cols-2 gap-y-2">
                 <div className="flex flex-col">
-                  <span className="text-[8px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-tight">
+                  <span className="text-[9px] font-bold text-neutral-800 dark:text-neutral-400 uppercase tracking-tight">
                     Correct
                   </span>
                   <div className="flex items-center gap-1.5 mt-0.5">
                     <div className="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
-                    <span className="text-xs font-black text-slate-700 dark:text-slate-300">
+                    <span className="text-xs font-black text-neutral-700 dark:text-neutral-300">
                       {analysis?.correct || 0}
                     </span>
                   </div>
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-[8px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-tight">
+                  <span className="text-[9px] font-bold text-neutral-800 dark:text-neutral-400 uppercase tracking-tight">
                     Partial
                   </span>
                   <div className="flex items-center gap-1.5 mt-0.5">
                     <div className="w-1.5 h-1.5 rounded-full bg-amber-400"></div>
-                    <span className="text-xs font-black text-slate-700 dark:text-slate-300">
+                    <span className="text-xs font-black text-neutral-700 dark:text-neutral-300">
                       {analysis?.partial || 0}
                     </span>
                   </div>
@@ -1037,31 +1043,32 @@ export const QuestionDetail = () => {
               </div>
               <div className="grid grid-cols-2 gap-y-2">
                 <div className="flex flex-col">
-                  <span className="text-[8px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-tight">
+                  <span className="text-[9px] font-bold text-neutral-800 dark:text-neutral-400 uppercase tracking-tight">
                     Incorrect
                   </span>
                   <div className="flex items-center gap-1.5 mt-0.5">
                     <div className="w-1.5 h-1.5 rounded-full bg-rose-500"></div>
-                    <span className="text-xs font-black text-slate-700 dark:text-slate-300">
+                    <span className="text-xs font-black text-neutral-700 dark:text-neutral-300">
                       {analysis?.incorrect || 0}
                     </span>
                   </div>
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-[8px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-tight">
+                  <span className="text-[9px] font-bold text-neutral-800 dark:text-neutral-400 uppercase tracking-tight">
                     Unattmpted
                   </span>
                   <div className="flex items-center gap-1.5 mt-0.5">
-                    <div className="w-1.5 h-1.5 rounded-full bg-slate-300"></div>
-                    <span className="text-xs font-black text-slate-700 dark:text-slate-300">
+                    <div className="w-1.5 h-1.5 rounded-full bg-neutral-300"></div>
+                    <span className="text-xs font-black text-neutral-700 dark:text-neutral-300">
                       {analysis?.unattempted || 0}
                     </span>
                   </div>
                 </div>
               </div>
             </div>
-            <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between transition-colors">
-              <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+            <Separator className="mt-3"/>
+            <div className="flex items-center justify-between transition-colors">
+              <span className="text-[9px] font-bold text-neutral-800 dark:text-neutral-300 uppercase tracking-widest">
                 Total Score
               </span>
               <div className="px-2.5 py-1 rounded-lg text-xs font-black bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400">
@@ -1192,23 +1199,23 @@ export const QuestionDetail = () => {
                 <div className="p-2 py-0">
                   <div className="grid grid-cols-2 gap-y-2">
                     <div className="flex flex-col">
-                      <span className="text-xs font-normal text-slate-400 dark:text-slate-500 uppercase tracking-tight">
+                      <span className="text-xs font-normal text-neutral-800 dark:text-neutral-300 uppercase tracking-tight">
                         Your Answer
                       </span>
                       <div className="flex items-center gap-1.5 mt-0.5">
                         <div className="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
-                        <span className="text-sm font-black text-slate-700 dark:text-slate-300">
+                        <span className="text-sm font-black text-neutral-700 dark:text-neutral-300">
                           {formatAnswerValue(answer)}
                         </span>
                       </div>
                     </div>
                     <div className="flex flex-col">
-                      <span className="text-xs font-normal text-slate-400 dark:text-slate-500 uppercase tracking-tight">
+                      <span className="text-xs font-normal text-neutral-800 dark:text-neutral-300 uppercase tracking-tight">
                         Correct Answer
                       </span>
                       <div className="flex items-center gap-1.5 mt-0.5">
                         <div className="w-1.5 h-1.5 rounded-full bg-amber-400"></div>
-                        <span className="text-sm font-black text-slate-700 dark:text-slate-300">
+                        <span className="text-sm font-black text-neutral-700 dark:text-neutral-300">
                           {formatAnswerValue(question.keyUpdate)}
                         </span>
                       </div>
@@ -1216,35 +1223,44 @@ export const QuestionDetail = () => {
                   </div>
                   <div className="grid grid-cols-2 gap-y-2">
                     <div className="flex flex-col">
-                      <span className="text-xs font-normal text-slate-400 dark:text-slate-500 uppercase tracking-tight">
+                      <span className="text-xs font-normal text-neutral-800 dark:text-neutral-300 uppercase tracking-tight">
                         Original Answer
                       </span>
                       <div className="flex items-center gap-1.5 mt-0.5">
                         <div className="w-1.5 h-1.5 rounded-full bg-orange-500"></div>
-                        <span className="text-sm font-black text-slate-700 dark:text-slate-300">
+                        <span className="text-sm font-black text-neutral-700 dark:text-neutral-300">
                           {formatAnswerValue(question.correctAnswer)}
                         </span>
                       </div>
                     </div>
                     <div className="flex flex-col">
-                      <span className="text-xs font-normal text-slate-400 dark:text-slate-500 uppercase tracking-tight">
+                      <span className="text-xs font-normal text-neutral-800 dark:text-neutral-300 uppercase tracking-tight">
                         Marks
                       </span>
                       <div className="flex items-center gap-1.5 mt-0.5">
-                        <div className="w-1.5 h-1.5 rounded-full bg-slate-300"></div>
-                        <span className="text-sm font-black text-slate-700 dark:text-slate-300">
+                        <div className="w-1.5 h-1.5 rounded-full bg-neutral-300"></div>
+                        <span className="text-sm font-black text-neutral-700 dark:text-neutral-300">
                           {score}
                         </span>
                       </div>
                     </div>
                   </div>
                 </div>
-                <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between transition-colors">
-                  <span className="text-xs font-normal text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+                <Separator className="mt-3" />
+                <div className="flex items-center justify-between transition-colors">
+                  <span className="text-xs font-normal text-neutral-800 dark:text-neutral-300 uppercase tracking-widest">
                     Time Spent
                   </span>
                   <div className="px-2.5 py-1 rounded-lg text-xs font-black bg-emerald-50 dark:bg-emerald-900/30 text-blue-600 dark:text-blue-400">
                     {formatSeconds(timeSpent)}
+                  </div>
+                </div>
+                <div className="flex items-center justify-between transition-colors">
+                  <span className="text-xs font-normal text-neutral-800 dark:text-neutral-300 uppercase tracking-widest">
+                    Avg Time (Others)
+                  </span>
+                  <div className="px-2.5 py-1 rounded-lg text-xs font-black bg-emerald-50 dark:bg-emerald-900/30 text-blue-600 dark:text-blue-400">
+                    {peerTimeLabel}
                   </div>
                 </div>
                 {/* <div className="flex items-center justify-between">
@@ -1593,7 +1609,7 @@ export const QuestionDetail = () => {
         }}
       >
         <DialogContent
-          className="inset-0 h-screen w-screen max-w-none translate-x-0 translate-y-0 rounded-none border-0 bg-transparent p-0 shadow-none"
+          className="inset-0 h-screen w-screen max-w-none tranneutral-x-0 tranneutral-y-0 rounded-none border-0 bg-transparent p-0 shadow-none"
           overlayClassName="bg-black/80 backdrop-blur-none"
         >
           <div className="relative h-full w-full">
@@ -1637,7 +1653,7 @@ export const QuestionDetail = () => {
                   draggable={false}
                   onClick={(event) => event.stopPropagation()}
                   style={{
-                    transform: `translate(${imageOffset.x}px, ${imageOffset.y}px) scale(${imageZoom})`,
+                    transform: `tranneutral(${imageOffset.x}px, ${imageOffset.y}px) scale(${imageZoom})`,
                     transformOrigin: "center",
                   }}
                 />

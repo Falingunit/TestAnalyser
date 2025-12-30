@@ -83,8 +83,10 @@ export type TestRecord = {
   externalExamId?: string
   title: string
   examDate: string
+  rank: number | null
   answers: Record<string, AnswerValue>
   timings: Record<string, number>
+  peerTimings?: Record<string, number>
   bookmarks: Record<string, boolean>
   questions: QuestionRecord[]
 }

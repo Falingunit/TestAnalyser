@@ -27,7 +27,13 @@ const subjects = ['ALL', 'PHYSICS', 'CHEMISTRY', 'MATHEMATICS'] as const
 
 type SubjectFilter = (typeof subjects)[number]
 
-type SortOption = 'date-desc' | 'date-asc' | 'score-desc' | 'score-asc'
+type SortOption =
+  | 'date-desc'
+  | 'date-asc'
+  | 'score-desc'
+  | 'score-asc'
+  | 'rank-asc'
+  | 'rank-desc'
 
 export const Tests = () => {
   const { state, currentUser, resyncTest, resyncAllTests } = useAppStore()
@@ -76,6 +82,8 @@ export const Tests = () => {
     const sorted = [...filtered].sort((a, b) => {
       const analysisA = analysisMap.get(a.id)
       const analysisB = analysisMap.get(b.id)
+      const rankA = a.rank ?? Number.POSITIVE_INFINITY
+      const rankB = b.rank ?? Number.POSITIVE_INFINITY
       switch (sort) {
         case 'date-asc':
           return new Date(a.examDate).getTime() - new Date(b.examDate).getTime()
@@ -83,6 +91,10 @@ export const Tests = () => {
           return (analysisB?.scoreCurrent ?? 0) - (analysisA?.scoreCurrent ?? 0)
         case 'score-asc':
           return (analysisA?.scoreCurrent ?? 0) - (analysisB?.scoreCurrent ?? 0)
+        case 'rank-asc':
+          return rankA - rankB
+        case 'rank-desc':
+          return rankB - rankA
         case 'date-desc':
         default:
           return new Date(b.examDate).getTime() - new Date(a.examDate).getTime()
@@ -164,6 +176,8 @@ export const Tests = () => {
                     <SelectItem value="date-asc">Oldest first</SelectItem>
                     <SelectItem value="score-desc">Highest score</SelectItem>
                     <SelectItem value="score-asc">Lowest score</SelectItem>
+                    <SelectItem value="rank-asc">Best rank</SelectItem>
+                    <SelectItem value="rank-desc">Worst rank</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -230,7 +244,8 @@ export const Tests = () => {
           <DialogHeader>
             <DialogTitle>Resync all tests?</DialogTitle>
             <DialogDescription>
-              This will replace your current attempts with the latest data.
+              This will replace your current attempts with the latest data, but your
+              bookmarks, notes, and key changes will remain intact.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -269,7 +284,8 @@ export const Tests = () => {
           <DialogHeader>
             <DialogTitle>Resync this exam?</DialogTitle>
             <DialogDescription>
-              This will replace your current attempt for this exam.
+              This will replace your current attempt for this exam, but your
+              bookmarks, notes, and key changes will remain intact.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

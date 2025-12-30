@@ -52,8 +52,8 @@ export const AppShell = ({ children }: { children: ReactNode }) => {
 
   return (
     <div className="app-canvas">
-      <header className="sticky top-0 z-40 border-b border-border bg-background">
-        <div className="flex flex-wrap items-center justify-between gap-4 px-6 py-4">
+      <header className="sticky top-0 z-40 border-b border-border/50 bg-background/80 backdrop-blur-xl shadow-sm supports-[backdrop-filter]:bg-background/60">
+        <div className="flex flex-wrap items-center justify-between gap-4 px-6 py-3">
           <div className="flex flex-wrap items-center gap-4">
             <nav className="flex flex-wrap items-center gap-2 text-sm">
               {navItems.map((item) => (
@@ -63,7 +63,7 @@ export const AppShell = ({ children }: { children: ReactNode }) => {
                   end={item.to === "/app"}
                   className={({ isActive }) =>
                     cn(
-                      "inline-flex items-center gap-2 rounded-full px-4 py-2 transition",
+                      "inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-sm transition",
                       isActive
                         ? "bg-secondary text-foreground"
                         : "text-muted-foreground hover:bg-accent hover:text-foreground"

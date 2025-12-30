@@ -162,6 +162,8 @@ export const TestSummaryCard = ({
     ? `${analysis.scoreCurrent}/${totalScore}`
     : "n/a";
   const accuracyLabel = analysis ? `${analysis.accuracy}%` : "n/a";
+  const rankValue = test.rank === null ? "n/a" : String(test.rank);
+  const rankBadgeLabel = test.rank === null ? null : `Rank ${test.rank}`;
   const totalSegments = buildSegments(
     analysis?.correct ?? 0,
     analysis?.partial ?? 0,
@@ -214,6 +216,9 @@ export const TestSummaryCard = ({
             ) : (
               <Badge variant="secondary">Key changes verified</Badge>
             )}
+            {rankBadgeLabel ? (
+              <Badge variant="outline">{rankBadgeLabel}</Badge>
+            ) : null}
             <SegmentedProgressBar className="h-1.5 w-32" segments={totalSegments} />
             <div onClick={(event) => event.stopPropagation()}>
               {collapsedActionContent}
@@ -267,14 +272,16 @@ export const TestSummaryCard = ({
             <div
               className="rounded-lg border border-border bg-muted/30 p-3"
             >
-              <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                Score
-              </p>
-              <p
-                className="mt-2 text-2xl font-semibold"
-              >
-                {scoreLabel}
-              </p>
+              <div className="grid grid-cols-2 gap-2 text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                <span>Score</span>
+                <span className="text-right">Rank</span>
+              </div>
+              <div className="mt-2 grid grid-cols-2 gap-2">
+                <p className="text-2xl font-semibold">{scoreLabel}</p>
+                <p className="text-2xl font-semibold text-right">
+                  {rankValue}
+                </p>
+              </div>
               {analysis && analysis.keyChanges.length > 0 && analysis.scoreDelta !== 0 ? (
                 <p className="mt-1 text-xs text-emerald-300">
                   Bonus {analysis.scoreDelta > 0 ? '+' : ''}

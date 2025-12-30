@@ -9,6 +9,7 @@ import type {
   ScrapedQuestion,
   ScrapedQuestionType,
   ScrapedReport,
+  ScrapedScoreOverview,
   ScrapedSubject,
 } from './types.js'
 
@@ -104,6 +105,21 @@ const extractOid = (value: unknown): string | null => {
     typeof (value as { $oid?: unknown }).$oid === 'string'
   ) {
     return (value as { $oid: string }).$oid
+  }
+  return null
+}
+
+const toInteger = (value: unknown) => {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return Math.round(value)
+  }
+  if (typeof value === 'string') {
+    const trimmed = value.trim()
+    if (!trimmed) {
+      return null
+    }
+    const parsed = Number(trimmed)
+    return Number.isFinite(parsed) ? Math.round(parsed) : null
   }
   return null
 }
@@ -450,6 +466,33 @@ const extractTestsList = (payload: unknown) => {
   return []
 }
 
+const extractScoreOverviewFromJson = (payload: unknown) => {
+  if (!payload || typeof payload !== 'object') {
+    return null
+  }
+  const root = payload as Record<string, unknown>
+  const data =
+    root.data && typeof root.data === 'object'
+      ? (root.data as Record<string, unknown>)
+      : root
+
+  if (!data || typeof data !== 'object') {
+    return null
+  }
+
+  const testEntry = Array.isArray(data.test) ? data.test[0] : null
+  const title =
+    testEntry && typeof (testEntry as { test_name?: unknown }).test_name === 'string'
+      ? ((testEntry as { test_name: string }).test_name || '').trim()
+      : null
+
+  const rank = toInteger(data.rank ?? data.rank_no ?? data.rankNo)
+  const overview: ScrapedScoreOverview | null =
+    rank === null ? null : { rank }
+
+  return { title, overview }
+}
+
 const parseTestEntry = (entry: Record<string, unknown>, index: number) => {
   const title =
     (typeof entry.test_name === 'string' && entry.test_name.trim()) ||
@@ -687,6 +730,32 @@ export const scrapeTestZ7iV2 = async (payload: {
       let questions: ScrapedQuestion[] = []
       let answers: ScrapedAnswer[] = []
       let examDate = test.examDate
+      let title = test.title
+      let scoreOverview: ScrapedScoreOverview | undefined
+
+      try {
+        const response = await context.request.get(
+          `${baseUrl}/student/reports/get-score-overview/${test.reportId}`,
+          { timeout: env.scraperTimeoutMs },
+        )
+        const body = await response.text()
+        const parsed = tryParseJsonPayload(body)
+        if (response.ok() && parsed) {
+          await saveDebugJson(`score-overview-${test.reportId}`, parsed)
+          const extracted = extractScoreOverviewFromJson(parsed)
+          if (extracted) {
+            if (extracted.title) {
+              title = extracted.title
+            }
+            scoreOverview = extracted.overview
+          }
+        } else if (response.ok()) {
+          await saveDebugText(`score-overview-${test.reportId}`, body)
+        }
+      } catch (error) {
+        const err = error instanceof Error ? error.message : 'Unknown error'
+        warnings.push(`Score overview fetch failed for ${test.title}: ${err}`)
+      }
 
       try {
         const questionResponse = await context.request.get(
@@ -725,8 +794,9 @@ export const scrapeTestZ7iV2 = async (payload: {
 
       reports.push({
         externalExamId: test.reportId,
-        title: test.title,
+        title,
         examDate,
+        scoreOverview,
         questions,
         answers,
       })

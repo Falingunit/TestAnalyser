@@ -486,7 +486,8 @@ export const TestDetail = () => {
           <DialogHeader>
             <DialogTitle>Resync this exam?</DialogTitle>
             <DialogDescription>
-              This will replace your current attempt with the latest data.
+              This will replace your current attempt with the latest data, but your
+              bookmarks, notes, and key changes will remain intact.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

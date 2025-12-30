@@ -11,6 +11,7 @@ import type {
   ScrapedQuestion,
   ScrapedReport,
   ScrapedQuestionType,
+  ScrapedScoreOverview,
   ScrapedSubject,
 } from './types.js'
 
@@ -200,6 +201,21 @@ const extractOid = (value: unknown): string | null => {
     typeof (value as { $oid?: unknown }).$oid === 'string'
   ) {
     return (value as { $oid: string }).$oid
+  }
+  return null
+}
+
+const toInteger = (value: unknown) => {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return Math.round(value)
+  }
+  if (typeof value === 'string') {
+    const trimmed = value.trim()
+    if (!trimmed) {
+      return null
+    }
+    const parsed = Number(trimmed)
+    return Number.isFinite(parsed) ? Math.round(parsed) : null
   }
   return null
 }
@@ -432,9 +448,24 @@ const extractScoreOverviewFromJson = (payload: unknown) => {
     /^date$/i,
   ])
 
+  let overview: ScrapedScoreOverview | null = null
+  if (payload && typeof payload === 'object') {
+    const root = payload as Record<string, unknown>
+    const data =
+      root.data && typeof root.data === 'object'
+        ? (root.data as Record<string, unknown>)
+        : root
+
+    if (data && typeof data === 'object') {
+      const rank = toInteger(data.rank ?? data.rank_no ?? data.rankNo)
+      overview = rank === null ? null : { rank }
+    }
+  }
+
   return {
     title: title ?? null,
     examDate: examDateRaw ? normalizeDate(examDateRaw) : null,
+    overview,
   }
 }
 
@@ -1012,6 +1043,7 @@ export const scrapeTestZ7i = async (payload: {
       await saveDebugHtml(`report-${reportId}`, reportHtml)
 
       let meta = parseScoreOverview(reportHtml)
+      let scoreOverview: ScrapedScoreOverview | undefined
       try {
         const response = await context.request.get(
           `${baseUrl}/student/reports/get-score-overview/${reportId}`,
@@ -1028,6 +1060,7 @@ export const scrapeTestZ7i = async (payload: {
             title: jsonMeta.title ?? meta.title,
             examDate: jsonMeta.examDate ?? meta.examDate,
           }
+          scoreOverview = jsonMeta.overview ?? scoreOverview
         } else if (response.ok() && contentType.includes('application/json')) {
           warnings.push(`Score overview JSON malformed for ${result.title}.`)
         }
@@ -1132,6 +1165,7 @@ export const scrapeTestZ7i = async (payload: {
           externalExamId: reportId,
           title: meta.title || result.title,
           examDate: meta.examDate,
+          scoreOverview,
           questions,
           answers,
         })
@@ -1163,6 +1197,7 @@ export const scrapeTestZ7i = async (payload: {
           externalExamId: reportId,
           title: meta.title || result.title,
           examDate: meta.examDate,
+          scoreOverview,
           answers,
         })
       }

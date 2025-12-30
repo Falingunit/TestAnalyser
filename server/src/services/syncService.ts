@@ -6,6 +6,7 @@ import type {
   ScrapedQuestion,
   ScrapedQuestionType,
   ScrapedReport,
+  ScrapedScoreOverview,
 } from '../scraper/types.js'
 
 type ExistingQuestion = {
@@ -32,9 +33,33 @@ const normalizeReport = (report: ScrapedReport) => {
     externalExamId: report.externalExamId?.trim() ?? '',
     title: report.title.trim(),
     examDate: normalizeDate(report.examDate),
+    scoreOverview: report.scoreOverview ?? null,
     questions: report.questions ?? [],
     answers: report.answers ?? [],
   }
+}
+
+const toOptionalInt = (value: unknown) => {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return Math.round(value)
+  }
+  if (typeof value === 'string') {
+    const trimmed = value.trim()
+    if (!trimmed) {
+      return null
+    }
+    const parsed = Number(trimmed)
+    return Number.isFinite(parsed) ? Math.round(parsed) : null
+  }
+  return null
+}
+
+const buildAttemptOverviewUpdate = (overview?: ScrapedScoreOverview | null) => {
+  const rank = toOptionalInt(overview?.rank)
+  if (rank === null) {
+    return {}
+  }
+  return { rank }
 }
 
 const parseStoredJson = (value: string | null) => {
@@ -298,6 +323,7 @@ const upsertAttempt = async (payload: {
   questionByNumber: Map<number, { id: string; qtype: ScrapedQuestionType; keyUpdate: unknown }>
   fallbackByNumber?: Map<number, { id: string; qtype: ScrapedQuestionType; keyUpdate: unknown }>
   answers: ScrapedAnswer[]
+  scoreOverview?: ScrapedScoreOverview | null
 }) => {
   const answerByQuestionId: Record<string, unknown> = {}
   const timingByQuestionId: Record<string, number> = {}
@@ -329,6 +355,7 @@ const upsertAttempt = async (payload: {
 
   }
 
+  const overview = buildAttemptOverviewUpdate(payload.scoreOverview)
   const attempt = await prisma.attempt.upsert({
     where: {
       userId_examId: {
@@ -339,6 +366,7 @@ const upsertAttempt = async (payload: {
     update: {
       answers: serializeJson(answerByQuestionId),
       timings: serializeJson(timingByQuestionId),
+      ...overview,
     },
     create: {
       userId: payload.userId,
@@ -346,6 +374,7 @@ const upsertAttempt = async (payload: {
       answers: serializeJson(answerByQuestionId),
       timings: serializeJson(timingByQuestionId),
       bookmarks: serializeJson({}),
+      ...overview,
     },
   })
 
@@ -467,6 +496,7 @@ export const syncExternalAccount = async (payload: {
       questionByNumber,
       fallbackByNumber,
       answers: normalized.answers,
+      scoreOverview: normalized.scoreOverview,
     })
 
     saved.push({ id: attempt.id, title: normalized.title })

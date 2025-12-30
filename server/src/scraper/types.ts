@@ -25,10 +25,15 @@ export type ScrapedAnswer = {
   timeSpentSec?: number
 }
 
+export type ScrapedScoreOverview = {
+  rank?: number | null
+}
+
 export type ScrapedReport = {
   externalExamId: string
   title: string
   examDate: string
+  scoreOverview?: ScrapedScoreOverview
   questions?: ScrapedQuestion[]
   answers?: ScrapedAnswer[]
 }
