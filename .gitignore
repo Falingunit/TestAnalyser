@@ -16,7 +16,10 @@ dist-ssr
 !.env.example
 !**/.env.example
 server/.scraper
-
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
