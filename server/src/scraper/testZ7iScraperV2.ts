@@ -747,7 +747,7 @@ export const scrapeTestZ7iV2 = async (payload: {
             if (extracted.title) {
               title = extracted.title
             }
-            scoreOverview = extracted.overview
+            scoreOverview = extracted.overview ?? undefined
           }
         } else if (response.ok()) {
           await saveDebugText(`score-overview-${test.reportId}`, body)

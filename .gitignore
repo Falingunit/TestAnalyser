@@ -31,3 +31,5 @@ server/prisma/dev.db
 *.njsproj
 *.sln
 *.sw?
+.env
+dev-dist/
