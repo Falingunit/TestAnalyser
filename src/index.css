@@ -32,6 +32,7 @@
     --chart-4: 0 0% 60%;
     --chart-5: 0 0% 72%;
     --reader-font-scale: 1;
+    --zoom-scale: 1;
   }
 
   .dark {
@@ -103,6 +104,17 @@
   h5,
   h6 {
     @apply font-display;
+  }
+
+  .question-html img {
+    zoom: var(--zoom-scale)
+  }
+
+  @supports not (zoom: 1) {
+    .html-content img {
+      transform: scale(var(--zoom-scale));
+      transform-origin: left center;
+    }
   }
 }
 

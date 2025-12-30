@@ -62,7 +62,12 @@ export const TestSummaryCard = ({
   const overallTypeStats = useMemo(() => {
     const typeMap = {} as Record<
       (typeof questionTypes)[number],
-      { correct: number; partial: number; incorrect: number; unattempted: number }
+      {
+        correct: number;
+        partial: number;
+        incorrect: number;
+        unattempted: number;
+      }
     >;
     questionTypes.forEach((type) => {
       typeMap[type] = { correct: 0, partial: 0, incorrect: 0, unattempted: 0 };
@@ -90,24 +95,39 @@ export const TestSummaryCard = ({
   }, [test]);
   const hasPartialQuestions = useMemo(
     () => Object.values(overallTypeStats).some((stats) => stats.partial > 0),
-    [overallTypeStats],
+    [overallTypeStats]
   );
   const subjectTypeStats = useMemo(() => {
     const stats = new Map<
       string,
       Record<
         (typeof questionTypes)[number],
-        { correct: number; partial: number; incorrect: number; unattempted: number }
+        {
+          correct: number;
+          partial: number;
+          incorrect: number;
+          unattempted: number;
+        }
       >
     >();
 
     subjectOrder.forEach((subject) => {
       const typeMap = {} as Record<
         (typeof questionTypes)[number],
-        { correct: number; partial: number; incorrect: number; unattempted: number }
+        {
+          correct: number;
+          partial: number;
+          incorrect: number;
+          unattempted: number;
+        }
       >;
       questionTypes.forEach((type) => {
-        typeMap[type] = { correct: 0, partial: 0, incorrect: 0, unattempted: 0 };
+        typeMap[type] = {
+          correct: 0,
+          partial: 0,
+          incorrect: 0,
+          unattempted: 0,
+        };
       });
       stats.set(subject.id, typeMap);
     });
@@ -176,9 +196,9 @@ export const TestSummaryCard = ({
     </Button>
   );
   const firstQuestionId = useMemo(() => {
-    const first = buildDisplayQuestions(test.questions)[0]
-    return first?.question.id ?? ""
-  }, [test.questions])
+    const first = buildDisplayQuestions(test.questions)[0];
+    return first?.question.id ?? "";
+  }, [test.questions]);
   const headerReviewAction = reviewAction ?? openReview;
   const actionContent = actions ?? (
     <>
@@ -219,7 +239,10 @@ export const TestSummaryCard = ({
             {rankBadgeLabel ? (
               <Badge variant="outline">{rankBadgeLabel}</Badge>
             ) : null}
-            <SegmentedProgressBar className="h-1.5 w-32" segments={totalSegments} />
+            <SegmentedProgressBar
+              className="h-1.5 w-32"
+              segments={totalSegments}
+            />
             <div onClick={(event) => event.stopPropagation()}>
               {collapsedActionContent}
             </div>
@@ -240,11 +263,13 @@ export const TestSummaryCard = ({
   }
 
   return (
-    <Card className={cn("app-panel", className)}>
+    <Card className={cn("app-panel", className, "border-none")}>
       <CardContent className="space-y-5 p-5">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="text-base font-semibold text-foreground">{test.title}</p>
+            <p className="text-base font-semibold text-foreground">
+              {test.title}
+            </p>
             <p className="text-xs text-muted-foreground">
               {formatDate(test.examDate)}
             </p>
@@ -269,22 +294,20 @@ export const TestSummaryCard = ({
 
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="grid gap-3 sm:grid-rows-2">
-            <div
-              className="rounded-lg border border-border bg-muted/30 p-3"
-            >
+            <div className="rounded-lg border border-border bg-muted/30 p-3">
               <div className="grid grid-cols-2 gap-2 text-xs uppercase tracking-[0.2em] text-muted-foreground">
                 <span>Score</span>
                 <span className="text-right">Rank</span>
               </div>
               <div className="mt-2 grid grid-cols-2 gap-2">
                 <p className="text-2xl font-semibold">{scoreLabel}</p>
-                <p className="text-2xl font-semibold text-right">
-                  {rankValue}
-                </p>
+                <p className="text-2xl font-semibold text-right">{rankValue}</p>
               </div>
-              {analysis && analysis.keyChanges.length > 0 && analysis.scoreDelta !== 0 ? (
+              {analysis &&
+              analysis.keyChanges.length > 0 &&
+              analysis.scoreDelta !== 0 ? (
                 <p className="mt-1 text-xs text-emerald-300">
-                  Bonus {analysis.scoreDelta > 0 ? '+' : ''}
+                  Bonus {analysis.scoreDelta > 0 ? "+" : ""}
                   {analysis.scoreDelta}
                 </p>
               ) : null}
@@ -292,16 +315,14 @@ export const TestSummaryCard = ({
               <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
                 Accuracy
               </p>
-              <p className="mt-2 text-xl font-semibold">
-                {accuracyLabel}
-              </p>
+              <p className="mt-2 text-xl font-semibold">{accuracyLabel}</p>
               <div className="mt-3 overflow-hidden rounded-md border border-border/60">
                 <div
                   className={cn(
-                    'grid gap-3 bg-muted/50 px-3 py-2 text-[10px] uppercase tracking-[0.2em] text-muted-foreground',
+                    "grid gap-3 bg-muted/50 px-3 py-2 text-[10px] uppercase tracking-[0.2em] text-muted-foreground",
                     hasPartialQuestions
-                      ? 'grid-cols-[minmax(0,1fr)_repeat(4,minmax(0,88px))]'
-                      : 'grid-cols-[minmax(0,1fr)_repeat(3,minmax(0,88px))]',
+                      ? "grid-cols-[minmax(0,1fr)_repeat(4,minmax(0,88px))]"
+                      : "grid-cols-[minmax(0,1fr)_repeat(3,minmax(0,88px))]"
                   )}
                 >
                   <span>Type</span>
@@ -321,7 +342,10 @@ export const TestSummaryCard = ({
                       unattempted: 0,
                     };
                     const total =
-                      stats.correct + stats.partial + stats.incorrect + stats.unattempted;
+                      stats.correct +
+                      stats.partial +
+                      stats.incorrect +
+                      stats.unattempted;
                     if (total === 0) {
                       return null;
                     }
@@ -329,10 +353,10 @@ export const TestSummaryCard = ({
                       <div
                         key={type}
                         className={cn(
-                          'grid gap-3 px-3 py-2 text-[11px] text-muted-foreground',
+                          "grid gap-3 px-3 py-2 text-[11px] text-muted-foreground",
                           hasPartialQuestions
-                            ? 'grid-cols-[minmax(0,1fr)_repeat(4,minmax(0,88px))]'
-                            : 'grid-cols-[minmax(0,1fr)_repeat(3,minmax(0,88px))]',
+                            ? "grid-cols-[minmax(0,1fr)_repeat(4,minmax(0,88px))]"
+                            : "grid-cols-[minmax(0,1fr)_repeat(3,minmax(0,88px))]"
                         )}
                       >
                         <span className="text-foreground/90">
@@ -381,9 +405,7 @@ export const TestSummaryCard = ({
               />
             </div>
           </div>
-          <div
-            className="grid gap-3 md:grid-cols-1"
-          >
+          <div className="grid gap-3 md:grid-cols-1">
             {subjectSummary.map((subject) => (
               <div
                 key={subject.label}
@@ -409,10 +431,10 @@ export const TestSummaryCard = ({
                 <div className="mt-2 overflow-hidden rounded-md border border-border/60">
                   <div
                     className={cn(
-                      'grid gap-3 bg-muted/50 px-3 py-2 text-[10px] uppercase tracking-[0.2em] text-muted-foreground',
+                      "grid gap-3 bg-muted/50 px-3 py-2 text-[10px] uppercase tracking-[0.2em] text-muted-foreground",
                       hasPartialQuestions
-                        ? 'grid-cols-[minmax(0,1fr)_repeat(4,minmax(0,88px))]'
-                        : 'grid-cols-[minmax(0,1fr)_repeat(3,minmax(0,88px))]',
+                        ? "grid-cols-[minmax(0,1fr)_repeat(4,minmax(0,88px))]"
+                        : "grid-cols-[minmax(0,1fr)_repeat(3,minmax(0,88px))]"
                     )}
                   >
                     <span>Type</span>
@@ -432,7 +454,10 @@ export const TestSummaryCard = ({
                         unattempted: 0,
                       };
                       const total =
-                        stats.correct + stats.partial + stats.incorrect + stats.unattempted;
+                        stats.correct +
+                        stats.partial +
+                        stats.incorrect +
+                        stats.unattempted;
                       if (total === 0) {
                         return null;
                       }
@@ -440,10 +465,10 @@ export const TestSummaryCard = ({
                         <div
                           key={type}
                           className={cn(
-                            'grid gap-3 px-3 py-2 text-[11px] text-muted-foreground',
+                            "grid gap-3 px-3 py-2 text-[11px] text-muted-foreground",
                             hasPartialQuestions
-                              ? 'grid-cols-[minmax(0,1fr)_repeat(4,minmax(0,88px))]'
-                              : 'grid-cols-[minmax(0,1fr)_repeat(3,minmax(0,88px))]',
+                              ? "grid-cols-[minmax(0,1fr)_repeat(4,minmax(0,88px))]"
+                              : "grid-cols-[minmax(0,1fr)_repeat(3,minmax(0,88px))]"
                           )}
                         >
                           <span className="text-foreground/90">
@@ -473,9 +498,7 @@ export const TestSummaryCard = ({
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-2">
-          {actionContent}
-        </div>
+        <div className="flex flex-wrap gap-2">{actionContent}</div>
       </CardContent>
     </Card>
   );

@@ -147,8 +147,6 @@ export const QuestionDetail = () => {
     toggleQuestionBookmark,
     currentUser,
     isAdmin,
-    fontScale,
-    setFontScale,
     setMode,
   } = useAppStore();
   const test = state.tests.find((item) => item.id === testId);
@@ -208,6 +206,7 @@ export const QuestionDetail = () => {
   const [isImageOpen, setIsImageOpen] = useState(false);
   const [imageSrc, setImageSrc] = useState<string | null>(null);
   const [imageZoom, setImageZoom] = useState(1);
+  const [zoomLevel, setZoomLevel] = useState(1);
   const [imageOffset, setImageOffset] = useState({ x: 0, y: 0 });
   const questionCopyRef = useRef<HTMLDivElement | null>(null);
   const dragState = useRef<{
@@ -221,6 +220,13 @@ export const QuestionDetail = () => {
     startDistance: number;
     startZoom: number;
   } | null>(null);
+
+  useEffect(() => {
+    document.documentElement.style.setProperty(
+      "--zoom-scale",
+      zoomLevel.toString()
+    );
+  }, [zoomLevel]);
 
   const analysis = test ? buildAnalysis(test) : null;
   const totalScore = test
@@ -673,10 +679,6 @@ export const QuestionDetail = () => {
     event.currentTarget.releasePointerCapture(event.pointerId);
   };
 
-  const adjustFontScale = (delta: number) => {
-    setFontScale(fontScale + delta);
-  };
-
   const togglePin = (id: string) => {
     if (!isAdmin) {
       return;
@@ -697,6 +699,7 @@ export const QuestionDetail = () => {
     );
   };
 
+  // Copy Image
   const waitForImages = async (root: HTMLElement) => {
     const images = Array.from(root.querySelectorAll("img"));
     if (images.length === 0) {
@@ -791,7 +794,6 @@ export const QuestionDetail = () => {
     wrapper.style.color = foreground;
     wrapper.style.fontFamily = fontFamily;
     wrapper.style.display = "block";
-    wrapper.style.setProperty("--reader-font-scale", String(fontScale));
     wrapper.appendChild(clonedRoot);
 
     const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
@@ -896,9 +898,6 @@ export const QuestionDetail = () => {
           <Link to={`/app/tests/${test.id}`}>Back to test</Link>
         </Button>
         <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-          <span>
-            Q{displayNumber} - {question.subject}
-          </span>
           <Button
             type="button"
             variant="ghost"
@@ -931,27 +930,26 @@ export const QuestionDetail = () => {
           >
             <Copy className="h-4 w-4 text-muted-foreground" />
           </Button>
+
+          {/* Image, Text size zoom */}
           <div className="flex items-center gap-2 rounded-full border border-border/60 bg-muted/30 px-3 py-1 text-xs text-muted-foreground">
-            <span>Text size</span>
+            <span>Size</span>
             <Button
               type="button"
               variant="ghost"
               size="icon"
               className="h-6 w-6"
-              onClick={() => adjustFontScale(-0.1)}
+              onClick={() => setZoomLevel((p) => Math.max(p - 0.1, 0.7))}
               title="Decrease font size"
             >
               A-
             </Button>
-            <span className="min-w-[38px] text-center text-[11px]">
-              {Math.round(fontScale * 100)}%
-            </span>
             <Button
               type="button"
               variant="ghost"
               size="icon"
               className="h-6 w-6"
-              onClick={() => adjustFontScale(0.1)}
+              onClick={() => setZoomLevel((p) => Math.min(p + 0.1, 1.7))}
               title="Increase font size"
             >
               A+
@@ -1085,10 +1083,11 @@ export const QuestionDetail = () => {
               <div ref={questionCopyRef} className="space-y-5">
                 <div className="space-y-3">
                   <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                    Question
+                    Q{displayNumber} - {question.subject}
                   </p>
                   <div
                     className="question-html rounded-lg bg-transparent leading-relaxed"
+                    style={{ fontSize: zoomLevel + "rem" }}
                     dangerouslySetInnerHTML={{
                       __html: question.questionContent,
                     }}
@@ -1152,6 +1151,7 @@ export const QuestionDetail = () => {
                             </span>
                             <div
                               className="question-html leading-relaxed"
+                              style={{ fontSize: zoomLevel * 1.15 + "rem" }}
                               dangerouslySetInnerHTML={{
                                 __html: item.value ?? "",
                               }}
