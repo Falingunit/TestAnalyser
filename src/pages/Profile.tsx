@@ -236,7 +236,7 @@ export const Profile = () => {
           <CardContent className="space-y-4 p-6">
             <div className="flex items-center justify-between">
               <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                External account
+                Z7i account
               </p>
               <Badge variant={account ? "secondary" : "outline"}>
                 {account
@@ -247,7 +247,7 @@ export const Profile = () => {
             <div className="rounded-lg border border-border bg-muted/30 p-4">
               <div className="space-y-3">
                 <div className="space-y-2">
-                  <Label>External username</Label>
+                  <Label>Z7i username</Label>
                   <Input
                     readOnly
                     value={account?.username ?? "Not connected"}
