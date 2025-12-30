@@ -20,7 +20,6 @@ server/.scraper
 *.db-journal
 *.db-wal
 *.db-shm
-!*/.scraper
 
 # Editor directories and files
 .vscode/*
