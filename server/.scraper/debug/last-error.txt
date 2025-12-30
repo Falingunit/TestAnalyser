@@ -1,3 +1,0 @@
-page.goto: net::ERR_NETWORK_CHANGED at https://test.z7i.in/student/reports/view-report/693bd7f9310b0dee5b094702
-Call log:
-[2m  - navigating to "https://test.z7i.in/student/reports/view-report/693bd7f9310b0dee5b094702", waiting until "networkidle"[22m

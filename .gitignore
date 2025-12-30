@@ -16,7 +16,7 @@ dist-ssr
 !.env.example
 !**/.env.example
 server/.scraper
-*.db
+server/prisma/dev.db
 *.db-journal
 *.db-wal
 *.db-shm
