@@ -147,7 +147,6 @@ export const QuestionDetail = () => {
     toggleQuestionBookmark,
     currentUser,
     isAdmin,
-    setMode,
   } = useAppStore();
   const test = state.tests.find((item) => item.id === testId);
   const displayQuestions = useMemo(() => {
@@ -255,8 +254,6 @@ export const QuestionDetail = () => {
   const isBookmarked = Boolean(
     test && question ? test.bookmarks?.[question.id] : false
   );
-  const mode = currentUser?.preferences.mode ?? state.ui.mode;
-  const isDark = mode === "dark";
   const keyOptions = keyOptionLabels;
   const keyOptionOrder: readonly string[] = keyOptionLabels;
 
@@ -955,13 +952,6 @@ export const QuestionDetail = () => {
               A+
             </Button>
           </div>
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <span>Dark mode</span>
-            <Switch
-              checked={isDark}
-              onCheckedChange={(checked) => setMode(checked ? "dark" : "light")}
-            />
-          </div>
         </div>
       </div>
 
@@ -1064,7 +1054,7 @@ export const QuestionDetail = () => {
                 </div>
               </div>
             </div>
-            <Separator className="mt-3"/>
+            <Separator className="mt-3" />
             <div className="flex items-center justify-between transition-colors">
               <span className="text-[9px] font-bold text-neutral-800 dark:text-neutral-300 uppercase tracking-widest">
                 Total Score

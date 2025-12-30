@@ -11,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import { Switch } from "@/components/ui/switch";
 
 const navItems = [
   {
@@ -31,7 +32,10 @@ const navItems = [
 ];
 
 export const AppShell = ({ children }: { children: ReactNode }) => {
-  const { currentUser, logout, state, syncExternalAccount } = useAppStore();
+  const { currentUser, logout, state, syncExternalAccount, setMode } =
+    useAppStore();
+  const mode = currentUser?.preferences.mode ?? state.ui.mode;
+  const isDark = mode === "dark";
   const account = state.externalAccounts.find(
     (item) => item.userId === currentUser?.id
   );
@@ -76,7 +80,17 @@ export const AppShell = ({ children }: { children: ReactNode }) => {
               ))}
             </nav>
           </div>
+
           <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <span>Dark mode</span>
+              <Switch
+                checked={isDark}
+                onCheckedChange={(checked) =>
+                  setMode(checked ? "dark" : "light")
+                }
+              />
+            </div>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm" className="lg:hidden">
