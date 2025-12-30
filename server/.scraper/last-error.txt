@@ -1,0 +1,7 @@
+page.waitForFunction: TypeError: Cannot read properties of undefined (reading 'toLowerCase')
+    at eval (eval at predicate (eval at evaluate (:290:30)), <anonymous>:1:80)
+    at predicate (eval at evaluate (:290:30), <anonymous>:7:23)
+    at next (eval at evaluate (:290:30), <anonymous>:29:29)
+    at eval (eval at evaluate (:290:30), <anonymous>:42:9)
+    at UtilityScript.evaluate (<anonymous>:292:16)
+    at UtilityScript.<anonymous> (<anonymous>:1:44)

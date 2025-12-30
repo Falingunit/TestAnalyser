@@ -1,0 +1,2782 @@
+{
+  "status": true,
+  "data": [
+    {
+      "_id": {
+        "$oid": "693fa8164ec8f9c0e5086ee1"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "693820bb29ef5fb68908aca5"
+      },
+      "marks_positive": "4",
+      "marks_negative": "1",
+      "question_type": "MCQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1765779478,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1765779478,
+      "q_lang": "EN",
+      "question": "<p><img height=\"193\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fe682cbb65\" width=\"1024\" /></p>",
+      "language": "EN",
+      "opt1": "<p><span lang=\"EN-US\" style=\"\"><span style=\"line-height:115%\"><span style=\"Calibri\">bc + ca + ab + abc = 0</span></span></span></p>",
+      "opt2": "<p><span lang=\"EN-US\" style=\"\"><span style=\"line-height:115%\"><span style=\"Calibri\">a + b + c = abc</span></span></span></p>",
+      "opt3": "<p><span lang=\"EN-US\" style=\"\"><span style=\"line-height:115%\"><span style=\"Calibri\">bc + ca + ab = abc</span></span></span></p>",
+      "opt4": "<p><span lang=\"EN-US\" style=\"\"><span style=\"line-height:115%\"><span style=\"Calibri\">bc + ca + ab &ndash; abc = 3 (a + b + c)</span></span></span></p>",
+      "ans": "d",
+      "have_passage": 0,
+      "passage_id": null,
+      "__order": 0,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 0,
+      "n_score": 0,
+      "time_taken": 0,
+      "std_ans": null,
+      "ans_status": "Unattempted"
+    },
+    {
+      "_id": {
+        "$oid": "693faef0d9a24a8fff095195"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "693820bb29ef5fb68908aca5"
+      },
+      "marks_positive": "4",
+      "marks_negative": "1",
+      "question_type": "MCQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1765781232,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1765781232,
+      "q_lang": "EN",
+      "question": "<p><span lang=\"EN-US\" style=\"\"><span style=\"line-height:115%\"><span style=\"Calibri&quot;,&quot;sans-serif&quot;\">The vertex of a right-angled triangle lies on straight line 2x + y &ndash; 10 = 0 and other vertices are (2, -3) and (4, 1). Find the area of triangle.</span></span></span></p>",
+      "language": "EN",
+      "opt1": "<p><img alt=\"$\\sqrt{10}$\" src=\"https://latex.codecogs.com/svg.image?$%5Csqrt%7B10%7D$\" /></p>",
+      "opt2": "<p><span lang=\"EN-US\" style=\"\"><span style=\"line-height:115%\"><span style=\"Calibri&quot;,&quot;sans-serif&quot;\">3</span></span></span></p>",
+      "opt3": "<p><span lang=\"EN-US\" style=\"\"><span style=\"line-height:115%\"><span style=\"Calibri&quot;,&quot;sans-serif&quot;\">33/5&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span></span></span></p>",
+      "opt4": "<p><span lang=\"EN-US\" style=\"\"><span style=\"line-height:115%\"><span style=\"Calibri&quot;,&quot;sans-serif&quot;\">11</span></span></span></p>",
+      "ans": "b",
+      "__order": 1,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 0,
+      "n_score": 0,
+      "time_taken": 0,
+      "std_ans": null,
+      "ans_status": "Unattempted"
+    },
+    {
+      "_id": {
+        "$oid": "693faf9b9859d49eca0bc152"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "693820bb29ef5fb68908aca5"
+      },
+      "marks_positive": "4",
+      "marks_negative": "1",
+      "question_type": "MCQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1765781403,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1765781403,
+      "q_lang": "EN",
+      "question": "<p><span lang=\"EN-US\" style=\"\"><span style=\"line-height:115%\"><span style=\"Calibri\">ABC is an isosceles <img alt=\"$\\Delta$\" src=\"https://latex.codecogs.com/svg.image?$%5CDelta$\" />(AB = AC). If the coordinates of base are (1, 3) and (-2, 7), the coordinates of vertex A are</span></span></span></p>",
+      "language": "EN",
+      "opt1": "<p>&nbsp;</p>\r\n\r\n<p><img alt=\"\" id=\"CCequation1\" src=\"https://latex.codecogs.com/svg.image?$\\left(\\dfrac{1}{2},5\\right)$\" /></p>",
+      "opt2": "<p><img alt=\"$\\left(-\\dfrac{1}{8},5\\right)$\" src=\"https://latex.codecogs.com/svg.image?$%5Cleft(-%5Cdfrac%7B1%7D%7B8%7D,5%5Cright)$\" /></p>",
+      "opt3": "<p><img alt=\"$\\left(\\dfrac{5}{6},6\\right)$\" src=\"https://latex.codecogs.com/svg.image?$%5Cleft(%5Cdfrac%7B5%7D%7B6%7D,6%5Cright)$\" /></p>",
+      "opt4": "<p><img alt=\"$\\left(-7,\\dfrac{1}{8}\\right)$\" src=\"https://latex.codecogs.com/svg.image?$%5Cleft(-7,%5Cdfrac%7B1%7D%7B8%7D%5Cright)$\" /></p>",
+      "ans": "c",
+      "have_passage": 0,
+      "passage_id": null,
+      "__order": 2,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 4,
+      "n_score": 0,
+      "time_taken": 656,
+      "std_ans": "c",
+      "ans_status": "correct"
+    },
+    {
+      "_id": {
+        "$oid": "693fb02f59167100fc02e5c1"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "693820bb29ef5fb68908aca5"
+      },
+      "marks_positive": "4",
+      "marks_negative": "1",
+      "question_type": "MCQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1765781551,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1765781551,
+      "q_lang": "EN",
+      "question": "<p><span lang=\"EN-US\" style=\"\"><span style=\"line-height:115%\"><span style=\"Calibri&quot;,&quot;sans-serif&quot;\">In&nbsp;</span></span></span><img alt=\"\" id=\"CCequation2\" src=\"https://latex.codecogs.com/svg.image?$\\Delta&amp;space;ABC$\" />&nbsp;<span lang=\"EN-US\" style=\"\"><span style=\"line-height:115%\"><span style=\"Calibri&quot;,&quot;sans-serif&quot;\">, side AB has equation 2x + 3y = 29 and side AC has equation x + 2y = 16. If midpoint of BC is (5, 6) then equation of BC is</span></span></span></p>",
+      "language": "EN",
+      "opt1": "<p><span lang=\"EN-US\" style=\"\"><span style=\"line-height:115%\"><span style=\"Calibri&quot;,&quot;sans-serif&quot;\">x &ndash; y = &ndash; 1&nbsp;</span></span></span></p>",
+      "opt2": "<p><span lang=\"EN-US\" style=\"\"><span style=\"line-height:115%\"><span style=\"Calibri&quot;,&quot;sans-serif&quot;\">5x &ndash; 2y = 13</span></span></span></p>",
+      "opt3": "<p><span lang=\"EN-US\" style=\"\"><span style=\"line-height:115%\"><span style=\"Calibri&quot;,&quot;sans-serif&quot;\">x + y = 11</span></span></span></p>",
+      "opt4": "<p><span lang=\"EN-US\" style=\"\"><span style=\"line-height:115%\"><span style=\"Calibri&quot;,&quot;sans-serif&quot;\">3x &ndash; 4y = &ndash;9</span></span></span></p>",
+      "ans": "c",
+      "__order": 3,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 0,
+      "n_score": 0,
+      "time_taken": 112,
+      "std_ans": "",
+      "ans_status": "Unattempted"
+    },
+    {
+      "_id": {
+        "$oid": "693fb0bd7847cebd0f0f08df"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "693820bb29ef5fb68908aca5"
+      },
+      "marks_positive": "4",
+      "marks_negative": "1",
+      "question_type": "MCQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1765781693,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1765781693,
+      "q_lang": "EN",
+      "question": "<p><span lang=\"EN-US\" style=\"\"><span style=\"line-height:115%\"><span style=\"Calibri\">If the lines x = k, k = 1, 2 &hellip; , n meet the line y = 3x + 4 at the points A<sub>k</sub> (x<sub>k</sub>, y<sub>k</sub>), k = 1, 2, &hellip;. , n then the ordinate of the centre off Mean position of the points A<sub>k</sub>, k = 1, 2, &hellip;, n&nbsp;is</span></span></span></p>",
+      "language": "EN",
+      "opt1": "<p>&nbsp;</p>\r\n\r\n<p><img alt=\"\" id=\"CCequation1\" src=\"https://latex.codecogs.com/svg.image?$\\dfrac{n+1}{2}$\" /></p>",
+      "opt2": "<p>&nbsp;</p>\r\n\r\n<p><img alt=\"\" id=\"CCequation3\" src=\"https://latex.codecogs.com/svg.image?$\\dfrac{3n+11}{2}$\" /></p>",
+      "opt3": "<p>&nbsp;</p>\r\n\r\n<p><img alt=\"\" id=\"CCequation4\" src=\"https://latex.codecogs.com/svg.image?$\\dfrac{3(n+1)}{2}$\" /></p>",
+      "opt4": "<p><span lang=\"EN-US\" style=\"\"><span style=\"line-height:115%\"><span style=\"Calibri\">None of these</span></span></span></p>",
+      "ans": "b",
+      "have_passage": 0,
+      "passage_id": null,
+      "__order": 4,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 4,
+      "n_score": 0,
+      "time_taken": 95,
+      "std_ans": "b",
+      "ans_status": "correct"
+    },
+    {
+      "_id": {
+        "$oid": "693fb165c7c6bb1f1a0db416"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "693820bb29ef5fb68908aca5"
+      },
+      "marks_positive": "4",
+      "marks_negative": "1",
+      "question_type": "MCQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1765781861,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1765781861,
+      "q_lang": "EN",
+      "question": "<p><span lang=\"EN-US\" style=\"\"><span style=\"line-height:115%\"><span style=\"Calibri&quot;,&quot;sans-serif&quot;\">If&nbsp;</span></span></span><img alt=\"\" id=\"CCequation2\" src=\"https://latex.codecogs.com/svg.image?$(\\lambda,2)$\" />&nbsp;<span lang=\"EN-US\" style=\"\"><span style=\"line-height:115%\"><span style=\"Calibri&quot;,&quot;sans-serif&quot;\">is an interior point of the triangle formed by the lines x + y = 4, 3x &ndash; 7y = 8 and 4x &ndash; y = 31, then</span></span></span></p>",
+      "language": "EN",
+      "opt1": "<p>&nbsp;</p>\r\n\r\n<p><img alt=\"\" id=\"CCequation1\" src=\"https://latex.codecogs.com/svg.image?$2%3C\\lambda%3C22/3$\" /></p>",
+      "opt2": "<p>&nbsp;</p>\r\n\r\n<p><img alt=\"\" id=\"CCequation3\" src=\"https://latex.codecogs.com/svg.image?$2%3C\\lambda%3C33/4$\" /></p>",
+      "opt3": "<p>&nbsp;</p>\r\n\r\n<p><img alt=\"\" id=\"CCequation4\" src=\"https://latex.codecogs.com/svg.image?$22/3%3C\\lambda%3C33/4$\" /></p>",
+      "opt4": "<p><img alt=\"$\\lambda&gt;9$\" src=\"https://latex.codecogs.com/svg.image?$%5Clambda%3E9$\" /></p>",
+      "ans": "c",
+      "__order": 5,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 4,
+      "n_score": 0,
+      "time_taken": 169,
+      "std_ans": "c",
+      "ans_status": "correct"
+    },
+    {
+      "_id": {
+        "$oid": "693fb230cde5b2066705295b"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "693820bb29ef5fb68908aca5"
+      },
+      "marks_positive": "4",
+      "marks_negative": "1",
+      "question_type": "MCQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1765782064,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1765782064,
+      "q_lang": "EN",
+      "question": "<p><span lang=\"EN-US\" style=\"\"><span style=\"line-height:115%\"><span style=\"Calibri&quot;,&quot;sans-serif&quot;\">The locus of the point P(h, k), when the area of the triangle formed by the lines y = x, x + y = 2 and the line through P (h, k) and parallel to the x-axis is 4h<sup>2</sup> is</span></span></span></p>",
+      "language": "EN",
+      "opt1": "<p><span lang=\"EN-US\" style=\"\"><span style=\"line-height:115%\"><span style=\"Calibri&quot;,&quot;sans-serif&quot;\">x + 2y &ndash; 1 = 0</span></span></span></p>",
+      "opt2": "<p><span lang=\"EN-US\" style=\"\"><span style=\"line-height:115%\"><span style=\"Calibri&quot;,&quot;sans-serif&quot;\">2x + y &ndash; 1 = 0</span></span></span></p>",
+      "opt3": "<p><span lang=\"EN-US\" style=\"\"><span style=\"line-height:115%\"><span style=\"Calibri&quot;,&quot;sans-serif&quot;\">2x &ndash; y &ndash; 1 = 0</span></span></span></p>",
+      "opt4": "<p><span lang=\"EN-US\" style=\"\"><span style=\"line-height:115%\"><span style=\"Calibri&quot;,&quot;sans-serif&quot;\">x &ndash; 2y + 1 = 0</span></span></span></p>",
+      "ans": "b",
+      "__order": 6,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 4,
+      "n_score": 0,
+      "time_taken": 168,
+      "std_ans": "b",
+      "ans_status": "correct"
+    },
+    {
+      "_id": {
+        "$oid": "693fb2a700a2ae2af3044c90"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "693820bb29ef5fb68908aca5"
+      },
+      "marks_positive": "4",
+      "marks_negative": "1",
+      "question_type": "MCQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1765782183,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1765782183,
+      "q_lang": "EN",
+      "question": "<p><img height=\"86\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fb2634f607\" width=\"941\" /></p>",
+      "language": "EN",
+      "opt1": "<p>3.7</p>",
+      "opt2": "<p>3.8</p>",
+      "opt3": "<p>3.9</p>",
+      "opt4": "<p>4</p>",
+      "ans": "a",
+      "__order": 7,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 0,
+      "n_score": 0,
+      "time_taken": 0,
+      "std_ans": null,
+      "ans_status": "Unattempted"
+    },
+    {
+      "_id": {
+        "$oid": "693fb2f7277161f5ea0bd62c"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "693820bb29ef5fb68908aca5"
+      },
+      "marks_positive": "4",
+      "marks_negative": "1",
+      "question_type": "MCQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1765782263,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1765782263,
+      "q_lang": "EN",
+      "question": "<p><img height=\"86\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fb2cf4d6a9\" width=\"952\" /></p>",
+      "language": "EN",
+      "opt1": "<p>1</p>",
+      "opt2": "<p>1/2</p>",
+      "opt3": "<p>1/4</p>",
+      "opt4": "<p>1/8</p>",
+      "ans": "d",
+      "__order": 8,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 0,
+      "n_score": 0,
+      "time_taken": 0,
+      "std_ans": null,
+      "ans_status": "Unattempted"
+    },
+    {
+      "_id": {
+        "$oid": "693fb3755ce78ab00302af1f"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "693820bb29ef5fb68908aca5"
+      },
+      "marks_positive": "4",
+      "marks_negative": "1",
+      "question_type": "MCQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1765782389,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1765782389,
+      "q_lang": "EN",
+      "question": "<p><span lang=\"EN-US\" style=\"\"><span style=\"line-height:115%\"><span style=\"Calibri&quot;,&quot;sans-serif&quot;\">A ray of light travels along the line 2x &ndash; 3y + 5 = 0 and strikes a plane mirror lying along the line x + y = 2. The equation of the straight line containing the reflected ray is</span></span></span></p>",
+      "language": "EN",
+      "opt1": "<p><span lang=\"EN-US\" style=\"\"><span style=\"line-height:115%\"><span style=\"Calibri&quot;,&quot;sans-serif&quot;\">2x &ndash; 3y + 3 = 0</span></span></span></p>",
+      "opt2": "<p><span lang=\"EN-US\" style=\"\"><span style=\"line-height:115%\"><span style=\"Calibri&quot;,&quot;sans-serif&quot;\">3x &ndash; 2y + 3 = 0</span></span></span></p>",
+      "opt3": "<p><span lang=\"EN-US\" style=\"\"><span style=\"line-height:115%\"><span style=\"Calibri&quot;,&quot;sans-serif&quot;\">21x &ndash; 7y + 1 = 0</span></span></span></p>",
+      "opt4": "<p><span lang=\"EN-US\" style=\"\"><span style=\"line-height:115%\"><span style=\"Calibri&quot;,&quot;sans-serif&quot;\">21x + 7y &ndash; 1 = 0</span></span></span></p>",
+      "ans": "b",
+      "__order": 9,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 4,
+      "n_score": 0,
+      "time_taken": 115,
+      "std_ans": "b",
+      "ans_status": "correct"
+    },
+    {
+      "_id": {
+        "$oid": "693fb486e671a6b0ed0b09d8"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "693820bb29ef5fb68908aca5"
+      },
+      "marks_positive": "4",
+      "marks_negative": "1",
+      "question_type": "MCQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1765782662,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1765782662,
+      "q_lang": "EN",
+      "question": "<p><span style=\"\"><span style=\"line-height:115%\"><span style=\"Calibri&quot;,&quot;sans-serif&quot;\">If the line y = x + 3 meets the circle x<sup>2</sup> + y<sup>2</sup> = a<sup>2</sup> at A and B, then equation of the circle on AB as diameter is</span></span></span></p>",
+      "language": "EN",
+      "opt1": "<p><span style=\"\"><span style=\"line-height:115%\"><span style=\"Calibri&quot;,&quot;sans-serif&quot;\">x<sup>2</sup> + y<sup>2</sup> + 3x &ndash; 3y &ndash; a<sup>2</sup> + 9 = 0</span></span></span></p>",
+      "opt2": "<p><span style=\"\"><span style=\"line-height:115%\"><span style=\"Calibri&quot;,&quot;sans-serif&quot;\">x<sup>2</sup> + y<sup>2</sup> - 3x + 3y &ndash; a<sup>2</sup> - 9 = 0</span></span></span></p>",
+      "opt3": "<p><span style=\"\"><span style=\"line-height:115%\"><span style=\"Calibri&quot;,&quot;sans-serif&quot;\">x<sup>2</sup> + y<sup>2</sup> + 3x + 3y + a<sup>2</sup> - 9 = 0</span></span></span></p>",
+      "opt4": "<p><span style=\"\"><span style=\"line-height:115%\"><span style=\"Calibri&quot;,&quot;sans-serif&quot;\">x<sup>2</sup> + y<sup>2</sup> - 3x + 3y &ndash; a<sup>2</sup> + 9 = 0 </span></span></span></p>",
+      "ans": "a",
+      "__order": 10,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 0,
+      "n_score": 0,
+      "time_taken": 0,
+      "std_ans": null,
+      "ans_status": "Unattempted"
+    },
+    {
+      "_id": {
+        "$oid": "693fb4eac8a5bfd5f702bf04"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "693820bb29ef5fb68908aca5"
+      },
+      "marks_positive": "4",
+      "marks_negative": "1",
+      "question_type": "MCQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1765782762,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1765782762,
+      "q_lang": "EN",
+      "question": "<p><img height=\"63\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fb49e65449\" width=\"1002\" /></p>",
+      "language": "EN",
+      "opt1": "<p><img height=\"66\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fb4b3afa82\" width=\"189\" /></p>",
+      "opt2": "<p><img height=\"62\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fb4c376351\" width=\"187\" /></p>",
+      "opt3": "<p><img height=\"57\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fb4d012e88\" width=\"177\" /></p>",
+      "opt4": "<p><img height=\"41\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fb4de7d555\" width=\"183\" /></p>",
+      "ans": "a",
+      "__order": 11,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 4,
+      "n_score": 0,
+      "time_taken": 191,
+      "std_ans": "a",
+      "ans_status": "correct"
+    },
+    {
+      "_id": {
+        "$oid": "693fb554964903cedb0e3034"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "693820bb29ef5fb68908aca5"
+      },
+      "marks_positive": "4",
+      "marks_negative": "1",
+      "question_type": "MCQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1765782868,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1765782868,
+      "q_lang": "EN",
+      "question": "<p><img height=\"37\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fb4fd35d43\" width=\"918\" /></p>",
+      "language": "EN",
+      "opt1": "<p><img height=\"64\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fb50f9e6bb\" width=\"31\" /></p>",
+      "opt2": "<p><img height=\"62\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fb5272329e\" width=\"32\" /></p>",
+      "opt3": "<p><img height=\"33\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fb53619aac\" width=\"53\" /></p>",
+      "opt4": "<p><img height=\"37\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fb5426fd2e\" width=\"60\" /></p>",
+      "ans": "d",
+      "__order": 12,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 4,
+      "n_score": 0,
+      "time_taken": 152,
+      "std_ans": "d",
+      "ans_status": "correct"
+    },
+    {
+      "_id": {
+        "$oid": "693fb5d2e6170496ac06259f"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "693820bb29ef5fb68908aca5"
+      },
+      "marks_positive": "4",
+      "marks_negative": "1",
+      "question_type": "MCQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1765782994,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1765782994,
+      "q_lang": "EN",
+      "question": "<p><img height=\"60\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fb56875956\" width=\"997\" /></p>",
+      "language": "EN",
+      "opt1": "<p><img height=\"31\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fb58126867\" width=\"162\" /></p>",
+      "opt2": "<p><img height=\"37\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fb58def042\" width=\"167\" /></p>",
+      "opt3": "<p><img height=\"32\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fb59c2add8\" width=\"164\" /></p>",
+      "opt4": "<p><span style=\"font-size:18px;\"><strong><em>x<sup>2</sup> + y<sup>2</sup> + ax - ay = 0</em></strong></span></p>",
+      "ans": "a",
+      "have_passage": 0,
+      "passage_id": null,
+      "__order": 13,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 4,
+      "n_score": 0,
+      "time_taken": 61,
+      "std_ans": "a",
+      "ans_status": "correct"
+    },
+    {
+      "_id": {
+        "$oid": "693fb75162fc947c5f053d56"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "693820bb29ef5fb68908aca5"
+      },
+      "marks_positive": "4",
+      "marks_negative": "1",
+      "question_type": "MCQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1765783377,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1765783377,
+      "q_lang": "EN",
+      "question": "<p><span lang=\"EN-US\" style=\"\"><span style=\"line-height:115%\"><span style=\"Calibri&quot;,&quot;sans-serif&quot;\">The equation of the locus of the mid-points of chords of the circle 4x<sup>2 </sup>+ 4y<sup>2</sup> &ndash; 12x + 4y + 1 = 0 that subtend an angle of&nbsp;</span></span></span></p>\r\n\r\n<p><img alt=\"\" id=\"CCequation2\" src=\"https://latex.codecogs.com/svg.image?$\\dfrac{2\\pi}{3}$\" />&nbsp;<span lang=\"EN-US\" style=\"\"><span style=\"line-height:115%\"><span style=\"Calibri&quot;,&quot;sans-serif&quot;\">at its centre, is</span></span></span></p>",
+      "language": "EN",
+      "opt1": "<p><img height=\"32\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fb71806bd1\" width=\"290\" /></p>",
+      "opt2": "<p><img height=\"33\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fb728db2ac\" width=\"289\" /></p>",
+      "opt3": "<p><img height=\"30\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fb736abf55\" width=\"294\" /></p>",
+      "opt4": "<p><img height=\"26\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fb745be411\" width=\"291\" /></p>",
+      "ans": "a",
+      "__order": 14,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 4,
+      "n_score": 0,
+      "time_taken": 239,
+      "std_ans": "a",
+      "ans_status": "correct"
+    },
+    {
+      "_id": {
+        "$oid": "693fb7a72fee9d47a1014acc"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "693820bb29ef5fb68908aca5"
+      },
+      "marks_positive": "4",
+      "marks_negative": "1",
+      "question_type": "MCQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1765783463,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1765783463,
+      "q_lang": "EN",
+      "question": "<p><img height=\"89\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fead2ccdc0\" width=\"985\" /></p>",
+      "language": "EN",
+      "opt1": "<p>6</p>",
+      "opt2": "<p>12</p>",
+      "opt3": "<p>18</p>",
+      "opt4": "<p>24</p>",
+      "ans": "b",
+      "have_passage": 0,
+      "passage_id": null,
+      "__order": 15,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 4,
+      "n_score": 0,
+      "time_taken": 702,
+      "std_ans": "b",
+      "ans_status": "correct"
+    },
+    {
+      "_id": {
+        "$oid": "693fb89cd5fb30f91d0adb65"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "693820bb29ef5fb68908aca5"
+      },
+      "marks_positive": "4",
+      "marks_negative": "1",
+      "question_type": "MCQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1765783708,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1765783708,
+      "q_lang": "EN",
+      "question": "<p><img height=\"122\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fb7ea9ca54\" width=\"990\" /></p>",
+      "language": "EN",
+      "opt1": "<p><img height=\"38\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fb7ff9b9f9\" width=\"295\" /></p>",
+      "opt2": "<p><img height=\"42\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fb82868324\" width=\"301\" /></p>",
+      "opt3": "<p><img height=\"40\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fb8908d9c6\" width=\"270\" /></p>",
+      "opt4": "<p><img height=\"34\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fb854535e8\" width=\"246\" /></p>",
+      "ans": "b",
+      "__order": 16,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 4,
+      "n_score": 0,
+      "time_taken": 245,
+      "std_ans": "b",
+      "ans_status": "correct"
+    },
+    {
+      "_id": {
+        "$oid": "693fb8efbc0f62a8b908fada"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "693820bb29ef5fb68908aca5"
+      },
+      "marks_positive": "4",
+      "marks_negative": "1",
+      "question_type": "MCQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1765783791,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1765783791,
+      "q_lang": "EN",
+      "question": "<p><img height=\"95\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fb8b59de0c\" width=\"1038\" /></p>",
+      "language": "EN",
+      "opt1": "<p><img height=\"61\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fb8c40de51\" width=\"28\" /></p>",
+      "opt2": "<p><img height=\"72\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fb8ce64085\" width=\"67\" /></p>",
+      "opt3": "<p><img height=\"74\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fb8da63af7\" width=\"57\" /></p>",
+      "opt4": "<p><img height=\"77\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fb8e7eb5ab\" width=\"48\" /></p>",
+      "ans": "c",
+      "__order": 17,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 4,
+      "n_score": 0,
+      "time_taken": 298,
+      "std_ans": "c",
+      "ans_status": "correct"
+    },
+    {
+      "_id": {
+        "$oid": "693fb971fc650ebcf90f98bd"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "693820bb29ef5fb68908aca5"
+      },
+      "marks_positive": "4",
+      "marks_negative": "1",
+      "question_type": "MCQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1765783921,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1765783921,
+      "q_lang": "EN",
+      "question": "<p><img height=\"62\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fb90cd80c6\" width=\"1024\" /></p>",
+      "language": "EN",
+      "opt1": "<p><span lang=\"EN-US\" style=\"\"><span style=\"line-height:115%\"><span style=\"Calibri&quot;,&quot;sans-serif&quot;\">y + x = 0, 7y + 17x = 0</span></span></span></p>",
+      "opt2": "<p><span lang=\"EN-US\" style=\"\"><span style=\"line-height:115%\"><span style=\"Calibri&quot;,&quot;sans-serif&quot;\">y + 3x = 0, 7y + 3x = 0</span></span></span></p>",
+      "opt3": "<p><span lang=\"EN-US\" style=\"\"><span style=\"line-height:115%\"><span style=\"Calibri&quot;,&quot;sans-serif&quot;\">4x + y = 0, 9y + 8x = 0</span></span></span></p>",
+      "opt4": "<p><span lang=\"EN-US\" style=\"\"><span style=\"line-height:115%\"><span style=\"Calibri&quot;,&quot;sans-serif&quot;\">y + 3x = 7, y + 3x = 0</span></span></span></p>",
+      "ans": "a",
+      "__order": 18,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 0,
+      "n_score": 0,
+      "time_taken": 0,
+      "std_ans": null,
+      "ans_status": "Unattempted"
+    },
+    {
+      "_id": {
+        "$oid": "693fbbd7f2bfeed98709555c"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "693820bb29ef5fb68908aca5"
+      },
+      "marks_positive": "4",
+      "marks_negative": "1",
+      "question_type": "MCQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1765784535,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1765784535,
+      "q_lang": "EN",
+      "question": "<p>For each natural number k, let C<sub>k </sub>denote the circle with radius k centimeters and centre at the origin O. On the circle C<sub>k</sub> a particle moves k centimeters in the counter-clockwise direction. After completing its motion on C<sub>k</sub>, the particle moves to C<sub>k+1</sub> in the radial direction. The motion of the particle continues in this&nbsp;manner. The particle starts at (1, 0). If the particle crosses the positive direction of x-axis for the first time on the circle C<sub>n</sub>, then n =&nbsp;</p>",
+      "language": "EN",
+      "opt1": "<p>4</p>",
+      "opt2": "<p>5</p>",
+      "opt3": "<p>6</p>",
+      "opt4": "<p>7</p>",
+      "ans": "d",
+      "have_passage": 0,
+      "passage_id": null,
+      "__order": 19,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 4,
+      "n_score": 0,
+      "time_taken": 298,
+      "std_ans": "d",
+      "ans_status": "correct"
+    },
+    {
+      "_id": {
+        "$oid": "693fc6103a9facf7d006a68e"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "693820bb29ef5fb68908aca5"
+      },
+      "marks_positive": "4",
+      "marks_negative": "1",
+      "question_type": "NAT",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1765787152,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1765787152,
+      "q_lang": "EN",
+      "question": "<p><span lang=\"EN-US\" style=\"\"><span style=\"line-height:115%\"><span style=\"Calibri\">A variable line passing through the origin intersects two given lines 2x + y = 4 and x + 3y = 6 at R and S. Point P is taken on this variable line. If equation of locus of point P such that OP is A.M of OR and OS is A x<sup>2</sup> + B xy + C y<sup>2</sup> &ndash; Dx &ndash; Ey = 0, then A + B + C + D + E is equal to ___</span></span></span></p>",
+      "language": "EN",
+      "ans": "29",
+      "have_passage": 0,
+      "passage_id": null,
+      "__order": 20,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 4,
+      "n_score": 0,
+      "time_taken": 449,
+      "std_ans": "29",
+      "ans_status": "correct"
+    },
+    {
+      "_id": {
+        "$oid": "693fc62aa8b9e382490b5c46"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "693820bb29ef5fb68908aca5"
+      },
+      "marks_positive": "4",
+      "marks_negative": "1",
+      "question_type": "NAT",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1765787178,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1765787178,
+      "q_lang": "EN",
+      "question": "<p><img height=\"92\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fc62627cbc\" width=\"838\" /></p>",
+      "language": "EN",
+      "ans": "3",
+      "__order": 21,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 4,
+      "n_score": 0,
+      "time_taken": 231,
+      "std_ans": "3",
+      "ans_status": "correct"
+    },
+    {
+      "_id": {
+        "$oid": "693fc6b35092feac8901839c"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "693820bb29ef5fb68908aca5"
+      },
+      "marks_positive": "4",
+      "marks_negative": "1",
+      "question_type": "NAT",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1765787315,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1765787315,
+      "q_lang": "EN",
+      "question": "<p><span style=\"\"><span style=\"line-height:115%\"><span style=\"Calibri&quot;,&quot;sans-serif&quot;\">Number of value of b for which in an acute triangle ABC, the coordinates of orthocentre &lsquo;H&rsquo; are (4, b), centroid &lsquo;G&rsquo; are (b, 2b &ndash; 8) and circumcentre &lsquo;S&rsquo; are (-4, 8) is</span></span></span></p>",
+      "language": "EN",
+      "ans": "0",
+      "__order": 22,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 4,
+      "n_score": 0,
+      "time_taken": 215,
+      "std_ans": "0",
+      "ans_status": "correct"
+    },
+    {
+      "_id": {
+        "$oid": "693fc7175034d040e0026b5a"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "693820bb29ef5fb68908aca5"
+      },
+      "marks_positive": "4",
+      "marks_negative": "1",
+      "question_type": "NAT",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1765787415,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1765787415,
+      "q_lang": "EN",
+      "question": "<p><span style=\"\"><span style=\"line-height:115%\"><span style=\"Calibri&quot;,&quot;sans-serif&quot;\">The least distance between two ponits P and Q on the circle x<sup>2</sup> + y<sup>2</sup> &ndash; 8x + 10y + 37 = 0 and x<sup>2</sup> + y<sup>2</sup> + 16x + 55 = 0 is &hellip;&hellip;</span></span></span></p>",
+      "language": "EN",
+      "ans": "8",
+      "__order": 23,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 4,
+      "n_score": 0,
+      "time_taken": 143,
+      "std_ans": "8",
+      "ans_status": "correct"
+    },
+    {
+      "_id": {
+        "$oid": "693fc74a908dcc48ed09ba20"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "693820bb29ef5fb68908aca5"
+      },
+      "marks_positive": "4",
+      "marks_negative": "1",
+      "question_type": "NAT",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1765787466,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1765787466,
+      "q_lang": "EN",
+      "question": "<p><img height=\"92\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fc732b677f\" width=\"935\" /></p>",
+      "language": "EN",
+      "ans": "1",
+      "have_passage": 0,
+      "passage_id": null,
+      "__order": 24,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 0,
+      "n_score": 0,
+      "time_taken": 0,
+      "std_ans": null,
+      "ans_status": "Unattempted"
+    },
+    {
+      "_id": {
+        "$oid": "693fced6e0caeac5fa08ed13"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "6936807a52cb2b62180ddd55"
+      },
+      "marks_positive": "4",
+      "marks_negative": "1",
+      "question_type": "MCQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1765789398,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1765789398,
+      "q_lang": "EN",
+      "question": "<p><span lang=\"EN-US\" style=\"\"><span style=\"line-height:115%\"><span style=\"Arial\">A current I flows along a thin wire shaped as shown in the figure.&nbsp; The radius of a curved part of the wire is equal to R, the angle&nbsp;<img alt=\"$2\\theta$\" src=\"https://latex.codecogs.com/svg.image?$2%5Ctheta$\" />. Find the magnetic induction of the field at the point O. (<img alt=\"\\theta=60 \" src=\"https://latex.codecogs.com/svg.image?%5Ctheta=60%20\" />&deg;)</span></span></span></p>\r\n\r\n<p><img height=\"221\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fce631b806\" width=\"329\" /></p>",
+      "language": "EN",
+      "opt1": "<p><img height=\"76\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fce752dee1\" width=\"163\" /></p>",
+      "opt2": "<p><img height=\"83\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fce80959df\" width=\"188\" /></p>",
+      "opt3": "<p><img height=\"76\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fce8c4d6a4\" width=\"174\" /></p>",
+      "opt4": "<p><img height=\"80\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fce9af1574\" width=\"191\" /></p>",
+      "ans": "d",
+      "have_passage": 0,
+      "passage_id": null,
+      "__order": 25,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 4,
+      "n_score": 0,
+      "time_taken": 379,
+      "std_ans": "d",
+      "ans_status": "correct"
+    },
+    {
+      "_id": {
+        "$oid": "693fd294f61ae9cbd1031d52"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "6936807a52cb2b62180ddd55"
+      },
+      "marks_positive": "4",
+      "marks_negative": "1",
+      "question_type": "MCQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1765790356,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1765790356,
+      "q_lang": "EN",
+      "question": "<p><img height=\"122\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fd24bf1b12\" width=\"1230\" /></p>",
+      "language": "EN",
+      "opt1": "<p><img height=\"37\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fd25f1ea02\" width=\"107\" /></p>",
+      "opt2": "<p><img height=\"40\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fd26abb15c\" width=\"105\" /></p>",
+      "opt3": "<p><img height=\"34\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fd276786ff\" width=\"128\" /></p>",
+      "opt4": "<p><img height=\"37\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fd282e7eb9\" width=\"123\" /></p>",
+      "ans": "c",
+      "__order": 26,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 4,
+      "n_score": 0,
+      "time_taken": 187,
+      "std_ans": "c",
+      "ans_status": "correct"
+    },
+    {
+      "_id": {
+        "$oid": "693fd36a58e6f8c2b10ee33c"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "6936807a52cb2b62180ddd55"
+      },
+      "marks_positive": "4",
+      "marks_negative": "1",
+      "question_type": "MCQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1765790570,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1765790570,
+      "q_lang": "EN",
+      "question": "<p><img height=\"213\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fd2d9a0dd4\" width=\"1233\" /></p>",
+      "language": "EN",
+      "opt1": "<p><img height=\"37\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fd2e87c38c\" width=\"57\" /></p>",
+      "opt2": "<p><img height=\"35\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fd34b3a6eb\" width=\"51\" /></p>",
+      "opt3": "<p><span lang=\"EN-US\" style=\"\"><span style=\"line-height:115%\"><span style=\"Arial\">0</span></span></span></p>",
+      "opt4": "<p><img height=\"36\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fd35e2b1ad\" width=\"65\" /></p>",
+      "ans": "d",
+      "have_passage": 0,
+      "passage_id": null,
+      "__order": 27,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 4,
+      "n_score": 0,
+      "time_taken": 233,
+      "std_ans": "d",
+      "ans_status": "correct"
+    },
+    {
+      "_id": {
+        "$oid": "693fd405777c9a4fe90112b9"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "6936807a52cb2b62180ddd55"
+      },
+      "marks_positive": "4",
+      "marks_negative": "1",
+      "question_type": "MCQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1765790725,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1765790725,
+      "q_lang": "EN",
+      "question": "<p><img height=\"369\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fd3a6bf3b5\" width=\"1231\" /></p>",
+      "language": "EN",
+      "opt1": "<p><img height=\"68\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fd3b6b3531\" width=\"57\" /></p>",
+      "opt2": "<p><img height=\"67\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fd3c8b8f31\" width=\"58\" /></p>",
+      "opt3": "<p><img height=\"66\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fd3ebe2e3f\" width=\"52\" /></p>",
+      "opt4": "<p><img height=\"68\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fd3f9733d4\" width=\"54\" /></p>",
+      "ans": "b",
+      "__order": 28,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 4,
+      "n_score": 0,
+      "time_taken": 168,
+      "std_ans": "b",
+      "ans_status": "correct"
+    },
+    {
+      "_id": {
+        "$oid": "693fd489960690d2780239da"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "6936807a52cb2b62180ddd55"
+      },
+      "marks_positive": "4",
+      "marks_negative": "1",
+      "question_type": "MCQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1765790857,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1765790857,
+      "q_lang": "EN",
+      "question": "<p><img height=\"335\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fd44435623\" width=\"971\" /></p>",
+      "language": "EN",
+      "opt1": "<p><img height=\"41\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fd456860bb\" width=\"63\" /></p>",
+      "opt2": "<p><img height=\"81\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fd4641e203\" width=\"66\" /></p>",
+      "opt3": "<p><img height=\"77\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fd47218e6d\" width=\"65\" /></p>",
+      "opt4": "<p><img height=\"51\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fd47d95ada\" width=\"29\" /></p>",
+      "ans": "b",
+      "have_passage": 0,
+      "passage_id": null,
+      "__order": 29,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 4,
+      "n_score": 0,
+      "time_taken": 72,
+      "std_ans": "b",
+      "ans_status": "correct"
+    },
+    {
+      "_id": {
+        "$oid": "693fd4d618d26611ff08ecc3"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "6936807a52cb2b62180ddd55"
+      },
+      "marks_positive": "4",
+      "marks_negative": "1",
+      "question_type": "MCQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1765790934,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1765790934,
+      "q_lang": "EN",
+      "question": "<p><span lang=\"EN-US\" style=\"\"><span style=\"line-height:115%\"><span style=\"Arial&quot;,&quot;sans-serif&quot;\">In the arrangement shown, a semi &ndash; circular wire loop is placed in a uniform magnetic field B=2T. The plane of the loop is perpendicular to the magnetic field. A current I = 4 A flows in the loop in the direction shown.</span></span></span></p>\r\n\r\n<p><img height=\"142\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fd4b22d8bf\" width=\"208\" /><span style=\"\"><span style=\"text-justify:inter-ideograph\"><span style=\"line-height:115%\"><span style=\"sans-serif&quot;\"><span style=\"Arial&quot;,&quot;sans-serif&quot;\"> </span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span></span></span></span><img height=\"155\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fd4b22dba3\" width=\"220\" /><span style=\"\"><span style=\"text-justify:inter-ideograph\"><span style=\"line-height:115%\"><span style=\"sans-serif&quot;\"><span style=\"Arial&quot;,&quot;sans-serif&quot;\"> </span></span></span></span></span></p>",
+      "language": "EN",
+      "opt1": "<p><span lang=\"EN-US\" style=\"\"><span style=\"line-height:115%\"><span style=\"Arial&quot;,&quot;sans-serif&quot;\">0, 32N</span></span></span></p>",
+      "opt2": "<p><span lang=\"EN-US\" style=\"\"><span style=\"line-height:115%\"><span style=\"Arial&quot;,&quot;sans-serif&quot;\">64N, 0N</span></span></span></p>",
+      "opt3": "<p><span lang=\"EN-US\" style=\"\"><span style=\"line-height:115%\"><span style=\"Arial&quot;,&quot;sans-serif&quot;\">0, 64N</span></span></span></p>",
+      "opt4": "<p><span lang=\"EN-US\" style=\"\"><span style=\"line-height:115%\"><span style=\"Arial&quot;,&quot;sans-serif&quot;\">64N, 64N</span></span></span></p>",
+      "ans": "c",
+      "__order": 30,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 4,
+      "n_score": 0,
+      "time_taken": 46,
+      "std_ans": "c",
+      "ans_status": "correct"
+    },
+    {
+      "_id": {
+        "$oid": "693fe1834563ed2d370cd0bd"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "6936807a52cb2b62180ddd55"
+      },
+      "marks_positive": "0",
+      "marks_negative": "0",
+      "question_type": "MCQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1765794179,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1765794179,
+      "q_lang": "EN",
+      "question": "<p><img height=\"102\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fe168d96f4\" width=\"1237\" /></p>",
+      "language": "EN",
+      "opt1": "<p>142 turns/ m</p>",
+      "opt2": "<p>1420 turns/m</p>",
+      "opt3": "<p>152 turns/m</p>",
+      "opt4": "<p>1520 turns/m</p>",
+      "ans": "b",
+      "have_passage": 0,
+      "passage_id": null,
+      "__order": 31,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 0,
+      "n_score": 0,
+      "time_taken": 0,
+      "std_ans": null,
+      "ans_status": "Unattempted"
+    },
+    {
+      "_id": {
+        "$oid": "693fe1c53a29f294fa0becb6"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "6936807a52cb2b62180ddd55"
+      },
+      "marks_positive": "4",
+      "marks_negative": "1",
+      "question_type": "MCQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1765794245,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1765794245,
+      "q_lang": "EN",
+      "question": "<p><span lang=\"EN-US\" style=\"\"><span style=\"line-height:115%\"><span style=\"Arial&quot;,&quot;sans-serif&quot;\">The ratio of the magnetic field at the centre of a current carrying coil of radius a to the field at a distance 3a on its axis is</span></span></span></p>",
+      "language": "EN",
+      "opt1": "<p><img height=\"36\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fe196b0a30\" width=\"82\" /></p>",
+      "opt2": "<p><img height=\"42\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fe1a25f84e\" width=\"72\" /></p>",
+      "opt3": "<p><img height=\"45\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fe1b14e038\" width=\"77\" /></p>",
+      "opt4": "<p><img height=\"40\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fe1bc19444\" width=\"59\" /></p>",
+      "ans": "c",
+      "__order": 32,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 4,
+      "n_score": 0,
+      "time_taken": 196,
+      "std_ans": "c",
+      "ans_status": "correct"
+    },
+    {
+      "_id": {
+        "$oid": "693fe2065d41f022f30c81a4"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "6936807a52cb2b62180ddd55"
+      },
+      "marks_positive": "4",
+      "marks_negative": "1",
+      "question_type": "MCQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1765794310,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1765794310,
+      "q_lang": "EN",
+      "question": "<p><span lang=\"EN-US\" style=\"\"><span style=\"line-height:115%\"><span style=\"Arial&quot;,&quot;sans-serif&quot;\">A charged particle enters a uniform magnetic field with a velocity vector at an angle of 45&deg; with the magnetic field. The pitch of helical path followed by the particle is p. The radius of the helix will be</span></span></span></p>",
+      "language": "EN",
+      "opt1": "<p><img height=\"70\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fe1dd477cb\" width=\"64\" /></p>",
+      "opt2": "<p><img height=\"47\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fe1e60b37f\" width=\"59\" /></p>",
+      "opt3": "<p><img height=\"60\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fe1f4814cc\" width=\"40\" /></p>",
+      "opt4": "<p><img height=\"70\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fe2007e55b\" width=\"56\" /></p>",
+      "ans": "c",
+      "__order": 33,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 0,
+      "n_score": -1,
+      "time_taken": 111,
+      "std_ans": "d",
+      "ans_status": "incorrect"
+    },
+    {
+      "_id": {
+        "$oid": "693fe24be1fe33525e0e2ea4"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "6936807a52cb2b62180ddd55"
+      },
+      "marks_positive": "4",
+      "marks_negative": "1",
+      "question_type": "MCQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1765794379,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1765794379,
+      "q_lang": "EN",
+      "question": "<p><span lang=\"EN-US\" style=\"\"><span style=\"line-height:115%\"><span style=\"Arial&quot;,&quot;sans-serif&quot;\">For a current carrying circular coil, the ratio of the magnetic field at the centre of a current carrying circular coil to its magnetic moment is x. On doubling the radius and the current, the x values</span></span></span></p>",
+      "language": "EN",
+      "opt1": "<p><img height=\"61\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fe2224fc0c\" width=\"184\" /></p>",
+      "opt2": "<p><img height=\"58\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fe22d4e5f9\" width=\"176\" /></p>",
+      "opt3": "<p><img height=\"63\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fe23d4fa3d\" width=\"199\" /></p>",
+      "opt4": "<p><img height=\"66\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fe248e3edb\" width=\"190\" /></p>",
+      "ans": "c",
+      "__order": 34,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 4,
+      "n_score": 0,
+      "time_taken": 70,
+      "std_ans": "c",
+      "ans_status": "correct"
+    },
+    {
+      "_id": {
+        "$oid": "693fe28c7fcdb2d35900e0c0"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "6936807a52cb2b62180ddd55"
+      },
+      "marks_positive": "4",
+      "marks_negative": "1",
+      "question_type": "MCQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1765794444,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1765794444,
+      "q_lang": "EN",
+      "question": "<p><span lang=\"EN-US\" style=\"\"><span style=\"line-height:115%\"><span style=\"Arial&quot;,&quot;sans-serif&quot;\">A proton, a deuteron and an a particle with the same kinetic energy enter in a region of uniform magnetic field, moving at right angles to B. What is the ratio of the radii of their circular paths?</span></span></span></p>",
+      "language": "EN",
+      "opt1": "<p><img height=\"37\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fe26555bae\" width=\"91\" /></p>",
+      "opt2": "<p><img height=\"43\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fe26f5bc69\" width=\"116\" /></p>",
+      "opt3": "<p><img height=\"43\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fe278ccaaa\" width=\"92\" /></p>",
+      "opt4": "<p><img height=\"43\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fe28697b95\" width=\"116\" /></p>",
+      "ans": "a",
+      "__order": 35,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 4,
+      "n_score": 0,
+      "time_taken": 120,
+      "std_ans": "a",
+      "ans_status": "correct"
+    },
+    {
+      "_id": {
+        "$oid": "693fe2eacf9692da0907bd9d"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "6936807a52cb2b62180ddd55"
+      },
+      "marks_positive": "4",
+      "marks_negative": "1",
+      "question_type": "MCQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1765794538,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1765794538,
+      "q_lang": "EN",
+      "question": "<p><span lang=\"EN-US\" style=\"\"><span style=\"line-height:115%\"><span style=\"Arial&quot;,&quot;sans-serif&quot;\">A cylindrical correction or radius&nbsp;<img alt=\"\\pi \" src=\"https://latex.codecogs.com/svg.image?%5Cpi%20\" />&nbsp;carries a current the value of magnetic field at a point which is R/4 distance inside from the surface is 10 T. Find the value of magnetic field at point which is 4R distance outside from the surface</span></span></span></p>",
+      "language": "EN",
+      "opt1": "<p><img height=\"70\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fe2c47e388\" width=\"53\" /></p>",
+      "opt2": "<p><img height=\"61\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fe2d19e017\" width=\"43\" /></p>",
+      "opt3": "<p><img height=\"63\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fe2dc97ebd\" width=\"60\" /></p>",
+      "opt4": "<p><img height=\"62\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fe2e663c36\" width=\"56\" /></p>",
+      "ans": "b",
+      "__order": 36,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 0,
+      "n_score": 0,
+      "time_taken": 0,
+      "std_ans": "",
+      "ans_status": "Unattempted"
+    },
+    {
+      "_id": {
+        "$oid": "693fe3206cfe54c7460436f3"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "6936807a52cb2b62180ddd55"
+      },
+      "marks_positive": "4",
+      "marks_negative": "1",
+      "question_type": "MCQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1765794592,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1765794592,
+      "q_lang": "EN",
+      "question": "<p><span lang=\"EN-US\" style=\"\"><span style=\"line-height:115%\"><span style=\"Arial&quot;,&quot;sans-serif&quot;\">A proton accelerated by a potential difference 500 KV moves through a transverse magnetic field of 0.51 T as shown in figure. The angle <span style=\"position:relative\"><span style=\"top:3.0pt\"><img id=\"_x0000_i1025\" o:ole=\"\" src=\"file:///C:\\Users\\Admin\\AppData\\Local\\Temp\\msohtmlclip1\\01\\clip_image001.wmz\" style=\"width:9.75pt; height:13.5pt\" /> </span></span>through which the proton deviates from the initial direction of its motion is</span></span></span></p>\r\n\r\n<p><img height=\"316\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question69400d0b7400b\" width=\"377\" /></p>",
+      "language": "EN",
+      "opt1": "<p><span lang=\"EN-US\" style=\"\"><span style=\"line-height:115%\"><span style=\"Arial\">15&deg;</span></span></span></p>",
+      "opt2": "<p><span lang=\"EN-US\" style=\"\"><span style=\"line-height:115%\"><span style=\"Arial\">30&deg;</span></span></span></p>",
+      "opt3": "<p><span lang=\"EN-US\" style=\"\"><span style=\"line-height:115%\"><span style=\"Arial\">45&deg;</span></span></span></p>",
+      "opt4": "<p><span lang=\"EN-US\" style=\"\"><span style=\"line-height:115%\"><span style=\"Arial\">60&deg;</span></span></span></p>",
+      "ans": "b",
+      "have_passage": 0,
+      "passage_id": null,
+      "__order": 37,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 0,
+      "n_score": 0,
+      "time_taken": 125,
+      "std_ans": "",
+      "ans_status": "Unattempted"
+    },
+    {
+      "_id": {
+        "$oid": "693fe5599fb858f95302a0de"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "6936807a52cb2b62180ddd55"
+      },
+      "marks_positive": "4",
+      "marks_negative": "1",
+      "question_type": "MCQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1765795161,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1765795161,
+      "q_lang": "EN",
+      "question": "<p><img height=\"291\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fe42963de6\" width=\"1224\" /></p>",
+      "language": "EN",
+      "opt1": "<p><img height=\"67\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fe4a54730b\" width=\"90\" /></p>",
+      "opt2": "<p><img height=\"64\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fe4c57bb4a\" width=\"96\" /></p>",
+      "opt3": "<p><img height=\"66\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fe4d600f78\" width=\"106\" /></p>",
+      "opt4": "<p><img height=\"78\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fe4e3035a6\" width=\"102\" /></p>",
+      "ans": "b",
+      "__order": 38,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 4,
+      "n_score": 0,
+      "time_taken": 127,
+      "std_ans": "b",
+      "ans_status": "correct"
+    },
+    {
+      "_id": {
+        "$oid": "693febeee2e18f58970a3d9a"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "6938203a74289711aa090fac"
+      },
+      "marks_positive": "4",
+      "marks_negative": "1",
+      "question_type": "MCQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1765796846,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1765796846,
+      "q_lang": "EN",
+      "question": "<p><span lang=\"EN-US\" style=\"\"><span style=\"line-height:115%\"><span style=\"Arial&quot;,&quot;sans-serif&quot;\">Which of the following is least reactive towards nucleophilic substitution reaction?</span></span></span></p>",
+      "language": "EN",
+      "opt1": "Acetamide",
+      "opt2": "Ethyl acetate",
+      "opt3": "Acetyl chloride",
+      "opt4": "Acetic anhydride",
+      "ans": "a",
+      "__order": 39,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 4,
+      "n_score": 0,
+      "time_taken": 30,
+      "std_ans": "a",
+      "ans_status": "correct"
+    },
+    {
+      "_id": {
+        "$oid": "693fec0e059e2aa12e00f0d7"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "6938203a74289711aa090fac"
+      },
+      "marks_positive": "4",
+      "marks_negative": "1",
+      "question_type": "MCQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1765796878,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1765796878,
+      "q_lang": "EN",
+      "question": "<p><span lang=\"EN-US\" style=\"\"><span style=\"line-height:115%\"><span style=\"Arial&quot;,&quot;sans-serif&quot;\">The compound that undergoes decarboxylation most readily under mild condition is</span></span></span></p>",
+      "language": "EN",
+      "opt1": "<p><img height=\"221\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693febfbaa00f\" width=\"271\" /></p>",
+      "opt2": "<p><img height=\"198\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fec0052662\" width=\"216\" /></p>",
+      "opt3": "<p><img height=\"208\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fec03bb7d9\" width=\"210\" /></p>",
+      "opt4": "<p><img height=\"206\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fec07e3c6c\" width=\"235\" /></p>",
+      "ans": "c",
+      "__order": 40,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 4,
+      "n_score": 0,
+      "time_taken": 11,
+      "std_ans": "c",
+      "ans_status": "correct"
+    },
+    {
+      "_id": {
+        "$oid": "693fec3a0d40092381013b98"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "6938203a74289711aa090fac"
+      },
+      "marks_positive": "4",
+      "marks_negative": "1",
+      "question_type": "MCQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1765796922,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1765796922,
+      "q_lang": "EN",
+      "question": "<p><img height=\"187\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fec1d9d508\" width=\"485\" /></p>\r\n\r\n<p><span lang=\"EN-US\" style=\"\"><span style=\"line-height:115%\"><span style=\"Arial\">The compound &lsquo;A&rsquo; is</span></span></span></p>",
+      "language": "EN",
+      "opt1": "<p><img height=\"193\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fec2926fd7\" width=\"217\" /></p>",
+      "opt2": "<p><img height=\"193\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fec2c23072\" width=\"307\" /></p>",
+      "opt3": "<p><img height=\"181\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fec2f22946\" width=\"220\" /></p>",
+      "opt4": "<p><img height=\"250\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fec32b1b89\" width=\"264\" /></p>",
+      "ans": "c",
+      "have_passage": 0,
+      "passage_id": null,
+      "__order": 41,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 0,
+      "n_score": -1,
+      "time_taken": 45,
+      "std_ans": "a",
+      "ans_status": "incorrect"
+    },
+    {
+      "_id": {
+        "$oid": "693fec9a148448df4d07e555"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "6938203a74289711aa090fac"
+      },
+      "marks_positive": "4",
+      "marks_negative": "1",
+      "question_type": "MCQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1765797018,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1765797018,
+      "q_lang": "EN",
+      "question": "<p><img height=\"65\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fec74a9b4c\" width=\"1046\" /></p>",
+      "language": "EN",
+      "opt1": "<p><img height=\"198\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fec80dcb6d\" width=\"199\" /></p>",
+      "opt2": "<p><img height=\"211\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fec8aca585\" width=\"288\" /></p>",
+      "opt3": "<p><img height=\"227\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fec90ed212\" width=\"241\" /></p>",
+      "opt4": "<p><img height=\"221\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fec99ce42a\" width=\"271\" /></p>",
+      "ans": "b",
+      "__order": 42,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 0,
+      "n_score": 0,
+      "time_taken": 0,
+      "std_ans": null,
+      "ans_status": "Unattempted"
+    },
+    {
+      "_id": {
+        "$oid": "693fecd80c9f76c9360a0103"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "6938203a74289711aa090fac"
+      },
+      "marks_positive": "4",
+      "marks_negative": "1",
+      "question_type": "MCQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1765797080,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1765797080,
+      "q_lang": "EN",
+      "question": "<p><img height=\"47\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fecb0ae0cb\" width=\"329\" /></p>\r\n\r\n<p><img height=\"76\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fecba92baa\" width=\"745\" /></p>\r\n\r\n<p><img height=\"41\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fecc100baa\" width=\"159\" /></p>",
+      "language": "EN",
+      "opt1": "<p><img height=\"45\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fecc6b8926\" width=\"371\" /></p>",
+      "opt2": "<p><img height=\"41\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693feccc50c2e\" width=\"310\" /></p>",
+      "opt3": "<p><img height=\"111\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fecd1ec6f5\" width=\"383\" /></p>",
+      "opt4": "<p><img height=\"50\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fecd7f32ac\" width=\"429\" /></p>",
+      "ans": "c",
+      "__order": 43,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 0,
+      "n_score": -1,
+      "time_taken": 99,
+      "std_ans": "b",
+      "ans_status": "incorrect"
+    },
+    {
+      "_id": {
+        "$oid": "693fed22961a85847b0086ed"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "6938203a74289711aa090fac"
+      },
+      "marks_positive": "4",
+      "marks_negative": "1",
+      "question_type": "MCQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1765797154,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1765797154,
+      "q_lang": "EN",
+      "question": "<p><img height=\"47\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fece314e9f\" width=\"1379\" /></p>\r\n\r\n<p><img height=\"271\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fecf087731\" width=\"575\" /></p>",
+      "language": "EN",
+      "opt1": "<p><img height=\"46\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fecf5e4fdd\" width=\"128\" /></p>",
+      "opt2": "<p><img height=\"46\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fecfa9622e\" width=\"93\" /></p>",
+      "opt3": "<p><img height=\"46\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fed00e946d\" width=\"135\" /></p>",
+      "opt4": "<p><img height=\"49\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fed221bbf5\" width=\"139\" /></p>",
+      "ans": "b",
+      "__order": 44,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 4,
+      "n_score": 0,
+      "time_taken": 10,
+      "std_ans": "b",
+      "ans_status": "correct"
+    },
+    {
+      "_id": {
+        "$oid": "693fed4a7d339fd3ba0baf72"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "6938203a74289711aa090fac"
+      },
+      "marks_positive": "4",
+      "marks_negative": "1",
+      "question_type": "MCQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1765797195,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1765797195,
+      "q_lang": "EN",
+      "question": "<p><img height=\"317\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fed307866a\" width=\"695\" /></p>",
+      "language": "EN",
+      "opt1": "<p><img height=\"44\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fed362bce4\" width=\"234\" /></p>",
+      "opt2": "<p><img height=\"51\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fed3b7b6da\" width=\"231\" /></p>",
+      "opt3": "<p><img height=\"49\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fed4092f11\" width=\"137\" /></p>",
+      "opt4": "<p><img height=\"48\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fed461acc6\" width=\"330\" /></p>",
+      "ans": "d",
+      "__order": 45,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 4,
+      "n_score": 0,
+      "time_taken": 9,
+      "std_ans": "d",
+      "ans_status": "correct"
+    },
+    {
+      "_id": {
+        "$oid": "693fed820d40092381013baa"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "6938203a74289711aa090fac"
+      },
+      "marks_positive": "4",
+      "marks_negative": "1",
+      "question_type": "MCQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1765797250,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1765797250,
+      "q_lang": "EN",
+      "question": "<p><img height=\"309\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fed55d26a4\" width=\"697\" /></p>",
+      "language": "EN",
+      "opt1": "<p><img height=\"317\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fed5db63b2\" width=\"283\" /></p>",
+      "opt2": "<p><img height=\"264\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fed6d4f918\" width=\"345\" /></p>",
+      "opt3": "<p><img height=\"280\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fed76eab15\" width=\"329\" /></p>",
+      "opt4": "<p><img height=\"312\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fed7dcea90\" width=\"330\" /></p>",
+      "ans": "a",
+      "__order": 46,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 0,
+      "n_score": 0,
+      "time_taken": 0,
+      "std_ans": null,
+      "ans_status": "Unattempted"
+    },
+    {
+      "_id": {
+        "$oid": "693fedc62aa726544c0ae42b"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "6938203a74289711aa090fac"
+      },
+      "marks_positive": "4",
+      "marks_negative": "1",
+      "question_type": "MCQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1765797318,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1765797318,
+      "q_lang": "EN",
+      "question": "<p><img height=\"500\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693feda0b129a\" width=\"985\" /></p>",
+      "language": "EN",
+      "opt1": "<p><img height=\"50\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fedad8d9d8\" width=\"676\" /></p>",
+      "opt2": "<p><img height=\"48\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fedb37add0\" width=\"677\" /></p>",
+      "opt3": "<p><img height=\"49\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fedb9c7d76\" width=\"672\" /></p>",
+      "opt4": "<p><img height=\"50\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fedc27e121\" width=\"670\" /></p>",
+      "ans": "c",
+      "__order": 47,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 4,
+      "n_score": 0,
+      "time_taken": 144,
+      "std_ans": "c",
+      "ans_status": "correct"
+    },
+    {
+      "_id": {
+        "$oid": "693fee560401a4a1890077fd"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "6938203a74289711aa090fac"
+      },
+      "marks_positive": "4",
+      "marks_negative": "1",
+      "question_type": "MCQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1765797462,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1765797462,
+      "q_lang": "EN",
+      "question": "<p><img height=\"186\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fee245bc4e\" width=\"713\" /></p>\r\n\r\n<p><span lang=\"EN-US\" style=\"\"><span style=\"line-height:115%\"><span style=\"Arial\">What is the structure of B</span></span></span></p>",
+      "language": "EN",
+      "opt1": "<p><img height=\"190\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fee29efc0c\" width=\"287\" /></p>",
+      "opt2": "<p><img height=\"207\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fee2d1eff4\" width=\"301\" /></p>",
+      "opt3": "<p><img height=\"155\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fee346560f\" width=\"454\" /></p>",
+      "opt4": "<p><img height=\"188\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fee375f3be\" width=\"398\" /></p>",
+      "ans": "c",
+      "have_passage": 0,
+      "passage_id": null,
+      "__order": 48,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 0,
+      "n_score": -1,
+      "time_taken": 56,
+      "std_ans": "b",
+      "ans_status": "incorrect"
+    },
+    {
+      "_id": {
+        "$oid": "693feeba148448df4d07e57a"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "6938203a74289711aa090fac"
+      },
+      "marks_positive": "4",
+      "marks_negative": "1",
+      "question_type": "MCQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1765797562,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1765797562,
+      "q_lang": "EN",
+      "question": "<p><img height=\"248\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fee934a9de\" width=\"419\" /></p>",
+      "language": "EN",
+      "opt1": "<p><span lang=\"EN-US\" style=\"\"><span style=\"line-height:115%\"><span style=\"Arial&quot;,&quot;sans-serif&quot;\">(A) &amp; (C) are correct statements.</span></span></span></p>",
+      "opt2": "<p><span lang=\"EN-US\" style=\"\"><span style=\"line-height:115%\"><span style=\"Arial&quot;,&quot;sans-serif&quot;\">(A) &amp; (D) are correct statement.</span></span></span></p>",
+      "opt3": "<p><span lang=\"EN-US\" style=\"\"><span style=\"line-height:115%\"><span style=\"Arial&quot;,&quot;sans-serif&quot;\">(B) &amp; (C) are correct statements.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span></span></span></p>",
+      "opt4": "<p><span lang=\"EN-US\" style=\"\"><span style=\"line-height:115%\"><span style=\"Arial&quot;,&quot;sans-serif&quot;\">(B) &amp; (D) are correct statement.</span></span></span></p>",
+      "ans": "d",
+      "__order": 49,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 0,
+      "n_score": -1,
+      "time_taken": 13,
+      "std_ans": "b",
+      "ans_status": "incorrect"
+    },
+    {
+      "_id": {
+        "$oid": "693feeec7d31038011054ae8"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "6938203a74289711aa090fac"
+      },
+      "marks_positive": "4",
+      "marks_negative": "1",
+      "question_type": "MCQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1765797612,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1765797612,
+      "q_lang": "EN",
+      "question": "<p><img height=\"205\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693feec90586b\" width=\"472\" /></p>",
+      "language": "EN",
+      "opt1": "<p><img height=\"132\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693feed15521b\" width=\"358\" /></p>",
+      "opt2": "<p><img height=\"145\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693feeda31980\" width=\"252\" /></p>",
+      "opt3": "<p><img height=\"144\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693feee0bb9f2\" width=\"332\" /></p>",
+      "opt4": "<p><img height=\"123\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693feeea3d643\" width=\"278\" /></p>",
+      "ans": "a",
+      "__order": 50,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 4,
+      "n_score": 0,
+      "time_taken": 25,
+      "std_ans": "a",
+      "ans_status": "correct"
+    },
+    {
+      "_id": {
+        "$oid": "693fef7ac4ddc8b2f00e2ae1"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "6938203a74289711aa090fac"
+      },
+      "marks_positive": "4",
+      "marks_negative": "1",
+      "question_type": "MCQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1765797754,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1765797754,
+      "q_lang": "EN",
+      "question": "<p><img height=\"67\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693feef59aa68\" width=\"977\" /></p>\r\n\r\n<p><img height=\"468\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693fef3374922\" width=\"545\" /></p>",
+      "language": "EN",
+      "opt1": "<p><span lang=\"EN-US\" style=\"\"><span style=\"line-height:115%\"><span style=\"Arial&quot;,&quot;sans-serif&quot;\">(A)-(II), (B) &ndash;(I), (C)-(III), (D)-(IV)</span></span></span></p>",
+      "opt2": "<p><span lang=\"EN-US\" style=\"\"><span style=\"line-height:115%\"><span style=\"Arial&quot;,&quot;sans-serif&quot;\">(A)-(III), (B) &ndash;(IV), (C)-(II), (D)-(I)</span></span></span></p>",
+      "opt3": "<p><span lang=\"EN-US\" style=\"\"><span style=\"line-height:115%\"><span style=\"Arial&quot;,&quot;sans-serif&quot;\">(A)-(III), (B) &ndash;(II), (C)-(IV), (D)-(I)</span></span></span></p>",
+      "opt4": "<p><span lang=\"EN-US\" style=\"\"><span style=\"line-height:115%\"><span style=\"Arial&quot;,&quot;sans-serif&quot;\">(A)-(II), (B) &ndash;(IV), (C)-(III), (D)-(I)</span></span></span></p>",
+      "ans": "b",
+      "__order": 51,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 4,
+      "n_score": 0,
+      "time_taken": 34,
+      "std_ans": "b",
+      "ans_status": "correct"
+    },
+    {
+      "_id": {
+        "$oid": "693ff0890fb808b37702a834"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "6938203a74289711aa090fac"
+      },
+      "marks_positive": "4",
+      "marks_negative": "1",
+      "question_type": "MCQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1765798025,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1765798025,
+      "q_lang": "EN",
+      "question": "<p><span lang=\"EN-US\" style=\"\"><span style=\"line-height:115%\"><span style=\"Arial\">Match List-I with List-II</span></span></span></p>\r\n\r\n<p><img height=\"632\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693ff01c5349f\" style=\"float: left;\" width=\"715\" /></p>\r\n\r\n<p>&nbsp;</p>\r\n\r\n<p>&nbsp;</p>\r\n\r\n<p>&nbsp;</p>\r\n\r\n<p>&nbsp;</p>\r\n\r\n<p>&nbsp;</p>\r\n\r\n<p>&nbsp;</p>\r\n\r\n<p>&nbsp;</p>\r\n\r\n<p>&nbsp;</p>\r\n\r\n<p>&nbsp;</p>\r\n\r\n<p>&nbsp;</p>\r\n\r\n<p>&nbsp;</p>\r\n\r\n<p>&nbsp;</p>\r\n\r\n<p>&nbsp;</p>\r\n\r\n<p>&nbsp;</p>\r\n\r\n<p>&nbsp;</p>\r\n\r\n<p>&nbsp;</p>\r\n\r\n<p>&nbsp;</p>\r\n\r\n<p>&nbsp;</p>\r\n\r\n<p>&nbsp;</p>\r\n\r\n<p><span lang=\"EN-US\" style=\"\"><span style=\"line-height:115%\"><span style=\"Arial\">Choose the correct answer form the options given below:</span></span></span></p>",
+      "language": "EN",
+      "opt1": "<p><span lang=\"EN-US\" style=\"\"><span style=\"line-height:115%\"><span style=\"Arial\">(A)-(IV), (B)&ndash;(II), (C)-(III), (D)-(I)</span></span></span></p>",
+      "opt2": "<p><span lang=\"EN-US\" style=\"\"><span style=\"line-height:115%\"><span style=\"Arial\">(A)-(I), (B)&ndash;(IV), (C)-(II), (D)-(III)</span></span></span></p>",
+      "opt3": "<p><span lang=\"EN-US\" style=\"\"><span style=\"line-height:115%\"><span style=\"Arial\">(A)-(II), (B)&ndash;(IV), (C)-(I), (D)-(III)</span></span></span></p>",
+      "opt4": "<p><span lang=\"EN-US\" style=\"\"><span style=\"line-height:115%\"><span style=\"Arial\">(A)-(III), (B)&ndash;(II), (C)-(I), (D)-(IV)</span></span></span></p>",
+      "ans": "c",
+      "have_passage": 0,
+      "passage_id": null,
+      "__order": 52,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 4,
+      "n_score": 0,
+      "time_taken": 32,
+      "std_ans": "c",
+      "ans_status": "correct"
+    },
+    {
+      "_id": {
+        "$oid": "693ff1029cfd5ec731053e44"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "6938203a74289711aa090fac"
+      },
+      "marks_positive": "4",
+      "marks_negative": "1",
+      "question_type": "MCQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1765798146,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1765798146,
+      "q_lang": "EN",
+      "question": "<p><span lang=\"EN-US\" style=\"\"><span style=\"line-height:115%\"><span style=\"Arial\">Which among the following does not react with Hinsberg&rsquo;s reagent?</span></span></span></p>\r\n\r\n<p><img height=\"331\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693ff0cf41dc6\" width=\"321\" /></p>\r\n\r\n<p><span lang=\"EN-US\" style=\"\"><span style=\"line-height:115%\"><span style=\"Arial\">Choose the correct answer from the options given below:</span></span></span></p>",
+      "language": "EN",
+      "opt1": "<p><span lang=\"EN-US\" style=\"\"><span style=\"line-height:115%\"><span style=\"Arial\">A, C and E only</span></span></span></p>",
+      "opt2": "<p><span lang=\"EN-US\" style=\"\"><span style=\"line-height:115%\"><span style=\"Arial\">B and D only</span></span></span></p>",
+      "opt3": "<p><span lang=\"EN-US\" style=\"\"><span style=\"line-height:115%\"><span style=\"Arial\">A, B and E only</span></span></span></p>",
+      "opt4": "<p><span lang=\"EN-US\" style=\"\"><span style=\"line-height:115%\"><span style=\"Arial\">C and D only</span></span></span></p>",
+      "ans": "a",
+      "have_passage": 0,
+      "passage_id": null,
+      "__order": 53,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 0,
+      "n_score": -1,
+      "time_taken": 47,
+      "std_ans": "b",
+      "ans_status": "incorrect"
+    },
+    {
+      "_id": {
+        "$oid": "693ff15a71a3d08e24034eac"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "6938203a74289711aa090fac"
+      },
+      "marks_positive": "4",
+      "marks_negative": "1",
+      "question_type": "MCQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1765798234,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1765798234,
+      "q_lang": "EN",
+      "question": "<ol>\r\n\t<li class=\"MsoNoSpacing\" style=\"margin:0in 0in 0.0001pt\"><span style=\"\"><span style=\"line-height:115%\"><span style=\"sans-serif&quot;\"><span lang=\"EN-US\" style=\"Arial&quot;,&quot;sans-serif&quot;\">Match List-I with List-II</span></span></span></span></li>\r\n</ol>\r\n\r\n<table class=\"MsoTableGrid\" style=\"margin-left:.5in; border-collapse:collapse; border:solid black 1.0pt\">\r\n\t<tbody>\r\n\t\t<tr>\r\n\t\t\t<td style=\"border:solid black 1.0pt; width:26.1pt; padding:0in 5.4pt 0in 5.4pt\" valign=\"top\" width=\"35\">\r\n\t\t\t<p class=\"MsoNoSpacing\" style=\"margin:0in 0in 0.0001pt\">&nbsp;</p>\r\n\t\t\t</td>\r\n\t\t\t<td style=\"border:solid black 1.0pt; width:127.6pt; border-left:none; padding:0in 5.4pt 0in 5.4pt\" valign=\"top\" width=\"170\">\r\n\t\t\t<p class=\"MsoNoSpacing\" style=\"margin: 0in 0in 0.0001pt; text-align: center;\"><strong><span style=\"\"><span style=\"line-height:115%\"><span style=\"sans-serif&quot;\"><span lang=\"EN-US\" style=\"Arial&quot;,&quot;sans-serif&quot;\">List-I</span></span></span></span></strong></p>\r\n\t\t\t</td>\r\n\t\t\t<td style=\"border:solid black 1.0pt; width:21.25pt; border-left:none; padding:0in 5.4pt 0in 5.4pt\" valign=\"top\" width=\"28\">\r\n\t\t\t<p class=\"MsoNoSpacing\" style=\"margin: 0in 0in 0.0001pt; text-align: center;\">&nbsp;</p>\r\n\t\t\t</td>\r\n\t\t\t<td style=\"border:solid black 1.0pt; width:106.3pt; border-left:none; padding:0in 5.4pt 0in 5.4pt\" valign=\"top\" width=\"142\">\r\n\t\t\t<p class=\"MsoNoSpacing\" style=\"margin: 0in 0in 0.0001pt; text-align: center;\"><strong><span style=\"\"><span style=\"line-height:115%\"><span style=\"sans-serif&quot;\"><span lang=\"EN-US\" style=\"Arial&quot;,&quot;sans-serif&quot;\">List-II</span></span></span></span></strong></p>\r\n\t\t\t</td>\r\n\t\t</tr>\r\n\t\t<tr>\r\n\t\t\t<td style=\"border:solid black 1.0pt; width:26.1pt; border-top:none; padding:0in 5.4pt 0in 5.4pt\" valign=\"top\" width=\"35\">\r\n\t\t\t<p class=\"MsoNoSpacing\" style=\"margin:0in 0in 0.0001pt\"><span style=\"\"><span style=\"line-height:115%\"><span style=\"sans-serif&quot;\"><span lang=\"EN-US\" style=\"Arial&quot;,&quot;sans-serif&quot;\">A</span></span></span></span></p>\r\n\t\t\t</td>\r\n\t\t\t<td style=\"border-bottom:solid black 1.0pt; width:127.6pt; border-top:none; border-left:none; border-right:solid black 1.0pt; padding:0in 5.4pt 0in 5.4pt\" valign=\"top\" width=\"170\">\r\n\t\t\t<p class=\"MsoNoSpacing\" style=\"margin:0in 0in 0.0001pt\"><span style=\"\"><span style=\"line-height:115%\"><span style=\"sans-serif&quot;\"><span lang=\"EN-US\" style=\"Arial&quot;,&quot;sans-serif&quot;\">Benzenesulphonyl chloride</span></span></span></span></p>\r\n\t\t\t</td>\r\n\t\t\t<td style=\"border-bottom:solid black 1.0pt; width:21.25pt; border-top:none; border-left:none; border-right:solid black 1.0pt; padding:0in 5.4pt 0in 5.4pt\" valign=\"top\" width=\"28\">\r\n\t\t\t<p class=\"MsoNoSpacing\" style=\"margin:0in 0in 0.0001pt\"><span style=\"\"><span style=\"line-height:115%\"><span style=\"sans-serif&quot;\"><span lang=\"EN-US\" style=\"Arial&quot;,&quot;sans-serif&quot;\">I</span></span></span></span></p>\r\n\t\t\t</td>\r\n\t\t\t<td style=\"border-bottom:solid black 1.0pt; width:106.3pt; border-top:none; border-left:none; border-right:solid black 1.0pt; padding:0in 5.4pt 0in 5.4pt\" valign=\"top\" width=\"142\">\r\n\t\t\t<p class=\"MsoNoSpacing\" style=\"margin:0in 0in 0.0001pt\"><span style=\"\"><span style=\"line-height:115%\"><span style=\"sans-serif&quot;\"><span lang=\"EN-US\" style=\"Arial&quot;,&quot;sans-serif&quot;\">Test for primary amines</span></span></span></span></p>\r\n\t\t\t</td>\r\n\t\t</tr>\r\n\t\t<tr>\r\n\t\t\t<td style=\"border:solid black 1.0pt; width:26.1pt; border-top:none; padding:0in 5.4pt 0in 5.4pt\" valign=\"top\" width=\"35\">\r\n\t\t\t<p class=\"MsoNoSpacing\" style=\"margin:0in 0in 0.0001pt\"><span style=\"\"><span style=\"line-height:115%\"><span style=\"sans-serif&quot;\"><span lang=\"EN-US\" style=\"Arial&quot;,&quot;sans-serif&quot;\">B</span></span></span></span></p>\r\n\t\t\t</td>\r\n\t\t\t<td style=\"border-bottom:solid black 1.0pt; width:127.6pt; border-top:none; border-left:none; border-right:solid black 1.0pt; padding:0in 5.4pt 0in 5.4pt\" valign=\"top\" width=\"170\">\r\n\t\t\t<p class=\"MsoNoSpacing\" style=\"margin:0in 0in 0.0001pt\"><span style=\"\"><span style=\"line-height:115%\"><span style=\"sans-serif&quot;\"><span lang=\"EN-US\" style=\"Arial&quot;,&quot;sans-serif&quot;\">Hoffmann bromamide reaction</span></span></span></span></p>\r\n\t\t\t</td>\r\n\t\t\t<td style=\"border-bottom:solid black 1.0pt; width:21.25pt; border-top:none; border-left:none; border-right:solid black 1.0pt; padding:0in 5.4pt 0in 5.4pt\" valign=\"top\" width=\"28\">\r\n\t\t\t<p class=\"MsoNoSpacing\" style=\"margin:0in 0in 0.0001pt\"><span style=\"\"><span style=\"line-height:115%\"><span style=\"sans-serif&quot;\"><span lang=\"EN-US\" style=\"Arial&quot;,&quot;sans-serif&quot;\">II</span></span></span></span></p>\r\n\t\t\t</td>\r\n\t\t\t<td style=\"border-bottom:solid black 1.0pt; width:106.3pt; border-top:none; border-left:none; border-right:solid black 1.0pt; padding:0in 5.4pt 0in 5.4pt\" valign=\"top\" width=\"142\">\r\n\t\t\t<p class=\"MsoNoSpacing\" style=\"margin:0in 0in 0.0001pt\"><span style=\"\"><span style=\"line-height:115%\"><span style=\"sans-serif&quot;\"><span lang=\"EN-US\" style=\"Arial&quot;,&quot;sans-serif&quot;\">Anti saytzeff</span></span></span></span></p>\r\n\t\t\t</td>\r\n\t\t</tr>\r\n\t\t<tr>\r\n\t\t\t<td style=\"border:solid black 1.0pt; width:26.1pt; border-top:none; padding:0in 5.4pt 0in 5.4pt\" valign=\"top\" width=\"35\">\r\n\t\t\t<p class=\"MsoNoSpacing\" style=\"margin:0in 0in 0.0001pt\"><span style=\"\"><span style=\"line-height:115%\"><span style=\"sans-serif&quot;\"><span lang=\"EN-US\" style=\"Arial&quot;,&quot;sans-serif&quot;\">C</span></span></span></span></p>\r\n\t\t\t</td>\r\n\t\t\t<td style=\"border-bottom:solid black 1.0pt; width:127.6pt; border-top:none; border-left:none; border-right:solid black 1.0pt; padding:0in 5.4pt 0in 5.4pt\" valign=\"top\" width=\"170\">\r\n\t\t\t<p class=\"MsoNoSpacing\" style=\"margin:0in 0in 0.0001pt\"><span style=\"\"><span style=\"line-height:115%\"><span style=\"sans-serif&quot;\"><span lang=\"EN-US\" style=\"Arial&quot;,&quot;sans-serif&quot;\">Carbylamine reaction</span></span></span></span></p>\r\n\t\t\t</td>\r\n\t\t\t<td style=\"border-bottom:solid black 1.0pt; width:21.25pt; border-top:none; border-left:none; border-right:solid black 1.0pt; padding:0in 5.4pt 0in 5.4pt\" valign=\"top\" width=\"28\">\r\n\t\t\t<p class=\"MsoNoSpacing\" style=\"margin:0in 0in 0.0001pt\"><span style=\"\"><span style=\"line-height:115%\"><span style=\"sans-serif&quot;\"><span lang=\"EN-US\" style=\"Arial&quot;,&quot;sans-serif&quot;\">III</span></span></span></span></p>\r\n\t\t\t</td>\r\n\t\t\t<td style=\"border-bottom:solid black 1.0pt; width:106.3pt; border-top:none; border-left:none; border-right:solid black 1.0pt; padding:0in 5.4pt 0in 5.4pt\" valign=\"top\" width=\"142\">\r\n\t\t\t<p class=\"MsoNoSpacing\" style=\"margin:0in 0in 0.0001pt\"><span style=\"\"><span style=\"line-height:115%\"><span style=\"sans-serif&quot;\"><span lang=\"EN-US\" style=\"Arial&quot;,&quot;sans-serif&quot;\">Hinsberg reagent</span></span></span></span></p>\r\n\t\t\t</td>\r\n\t\t</tr>\r\n\t\t<tr>\r\n\t\t\t<td style=\"border:solid black 1.0pt; width:26.1pt; border-top:none; padding:0in 5.4pt 0in 5.4pt\" valign=\"top\" width=\"35\">\r\n\t\t\t<p class=\"MsoNoSpacing\" style=\"margin:0in 0in 0.0001pt\"><span style=\"\"><span style=\"line-height:115%\"><span style=\"sans-serif&quot;\"><span lang=\"EN-US\" style=\"Arial&quot;,&quot;sans-serif&quot;\">D</span></span></span></span></p>\r\n\t\t\t</td>\r\n\t\t\t<td style=\"border-bottom:solid black 1.0pt; width:127.6pt; border-top:none; border-left:none; border-right:solid black 1.0pt; padding:0in 5.4pt 0in 5.4pt\" valign=\"top\" width=\"170\">\r\n\t\t\t<p class=\"MsoNoSpacing\" style=\"margin:0in 0in 0.0001pt\"><span style=\"\"><span style=\"line-height:115%\"><span style=\"sans-serif&quot;\"><span lang=\"EN-US\" style=\"Arial&quot;,&quot;sans-serif&quot;\">Hoffmann orientation</span></span></span></span></p>\r\n\t\t\t</td>\r\n\t\t\t<td style=\"border-bottom:solid black 1.0pt; width:21.25pt; border-top:none; border-left:none; border-right:solid black 1.0pt; padding:0in 5.4pt 0in 5.4pt\" valign=\"top\" width=\"28\">\r\n\t\t\t<p class=\"MsoNoSpacing\" style=\"margin:0in 0in 0.0001pt\"><span style=\"\"><span style=\"line-height:115%\"><span style=\"sans-serif&quot;\"><span lang=\"EN-US\" style=\"Arial&quot;,&quot;sans-serif&quot;\">IV</span></span></span></span></p>\r\n\t\t\t</td>\r\n\t\t\t<td style=\"border-bottom:solid black 1.0pt; width:106.3pt; border-top:none; border-left:none; border-right:solid black 1.0pt; padding:0in 5.4pt 0in 5.4pt\" valign=\"top\" width=\"142\">\r\n\t\t\t<p class=\"MsoNoSpacing\" style=\"margin:0in 0in 0.0001pt\"><span style=\"\"><span style=\"line-height:115%\"><span style=\"sans-serif&quot;\"><span lang=\"EN-US\" style=\"Arial&quot;,&quot;sans-serif&quot;\">Known reaction of Isocyanates</span></span></span></span></p>\r\n\t\t\t</td>\r\n\t\t</tr>\r\n\t</tbody>\r\n</table>\r\n\r\n<p class=\"MsoNoSpacing\" style=\"margin-left:.5in; margin:0in 0in 0.0001pt\">&nbsp;</p>\r\n\r\n<p><span lang=\"EN-US\" style=\"\"><span style=\"line-height:115%\"><span style=\"Arial&quot;,&quot;sans-serif&quot;\">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Choose the correct answer form the options given below:</span></span></span></p>",
+      "language": "EN",
+      "opt1": "<p><span lang=\"EN-US\" style=\"\"><span style=\"line-height:115%\"><span style=\"Arial&quot;,&quot;sans-serif&quot;\">(A)-(IV), (B) &ndash;(III), (C)-(I), (D)-(II)</span></span></span></p>",
+      "opt2": "<p><span lang=\"EN-US\" style=\"\"><span style=\"line-height:115%\"><span style=\"Arial&quot;,&quot;sans-serif&quot;\">(A)-(III), (B) &ndash;(IV), (C)-(I), (D)-(II)</span></span></span></p>",
+      "opt3": "<p><span lang=\"EN-US\" style=\"\"><span style=\"line-height:115%\"><span style=\"Arial&quot;,&quot;sans-serif&quot;\">(A)-(IV), (B) &ndash;(II), (C)-(I), (D)-(III)</span></span></span></p>",
+      "opt4": "<p><span lang=\"EN-US\" style=\"\"><span style=\"line-height:115%\"><span style=\"Arial&quot;,&quot;sans-serif&quot;\">(A)-(IV), (B) &ndash;(III), (C)-(II), (D)-(I)</span></span></span></p>",
+      "ans": "b",
+      "__order": 54,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 4,
+      "n_score": 0,
+      "time_taken": 31,
+      "std_ans": "b",
+      "ans_status": "correct"
+    },
+    {
+      "_id": {
+        "$oid": "693ff193cf763789b400ba07"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "6938203a74289711aa090fac"
+      },
+      "marks_positive": "4",
+      "marks_negative": "1",
+      "question_type": "MCQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1765798291,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1765798291,
+      "q_lang": "EN",
+      "question": "<p class=\"MsoNoSpacing\" style=\"margin:0in 0in 0.0001pt\"><span style=\"\"><span style=\"line-height:115%\"><span style=\"sans-serif&quot;\"><span lang=\"EN-US\" style=\"Arial&quot;,&quot;sans-serif&quot;\">The major product &lsquo;P&rsquo; for the following sequence of reactions is:</span></span></span></span></p>\r\n\r\n<p class=\"MsoNoSpacing\" style=\"margin-left:.5in; margin:0in 0in 0.0001pt\"><img height=\"128\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693ff169c8639\" width=\"333\" /></p>",
+      "language": "EN",
+      "opt1": "<p><img height=\"125\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693ff171c0646\" width=\"229\" /></p>",
+      "opt2": "<p><img height=\"86\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693ff1780f22b\" width=\"278\" /></p>",
+      "opt3": "<p><img height=\"106\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693ff17b2ea3d\" width=\"277\" /></p>",
+      "opt4": "<p><img height=\"125\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693ff17edc95c\" width=\"273\" /></p>",
+      "ans": "b",
+      "__order": 55,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 4,
+      "n_score": 0,
+      "time_taken": 52,
+      "std_ans": "b",
+      "ans_status": "correct"
+    },
+    {
+      "_id": {
+        "$oid": "693ff1cdad3887f9a70d5381"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "6938203a74289711aa090fac"
+      },
+      "marks_positive": "4",
+      "marks_negative": "1",
+      "question_type": "MCQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1765798349,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1765798349,
+      "q_lang": "EN",
+      "question": "<p><img height=\"131\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693ff1a802851\" width=\"431\" /></p>\r\n\r\n<p><span lang=\"EN-US\" style=\"\"><span style=\"line-height:115%\"><span style=\"Arial&quot;,&quot;sans-serif&quot;\">The structure of X is</span></span></span></p>",
+      "language": "EN",
+      "opt1": "<p><img height=\"198\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693ff1b41ad61\" width=\"272\" /></p>",
+      "opt2": "<p><img height=\"147\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693ff1b79491a\" width=\"234\" /></p>",
+      "opt3": "<p><img height=\"186\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693ff1c2608d4\" width=\"247\" /></p>",
+      "opt4": "<p><img height=\"194\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693ff1c5a0fd2\" width=\"266\" /></p>",
+      "ans": "c",
+      "__order": 56,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 4,
+      "n_score": 0,
+      "time_taken": 36,
+      "std_ans": "c",
+      "ans_status": "correct"
+    },
+    {
+      "_id": {
+        "$oid": "693ff20930afbb1a280ff4ba"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "6938203a74289711aa090fac"
+      },
+      "marks_positive": "4",
+      "marks_negative": "1",
+      "question_type": "MCQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1765798409,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1765798409,
+      "q_lang": "EN",
+      "question": "<p><span lang=\"EN-US\" style=\"\"><span style=\"line-height:115%\"><span style=\"Arial&quot;,&quot;sans-serif&quot;\">A compound &lsquo;X&rsquo; on treatment with Br/NaOH, provided C<sub>3</sub>H<sub>9 </sub>N, which gives positive carbylamine test. Compound X &lsquo; is :</span></span></span></p>",
+      "language": "EN",
+      "opt1": "<p><img height=\"40\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693ff1f190363\" width=\"190\" /></p>",
+      "opt2": "<p><img height=\"34\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693ff1f9aa9df\" width=\"236\" /></p>",
+      "opt3": "<p><img height=\"39\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693ff1ff9235b\" width=\"235\" /></p>",
+      "opt4": "<p><img height=\"35\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question693ff2046030f\" width=\"220\" /></p>",
+      "ans": "c",
+      "__order": 57,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 4,
+      "n_score": 0,
+      "time_taken": 56,
+      "std_ans": "c",
+      "ans_status": "correct"
+    },
+    {
+      "_id": {
+        "$oid": "69400aa1e2fb5e147604b847"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "6938203a74289711aa090fac"
+      },
+      "marks_positive": "4",
+      "marks_negative": "1",
+      "question_type": "MCQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1765804705,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1765804705,
+      "q_lang": "EN",
+      "question": "<p><span lang=\"EN-US\" style=\"\"><span style=\"line-height:115%\"><span style=\"Arial&quot;,&quot;sans-serif&quot;\">Which of the following reaction will occur?</span></span></span></p>\r\n\r\n<p><img height=\"217\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question69400a71a91f3\" width=\"445\" /></p>\r\n\r\n<p><img height=\"31\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question69400a8134c0c\" width=\"531\" /></p>",
+      "language": "EN",
+      "opt1": "<p><span lang=\"EN-US\" style=\"\"><span style=\"line-height:115%\"><span style=\"Arial&quot;,&quot;sans-serif&quot;\">2, 3 and 4</span></span></span></p>",
+      "opt2": "<p><span lang=\"EN-US\" style=\"\"><span style=\"line-height:115%\"><span style=\"Arial&quot;,&quot;sans-serif&quot;\">1, 2 and&nbsp; 4&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span></span></span></p>",
+      "opt3": "<p><span lang=\"EN-US\" style=\"\"><span style=\"line-height:115%\"><span style=\"Arial&quot;,&quot;sans-serif&quot;\">1, 3 and 4</span></span></span></p>",
+      "opt4": "<p><span lang=\"EN-US\" style=\"\"><span style=\"line-height:115%\"><span style=\"Arial&quot;,&quot;sans-serif&quot;\">1, 2 and 3</span></span></span></p>",
+      "ans": "c",
+      "__order": 58,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 4,
+      "n_score": 0,
+      "time_taken": 24,
+      "std_ans": "c",
+      "ans_status": "correct"
+    },
+    {
+      "_id": {
+        "$oid": "69400addbc7992dfb1033f66"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "6938203a74289711aa090fac"
+      },
+      "marks_positive": "4",
+      "marks_negative": "1",
+      "question_type": "NAT",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1765804765,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1765804765,
+      "q_lang": "EN",
+      "question": "<p><img height=\"118\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question69400ad8b29f5\" width=\"830\" /></p>",
+      "language": "EN",
+      "ans": "18",
+      "__order": 59,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 0,
+      "n_score": -1,
+      "time_taken": 64,
+      "std_ans": "12",
+      "ans_status": "incorrect"
+    },
+    {
+      "_id": {
+        "$oid": "69400aece654a72bf000011b"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "6938203a74289711aa090fac"
+      },
+      "marks_positive": "4",
+      "marks_negative": "1",
+      "question_type": "NAT",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1765804780,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1765804780,
+      "q_lang": "EN",
+      "question": "<p><img height=\"63\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question69400ae80105a\" width=\"977\" /></p>",
+      "language": "EN",
+      "ans": "9",
+      "__order": 60,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 0,
+      "n_score": 0,
+      "time_taken": 10,
+      "std_ans": "",
+      "ans_status": "Unattempted"
+    },
+    {
+      "_id": {
+        "$oid": "69400ba4cc2e847ccf045f30"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "6938203a74289711aa090fac"
+      },
+      "marks_positive": "4",
+      "marks_negative": "1",
+      "question_type": "NAT",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1765804964,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1765804964,
+      "q_lang": "EN",
+      "question": "<p><span lang=\"EN-US\" style=\"\"><span style=\"line-height:115%\"><span style=\"Arial\">Consider the following sequence of reactions:</span></span></span></p>\r\n\r\n<p><img height=\"256\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question69400b8490677\" width=\"562\" /></p>",
+      "language": "EN",
+      "ans": "154",
+      "have_passage": 0,
+      "passage_id": null,
+      "__order": 61,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 4,
+      "n_score": 0,
+      "time_taken": 29,
+      "std_ans": "154",
+      "ans_status": "correct"
+    },
+    {
+      "_id": {
+        "$oid": "69400bb408c0353071015bfd"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "6938203a74289711aa090fac"
+      },
+      "marks_positive": "4",
+      "marks_negative": "1",
+      "question_type": "NAT",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1765804980,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1765804980,
+      "q_lang": "EN",
+      "question": "<p><img height=\"150\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question69400bb12d892\" width=\"879\" /></p>",
+      "language": "EN",
+      "ans": "4",
+      "__order": 62,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 4,
+      "n_score": 0,
+      "time_taken": 90,
+      "std_ans": "4",
+      "ans_status": "correct"
+    },
+    {
+      "_id": {
+        "$oid": "69400bc0feba82536e003dbe"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "6938203a74289711aa090fac"
+      },
+      "marks_positive": "4",
+      "marks_negative": "1",
+      "question_type": "NAT",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1765804992,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1765804992,
+      "q_lang": "EN",
+      "question": "<p><img height=\"187\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question69400bbcc24f0\" width=\"584\" /></p>",
+      "language": "EN",
+      "ans": "1",
+      "__order": 63,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 4,
+      "n_score": 0,
+      "time_taken": 21,
+      "std_ans": "1",
+      "ans_status": "correct"
+    },
+    {
+      "_id": {
+        "$oid": "69400e6c78a56c8b9c0c770b"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "6936807a52cb2b62180ddd55"
+      },
+      "marks_positive": "4",
+      "marks_negative": "1",
+      "question_type": "MCQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1765805676,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1765805676,
+      "q_lang": "EN",
+      "question": "<p><span lang=\"EN-US\" style=\"\"><span style=\"line-height:115%\"><span style=\"Arial&quot;,&quot;sans-serif&quot;\">A metallic wire is folded to form a square loop of side a. It carries a current i and is kept perpendicular to a uniform magnetic field B. If the shape of the loop is changed from square to a circle without changing the length of the wire and current, the amount of work done in doing is</span></span></span></p>",
+      "language": "EN",
+      "opt1": "<p><img height=\"70\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question69400e2e9aad8\" width=\"111\" /></p>",
+      "opt2": "<p><img height=\"34\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question69400e3941631\" width=\"112\" /></p>",
+      "opt3": "<p><img height=\"65\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question69400e546cee4\" width=\"115\" /></p>",
+      "opt4": "<p><img height=\"42\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question69400e62ca63a\" width=\"106\" /></p>",
+      "ans": "a",
+      "__order": 64,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 4,
+      "n_score": 0,
+      "time_taken": 113,
+      "std_ans": "a",
+      "ans_status": "correct"
+    },
+    {
+      "_id": {
+        "$oid": "69400ec8a4253c84b904e2c7"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "6936807a52cb2b62180ddd55"
+      },
+      "marks_positive": "4",
+      "marks_negative": "1",
+      "question_type": "MCQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1765805768,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1765805768,
+      "q_lang": "EN",
+      "question": "<p><img height=\"65\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question69400e83f06d8\" width=\"1007\" /></p>",
+      "language": "EN",
+      "opt1": "<p><img height=\"35\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question69400e8d686dd\" width=\"105\" /></p>",
+      "opt2": "<p><img height=\"32\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question69400e97c6170\" width=\"116\" /></p>",
+      "opt3": "<p><img height=\"35\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question69400eae83924\" width=\"113\" /></p>",
+      "opt4": "<p><img height=\"33\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question69400ebdc4bd2\" width=\"113\" /></p>",
+      "ans": "c",
+      "__order": 65,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 4,
+      "n_score": 0,
+      "time_taken": 104,
+      "std_ans": "c",
+      "ans_status": "correct"
+    },
+    {
+      "_id": {
+        "$oid": "69400f546a4d6193e3070c1b"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "6936807a52cb2b62180ddd55"
+      },
+      "marks_positive": "4",
+      "marks_negative": "1",
+      "question_type": "MCQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1765805908,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1765805908,
+      "q_lang": "EN",
+      "question": "<p><img height=\"102\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question69400ee6a78c7\" width=\"1018\" /></p>",
+      "language": "EN",
+      "opt1": "<p><img height=\"32\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question69400f1b85cd4\" width=\"279\" /></p>",
+      "opt2": "<p><img height=\"35\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question69400f36c8230\" width=\"282\" /></p>",
+      "opt3": "<p><img height=\"35\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question69400f47bebcf\" width=\"434\" /></p>",
+      "opt4": "<p><span lang=\"EN-US\" style=\"\"><span style=\"line-height:115%\"><span style=\"Arial&quot;,&quot;sans-serif&quot;\">All ions will suffer the same deflection</span></span></span></p>",
+      "ans": "a",
+      "__order": 66,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 4,
+      "n_score": 0,
+      "time_taken": 42,
+      "std_ans": "a",
+      "ans_status": "correct"
+    },
+    {
+      "_id": {
+        "$oid": "6940101bd410331aac00b8f9"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "6936807a52cb2b62180ddd55"
+      },
+      "marks_positive": "4",
+      "marks_negative": "1",
+      "question_type": "MCQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1765806107,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1765806107,
+      "q_lang": "EN",
+      "question": "<p class=\"MsoNoSpacing\" style=\"text-align:justify; margin:0in 0in 0.0001pt\"><span style=\"\"><span style=\"text-justify:inter-ideograph\"><span style=\"line-height:115%\"><span style=\"sans-serif&quot;\"><span lang=\"EN-US\" style=\"Arial&quot;,&quot;sans-serif&quot;\">We know that magnetic substance follow Curie-Weiss Law. In the given table, Column - I shows the type of material and Column - II shows the three figures &ndash; figure (I) shows direction of magnetic momentum of each electron when there is no magnetic field inside magnetic substance; figure (II) shows the direction of magnetic momentum of electron when there is magnetic field inside magnetic substance and figure (III) shows the curve between M and H inside magnetic substance.</span></span></span></span></span></p>\r\n\r\n<p><span lang=\"EN-US\" style=\"\"><span style=\"line-height:115%\"><span style=\"Arial&quot;,&quot;sans-serif&quot;\">Correct match is:</span></span></span></p>\r\n\r\n<table class=\"MsoTableGrid\" style=\"margin-left:45.9pt; border-collapse:collapse; border:solid windowtext 1.0pt\">\r\n\t<tbody>\r\n\t\t<tr>\r\n\t\t\t<td colspan=\"2\" style=\"border:solid windowtext 1.0pt; width:246.3pt; padding:0in 5.4pt 0in 5.4pt\" valign=\"top\" width=\"328\">\r\n\t\t\t<p align=\"center\" class=\"MsoNoSpacing\" style=\"text-align:center; margin:0in 0in 0.0001pt\"><span style=\"\"><span style=\"line-height:115%\"><span style=\"sans-serif&quot;\"><b><span lang=\"EN-US\" style=\"Arial&quot;,&quot;sans-serif&quot;\">COLUMN &ndash; I</span></b></span></span></span></p>\r\n\t\t\t</td>\r\n\t\t\t<td colspan=\"2\" style=\"border:solid windowtext 1.0pt; width:212.7pt; border-left:none; padding:0in 5.4pt 0in 5.4pt\" valign=\"top\" width=\"284\">\r\n\t\t\t<p align=\"center\" class=\"MsoNoSpacing\" style=\"text-align:center; margin:0in 0in 0.0001pt\"><span style=\"\"><span style=\"line-height:115%\"><span style=\"sans-serif&quot;\"><b><span lang=\"EN-US\" style=\"Arial&quot;,&quot;sans-serif&quot;\">COLUMN &ndash; II</span></b></span></span></span></p>\r\n\t\t\t</td>\r\n\t\t</tr>\r\n\t\t<tr>\r\n\t\t\t<td style=\"border:solid windowtext 1.0pt; width:83.55pt; border-top:none; padding:0in 5.4pt 0in 5.4pt\" valign=\"top\" width=\"111\">\r\n\t\t\t<p class=\"MsoNoSpacing\" style=\"text-align:justify; margin:0in 0in 0.0001pt\"><span style=\"\"><span style=\"text-justify:inter-ideograph\"><span style=\"line-height:115%\"><span style=\"sans-serif&quot;\"><span lang=\"EN-US\" style=\"Arial&quot;,&quot;sans-serif&quot;\">(A)</span></span></span></span></span></p>\r\n\t\t\t</td>\r\n\t\t\t<td style=\"border-bottom:solid windowtext 1.0pt; width:162.75pt; border-top:none; border-left:none; border-right:solid windowtext 1.0pt; padding:0in 5.4pt 0in 5.4pt\" valign=\"top\" width=\"217\">\r\n\t\t\t<p class=\"MsoNoSpacing\" style=\"text-align:justify; margin:0in 0in 0.0001pt\"><span style=\"\"><span style=\"text-justify:inter-ideograph\"><span style=\"line-height:115%\"><span style=\"sans-serif&quot;\"><span lang=\"EN-US\" style=\"Arial&quot;,&quot;sans-serif&quot;\">Ferromagnetic</span></span></span></span></span></p>\r\n\t\t\t</td>\r\n\t\t\t<td style=\"border-bottom:solid windowtext 1.0pt; width:32.7pt; border-top:none; border-left:none; border-right:solid windowtext 1.0pt; padding:0in 5.4pt 0in 5.4pt\" valign=\"top\" width=\"44\">\r\n\t\t\t<p class=\"MsoNoSpacing\" style=\"text-align:justify; margin:0in 0in 0.0001pt\"><span style=\"\"><span style=\"text-justify:inter-ideograph\"><span style=\"line-height:115%\"><span style=\"sans-serif&quot;\"><span lang=\"EN-US\" style=\"Arial&quot;,&quot;sans-serif&quot;\">(P)</span></span></span></span></span></p>\r\n\t\t\t</td>\r\n\t\t\t<td style=\"border-bottom:solid windowtext 1.0pt; width:2.5in; border-top:none; border-left:none; border-right:solid windowtext 1.0pt; padding:0in 5.4pt 0in 5.4pt\" valign=\"top\" width=\"240\">\r\n\t\t\t<p class=\"MsoNoSpacing\" style=\"text-align:justify; margin:0in 0in 0.0001pt\"><img height=\"202\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question69400f8b9ce35\" width=\"344\" /><span style=\"\"><span style=\"text-justify:inter-ideograph\"><span style=\"line-height:115%\"><span style=\"sans-serif&quot;\"><span style=\"Arial&quot;,&quot;sans-serif&quot;\"> </span></span></span></span></span></p>\r\n\t\t\t</td>\r\n\t\t</tr>\r\n\t\t<tr>\r\n\t\t\t<td style=\"border:solid windowtext 1.0pt; width:83.55pt; border-top:none; padding:0in 5.4pt 0in 5.4pt\" valign=\"top\" width=\"111\">\r\n\t\t\t<p class=\"MsoNoSpacing\" style=\"text-align:justify; margin:0in 0in 0.0001pt\"><span style=\"\"><span style=\"text-justify:inter-ideograph\"><span style=\"line-height:115%\"><span style=\"sans-serif&quot;\"><span lang=\"EN-US\" style=\"Arial&quot;,&quot;sans-serif&quot;\">(B)</span></span></span></span></span></p>\r\n\t\t\t</td>\r\n\t\t\t<td style=\"border-bottom:solid windowtext 1.0pt; width:162.75pt; border-top:none; border-left:none; border-right:solid windowtext 1.0pt; padding:0in 5.4pt 0in 5.4pt\" valign=\"top\" width=\"217\">\r\n\t\t\t<p class=\"MsoNoSpacing\" style=\"text-align:justify; margin:0in 0in 0.0001pt\"><span style=\"\"><span style=\"text-justify:inter-ideograph\"><span style=\"line-height:115%\"><span style=\"sans-serif&quot;\"><span lang=\"EN-US\" style=\"Arial&quot;,&quot;sans-serif&quot;\">Paramagnetic</span></span></span></span></span></p>\r\n\t\t\t</td>\r\n\t\t\t<td style=\"border-bottom:solid windowtext 1.0pt; width:32.7pt; border-top:none; border-left:none; border-right:solid windowtext 1.0pt; padding:0in 5.4pt 0in 5.4pt\" valign=\"top\" width=\"44\">\r\n\t\t\t<p class=\"MsoNoSpacing\" style=\"text-align:justify; margin:0in 0in 0.0001pt\"><span style=\"\"><span style=\"text-justify:inter-ideograph\"><span style=\"line-height:115%\"><span style=\"sans-serif&quot;\"><span lang=\"EN-US\" style=\"Arial&quot;,&quot;sans-serif&quot;\">(Q)</span></span></span></span></span></p>\r\n\t\t\t</td>\r\n\t\t\t<td style=\"border-bottom:solid windowtext 1.0pt; width:2.5in; border-top:none; border-left:none; border-right:solid windowtext 1.0pt; padding:0in 5.4pt 0in 5.4pt\" valign=\"top\" width=\"240\">\r\n\t\t\t<p class=\"MsoNoSpacing\" style=\"text-align:justify; margin:0in 0in 0.0001pt\"><img height=\"221\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question69400f8b92e0a\" width=\"332\" /><span style=\"\"><span style=\"text-justify:inter-ideograph\"><span style=\"line-height:115%\"><span style=\"sans-serif&quot;\"><span style=\"Arial&quot;,&quot;sans-serif&quot;\"> </span></span></span></span></span></p>\r\n\t\t\t</td>\r\n\t\t</tr>\r\n\t\t<tr>\r\n\t\t\t<td style=\"border:solid windowtext 1.0pt; width:83.55pt; border-top:none; padding:0in 5.4pt 0in 5.4pt\" valign=\"top\" width=\"111\">\r\n\t\t\t<p class=\"MsoNoSpacing\" style=\"text-align:justify; margin:0in 0in 0.0001pt\"><span style=\"\"><span style=\"text-justify:inter-ideograph\"><span style=\"line-height:115%\"><span style=\"sans-serif&quot;\"><span lang=\"EN-US\" style=\"Arial&quot;,&quot;sans-serif&quot;\">(C)</span></span></span></span></span></p>\r\n\t\t\t</td>\r\n\t\t\t<td style=\"border-bottom:solid windowtext 1.0pt; width:162.75pt; border-top:none; border-left:none; border-right:solid windowtext 1.0pt; padding:0in 5.4pt 0in 5.4pt\" valign=\"top\" width=\"217\">\r\n\t\t\t<p class=\"MsoNoSpacing\" style=\"text-align:justify; margin:0in 0in 0.0001pt\"><span style=\"\"><span style=\"text-justify:inter-ideograph\"><span style=\"line-height:115%\"><span style=\"sans-serif&quot;\"><span lang=\"EN-US\" style=\"Arial&quot;,&quot;sans-serif&quot;\">diamagnetic</span></span></span></span></span></p>\r\n\t\t\t</td>\r\n\t\t\t<td style=\"border-bottom:solid windowtext 1.0pt; width:32.7pt; border-top:none; border-left:none; border-right:solid windowtext 1.0pt; padding:0in 5.4pt 0in 5.4pt\" valign=\"top\" width=\"44\">\r\n\t\t\t<p class=\"MsoNoSpacing\" style=\"text-align:justify; margin:0in 0in 0.0001pt\"><span style=\"\"><span style=\"text-justify:inter-ideograph\"><span style=\"line-height:115%\"><span style=\"sans-serif&quot;\"><span lang=\"EN-US\" style=\"Arial&quot;,&quot;sans-serif&quot;\">(R)</span></span></span></span></span></p>\r\n\t\t\t</td>\r\n\t\t\t<td style=\"border-bottom:solid windowtext 1.0pt; width:2.5in; border-top:none; border-left:none; border-right:solid windowtext 1.0pt; padding:0in 5.4pt 0in 5.4pt\" valign=\"top\" width=\"240\">\r\n\t\t\t<p class=\"MsoNoSpacing\" style=\"text-align:justify; margin:0in 0in 0.0001pt\"><img height=\"209\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question69400f8b9e8d8\" width=\"355\" /><span style=\"\"><span style=\"text-justify:inter-ideograph\"><span style=\"line-height:115%\"><span style=\"sans-serif&quot;\"><span style=\"Arial&quot;,&quot;sans-serif&quot;\"> </span></span></span></span></span></p>\r\n\t\t\t</td>\r\n\t\t</tr>\r\n\t\t<tr>\r\n\t\t\t<td style=\"border:solid windowtext 1.0pt; width:83.55pt; border-top:none; padding:0in 5.4pt 0in 5.4pt\" valign=\"top\" width=\"111\">\r\n\t\t\t<p class=\"MsoNoSpacing\" style=\"text-align:justify; margin:0in 0in 0.0001pt\"><span style=\"\"><span style=\"text-justify:inter-ideograph\"><span style=\"line-height:115%\"><span style=\"sans-serif&quot;\"><span lang=\"EN-US\" style=\"Arial&quot;,&quot;sans-serif&quot;\">(D)</span></span></span></span></span></p>\r\n\t\t\t</td>\r\n\t\t\t<td style=\"border-bottom:solid windowtext 1.0pt; width:162.75pt; border-top:none; border-left:none; border-right:solid windowtext 1.0pt; padding:0in 5.4pt 0in 5.4pt\" valign=\"top\" width=\"217\">\r\n\t\t\t<p class=\"MsoNoSpacing\" style=\"text-align:justify; margin:0in 0in 0.0001pt\">&nbsp;</p>\r\n\t\t\t</td>\r\n\t\t\t<td style=\"border-bottom:solid windowtext 1.0pt; width:32.7pt; border-top:none; border-left:none; border-right:solid windowtext 1.0pt; padding:0in 5.4pt 0in 5.4pt\" valign=\"top\" width=\"44\">\r\n\t\t\t<p class=\"MsoNoSpacing\" style=\"text-align:justify; margin:0in 0in 0.0001pt\"><span style=\"\"><span style=\"text-justify:inter-ideograph\"><span style=\"line-height:115%\"><span style=\"sans-serif&quot;\"><span lang=\"EN-US\" style=\"Arial&quot;,&quot;sans-serif&quot;\">(S)</span></span></span></span></span></p>\r\n\t\t\t</td>\r\n\t\t\t<td style=\"border-bottom:solid windowtext 1.0pt; width:2.5in; border-top:none; border-left:none; border-right:solid windowtext 1.0pt; padding:0in 5.4pt 0in 5.4pt\" valign=\"top\" width=\"240\">\r\n\t\t\t<p class=\"MsoNoSpacing\" style=\"text-align:justify; margin:0in 0in 0.0001pt\"><img height=\"218\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question69400f8b9dd42\" width=\"338\" /><span style=\"\"><span style=\"text-justify:inter-ideograph\"><span style=\"line-height:115%\"><span style=\"sans-serif&quot;\"><span style=\"Arial&quot;,&quot;sans-serif&quot;\"> </span></span></span></span></span></p>\r\n\t\t\t</td>\r\n\t\t</tr>\r\n\t</tbody>\r\n</table>",
+      "language": "EN",
+      "opt1": "<p><img height=\"30\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question69400fb31fd55\" width=\"194\" /></p>",
+      "opt2": "<p><img height=\"28\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question69400fc87a938\" width=\"196\" /></p>",
+      "opt3": "<p><img height=\"29\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question69400fd38bb18\" width=\"194\" /></p>",
+      "opt4": "<p><img height=\"32\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question69400fe4191a2\" width=\"196\" /></p>",
+      "ans": "b",
+      "__order": 67,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 4,
+      "n_score": 0,
+      "time_taken": 205,
+      "std_ans": "b",
+      "ans_status": "correct"
+    },
+    {
+      "_id": {
+        "$oid": "6940107d713d3138bd03e1be"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "6936807a52cb2b62180ddd55"
+      },
+      "marks_positive": "4",
+      "marks_negative": "1",
+      "question_type": "MCQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1765806205,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1765806205,
+      "q_lang": "EN",
+      "question": "<p><span lang=\"EN-US\" style=\"\"><span style=\"line-height:115%\"><span style=\"Arial&quot;,&quot;sans-serif&quot;\">A solenoid of length 0.250 m and radius 0.0200 m is comprised of 120 turns of wire. Determine the magnitude of the magnetic field at the center of the solenoid when it curries a current of 15.0 A.</span></span></span></p>",
+      "language": "EN",
+      "opt1": "<p><img height=\"32\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question6940105768c1c\" width=\"115\" /></p>",
+      "opt2": "<p><img height=\"32\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question6940106232a53\" width=\"117\" /></p>",
+      "opt3": "<p><img height=\"35\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question6940106ec51fa\" width=\"114\" /></p>",
+      "opt4": "<p><img height=\"31\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question6940107a8f5a6\" width=\"111\" /></p>",
+      "ans": "b",
+      "__order": 68,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 4,
+      "n_score": 0,
+      "time_taken": 118,
+      "std_ans": "b",
+      "ans_status": "correct"
+    },
+    {
+      "_id": {
+        "$oid": "694010d008c0353071015c28"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "6936807a52cb2b62180ddd55"
+      },
+      "marks_positive": "4",
+      "marks_negative": "1",
+      "question_type": "MCQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1765806288,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1765806288,
+      "q_lang": "EN",
+      "question": "<p><img height=\"120\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question6940109258177\" width=\"1014\" /></p>",
+      "language": "EN",
+      "opt1": "<p><img height=\"52\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question694010a243336\" width=\"33\" /></p>",
+      "opt2": "<p><span lang=\"EN-US\" style=\"\"><span style=\"line-height:115%\"><span style=\"Arial&quot;,&quot;sans-serif&quot;\">N</span></span></span></p>",
+      "opt3": "<p><img height=\"56\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question694010b9a85dc\" width=\"38\" /></p>",
+      "opt4": "<p><img height=\"36\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question694010caa6355\" width=\"39\" /></p>",
+      "ans": "c",
+      "__order": 69,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 4,
+      "n_score": 0,
+      "time_taken": 48,
+      "std_ans": "c",
+      "ans_status": "correct"
+    },
+    {
+      "_id": {
+        "$oid": "694011a517a63c4c7806b194"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "6936807a52cb2b62180ddd55"
+      },
+      "marks_positive": "4",
+      "marks_negative": "1",
+      "question_type": "NAT",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1765806501,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1765806501,
+      "q_lang": "EN",
+      "question": "<p><span lang=\"EN-US\" style=\"\"><span style=\"line-height:115%\"><span style=\"Arial&quot;,&quot;sans-serif&quot;\">Same current i = 2A is flowing in a wire frame as shown in figure. The frame is a combination of two equilateral triangles ACD and CDE of side 1m. It is placed in uniform magnetic field B = 4T acting perpendicular to the plane of frame. The magnitude of magnetic force acting on the frame in newton.</span></span></span></p>\r\n\r\n<p><img height=\"180\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question694011a136e28\" width=\"307\" /></p>",
+      "language": "EN",
+      "ans": "24",
+      "__order": 70,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 4,
+      "n_score": 0,
+      "time_taken": 365,
+      "std_ans": "24",
+      "ans_status": "correct"
+    },
+    {
+      "_id": {
+        "$oid": "694011c69414c85a740c7e65"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "6936807a52cb2b62180ddd55"
+      },
+      "marks_positive": "4",
+      "marks_negative": "1",
+      "question_type": "NAT",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1765806534,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1765806534,
+      "q_lang": "EN",
+      "question": "<p><img height=\"96\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question694011c08138b\" width=\"1011\" /></p>",
+      "language": "EN",
+      "ans": "33.33",
+      "have_passage": 0,
+      "passage_id": null,
+      "__order": 71,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 4,
+      "n_score": 0,
+      "time_taken": 189,
+      "std_ans": "33.33",
+      "ans_status": "correct"
+    },
+    {
+      "_id": {
+        "$oid": "694011faa77aac835a0f9ed3"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "6936807a52cb2b62180ddd55"
+      },
+      "marks_positive": "0",
+      "marks_negative": "0",
+      "question_type": "NAT",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1765806586,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1765806586,
+      "q_lang": "EN",
+      "question": "<p><img height=\"88\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question694011f4ca606\" width=\"1019\" /></p>",
+      "language": "EN",
+      "ans": "0.25",
+      "have_passage": 0,
+      "passage_id": null,
+      "__order": 72,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 0,
+      "n_score": 0,
+      "time_taken": 0,
+      "std_ans": null,
+      "ans_status": "Unattempted"
+    },
+    {
+      "_id": {
+        "$oid": "69401217b98808a248099ea8"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "6936807a52cb2b62180ddd55"
+      },
+      "marks_positive": "4",
+      "marks_negative": "1",
+      "question_type": "NAT",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1765806615,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1765806615,
+      "q_lang": "EN",
+      "question": "<p><img height=\"108\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question69401211d1b07\" width=\"1016\" /></p>",
+      "language": "EN",
+      "ans": "1",
+      "__order": 73,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 4,
+      "n_score": 0,
+      "time_taken": 372,
+      "std_ans": "1",
+      "ans_status": "correct"
+    },
+    {
+      "_id": {
+        "$oid": "6940123264108da651053623"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "6936807a52cb2b62180ddd55"
+      },
+      "marks_positive": "4",
+      "marks_negative": "1",
+      "question_type": "NAT",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1765806642,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1765806642,
+      "q_lang": "EN",
+      "question": "<p><img height=\"152\" src=\"https://client-media.onlinetestpanel.com/2512/user_6932cc9c62a7e2e82303b9cb/packages/question6940122c5e1df\" width=\"1018\" /></p>",
+      "language": "EN",
+      "ans": "10",
+      "__order": 74,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 4,
+      "n_score": 0,
+      "time_taken": 109,
+      "std_ans": "10",
+      "ans_status": "correct"
+    }
+  ],
+  "subject": [
+    {
+      "_id": {
+        "$oid": "6936807a52cb2b62180ddd55"
+      },
+      "title": "PHYSICS"
+    },
+    {
+      "_id": {
+        "$oid": "6938203a74289711aa090fac"
+      },
+      "title": "CHEMISTRY"
+    },
+    {
+      "_id": {
+        "$oid": "693820bb29ef5fb68908aca5"
+      },
+      "title": "MATHEMATICS"
+    }
+  ],
+  "subjectmap": {
+    "693fa8164ec8f9c0e5086ee1": "693820bb29ef5fb68908aca5",
+    "693faef0d9a24a8fff095195": "693820bb29ef5fb68908aca5",
+    "693faf9b9859d49eca0bc152": "693820bb29ef5fb68908aca5",
+    "693fb02f59167100fc02e5c1": "693820bb29ef5fb68908aca5",
+    "693fb0bd7847cebd0f0f08df": "693820bb29ef5fb68908aca5",
+    "693fb165c7c6bb1f1a0db416": "693820bb29ef5fb68908aca5",
+    "693fb230cde5b2066705295b": "693820bb29ef5fb68908aca5",
+    "693fb2a700a2ae2af3044c90": "693820bb29ef5fb68908aca5",
+    "693fb2f7277161f5ea0bd62c": "693820bb29ef5fb68908aca5",
+    "693fb3755ce78ab00302af1f": "693820bb29ef5fb68908aca5",
+    "693fb486e671a6b0ed0b09d8": "693820bb29ef5fb68908aca5",
+    "693fb4eac8a5bfd5f702bf04": "693820bb29ef5fb68908aca5",
+    "693fb554964903cedb0e3034": "693820bb29ef5fb68908aca5",
+    "693fb5d2e6170496ac06259f": "693820bb29ef5fb68908aca5",
+    "693fb75162fc947c5f053d56": "693820bb29ef5fb68908aca5",
+    "693fb7a72fee9d47a1014acc": "693820bb29ef5fb68908aca5",
+    "693fb89cd5fb30f91d0adb65": "693820bb29ef5fb68908aca5",
+    "693fb8efbc0f62a8b908fada": "693820bb29ef5fb68908aca5",
+    "693fb971fc650ebcf90f98bd": "693820bb29ef5fb68908aca5",
+    "693fbbd7f2bfeed98709555c": "693820bb29ef5fb68908aca5",
+    "693fc6103a9facf7d006a68e": "693820bb29ef5fb68908aca5",
+    "693fc62aa8b9e382490b5c46": "693820bb29ef5fb68908aca5",
+    "693fc6b35092feac8901839c": "693820bb29ef5fb68908aca5",
+    "693fc7175034d040e0026b5a": "693820bb29ef5fb68908aca5",
+    "693fc74a908dcc48ed09ba20": "693820bb29ef5fb68908aca5",
+    "693fced6e0caeac5fa08ed13": "6936807a52cb2b62180ddd55",
+    "693fd294f61ae9cbd1031d52": "6936807a52cb2b62180ddd55",
+    "693fd36a58e6f8c2b10ee33c": "6936807a52cb2b62180ddd55",
+    "693fd405777c9a4fe90112b9": "6936807a52cb2b62180ddd55",
+    "693fd489960690d2780239da": "6936807a52cb2b62180ddd55",
+    "693fd4d618d26611ff08ecc3": "6936807a52cb2b62180ddd55",
+    "693fe1834563ed2d370cd0bd": "6936807a52cb2b62180ddd55",
+    "693fe1c53a29f294fa0becb6": "6936807a52cb2b62180ddd55",
+    "693fe2065d41f022f30c81a4": "6936807a52cb2b62180ddd55",
+    "693fe24be1fe33525e0e2ea4": "6936807a52cb2b62180ddd55",
+    "693fe28c7fcdb2d35900e0c0": "6936807a52cb2b62180ddd55",
+    "693fe2eacf9692da0907bd9d": "6936807a52cb2b62180ddd55",
+    "693fe3206cfe54c7460436f3": "6936807a52cb2b62180ddd55",
+    "693fe5599fb858f95302a0de": "6936807a52cb2b62180ddd55",
+    "693febeee2e18f58970a3d9a": "6938203a74289711aa090fac",
+    "693fec0e059e2aa12e00f0d7": "6938203a74289711aa090fac",
+    "693fec3a0d40092381013b98": "6938203a74289711aa090fac",
+    "693fec9a148448df4d07e555": "6938203a74289711aa090fac",
+    "693fecd80c9f76c9360a0103": "6938203a74289711aa090fac",
+    "693fed22961a85847b0086ed": "6938203a74289711aa090fac",
+    "693fed4a7d339fd3ba0baf72": "6938203a74289711aa090fac",
+    "693fed820d40092381013baa": "6938203a74289711aa090fac",
+    "693fedc62aa726544c0ae42b": "6938203a74289711aa090fac",
+    "693fee560401a4a1890077fd": "6938203a74289711aa090fac",
+    "693feeba148448df4d07e57a": "6938203a74289711aa090fac",
+    "693feeec7d31038011054ae8": "6938203a74289711aa090fac",
+    "693fef7ac4ddc8b2f00e2ae1": "6938203a74289711aa090fac",
+    "693ff0890fb808b37702a834": "6938203a74289711aa090fac",
+    "693ff1029cfd5ec731053e44": "6938203a74289711aa090fac",
+    "693ff15a71a3d08e24034eac": "6938203a74289711aa090fac",
+    "693ff193cf763789b400ba07": "6938203a74289711aa090fac",
+    "693ff1cdad3887f9a70d5381": "6938203a74289711aa090fac",
+    "693ff20930afbb1a280ff4ba": "6938203a74289711aa090fac",
+    "69400aa1e2fb5e147604b847": "6938203a74289711aa090fac",
+    "69400addbc7992dfb1033f66": "6938203a74289711aa090fac",
+    "69400aece654a72bf000011b": "6938203a74289711aa090fac",
+    "69400ba4cc2e847ccf045f30": "6938203a74289711aa090fac",
+    "69400bb408c0353071015bfd": "6938203a74289711aa090fac",
+    "69400bc0feba82536e003dbe": "6938203a74289711aa090fac",
+    "69400e6c78a56c8b9c0c770b": "6936807a52cb2b62180ddd55",
+    "69400ec8a4253c84b904e2c7": "6936807a52cb2b62180ddd55",
+    "69400f546a4d6193e3070c1b": "6936807a52cb2b62180ddd55",
+    "6940101bd410331aac00b8f9": "6936807a52cb2b62180ddd55",
+    "6940107d713d3138bd03e1be": "6936807a52cb2b62180ddd55",
+    "694010d008c0353071015c28": "6936807a52cb2b62180ddd55",
+    "694011a517a63c4c7806b194": "6936807a52cb2b62180ddd55",
+    "694011c69414c85a740c7e65": "6936807a52cb2b62180ddd55",
+    "694011faa77aac835a0f9ed3": "6936807a52cb2b62180ddd55",
+    "69401217b98808a248099ea8": "6936807a52cb2b62180ddd55",
+    "6940123264108da651053623": "6936807a52cb2b62180ddd55"
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "status": true,
+  "data": {
+    "_id": {
+      "$oid": "693cde0de9619c4f79071588"
+    },
+    "test_id": {
+      "$oid": "693bd7f9310b0dee5b094702"
+    },
+    "time_taken": 179.98,
+    "submit_date": 1765607485,
+    "attempted": 0,
+    "correct": 27,
+    "incorrect": 11,
+    "total_score": 86,
+    "test": [
+      {
+        "test_name": "JEE Advanced 11 & 12 - PCM",
+        "test_type": "0",
+        "time_limit": "180",
+        "total_qs": "54",
+        "max_score": 195,
+        "lang": "EN"
+      }
+    ],
+    "student": [
+      {}
+    ],
+    "bonus_marks": 4,
+    "rank": 8,
+    "percentile": 89.0625
+  }
+}

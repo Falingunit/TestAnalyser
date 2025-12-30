@@ -1,0 +1,33 @@
+{
+  "status": true,
+  "data": {
+    "_id": {
+      "$oid": "694b96f6959ba308b9067cdb"
+    },
+    "test_id": {
+      "$oid": "69492c549573691a3f079298"
+    },
+    "time_taken": 180,
+    "submit_date": 1766572326,
+    "attempted": 0,
+    "correct": 66,
+    "incorrect": 8,
+    "total_score": 268,
+    "test": [
+      {
+        "test_name": "DHEERAN FULL TEST - 2",
+        "test_type": "0",
+        "time_limit": "180",
+        "total_qs": "75",
+        "max_score": 300,
+        "lang": "EN"
+      }
+    ],
+    "student": [
+      {}
+    ],
+    "bonus_marks": null,
+    "rank": 1,
+    "percentile": 100
+  }
+}

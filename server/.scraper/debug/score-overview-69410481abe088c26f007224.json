@@ -1,0 +1,33 @@
+{
+  "status": true,
+  "data": {
+    "_id": {
+      "$oid": "69476a0d5aaf5794b401c1a9"
+    },
+    "test_id": {
+      "$oid": "69410481abe088c26f007224"
+    },
+    "time_taken": 179.6,
+    "submit_date": 1766298740,
+    "attempted": 0,
+    "correct": 62,
+    "incorrect": 12,
+    "total_score": 236,
+    "test": [
+      {
+        "test_name": "JEE Main Revision 14",
+        "test_type": "0",
+        "time_limit": "180",
+        "total_qs": "75",
+        "max_score": 300,
+        "lang": "EN"
+      }
+    ],
+    "student": [
+      {}
+    ],
+    "bonus_marks": null,
+    "rank": 3,
+    "percentile": 97.46835443037975
+  }
+}
