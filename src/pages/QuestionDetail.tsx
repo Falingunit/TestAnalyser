@@ -257,6 +257,22 @@ export const QuestionDetail = () => {
   const hasPeerAnswerStats =
     Boolean(peerAnswerStats) && (peerAnswerStats?.total ?? 0) > 0;
   const answer = question && test ? getAnswerForQuestion(test, question) : null;
+  const questionStatus =
+    test && question ? getQuestionStatus(test, question) : "Unattempted";
+  const userAnswerValue =
+    questionStatus === "Unattempted" ? "" : formatAnswerValue(answer);
+  const answerBorderClass =
+    questionStatus === "Correct"
+      ? "border-emerald-500"
+      : questionStatus === "Incorrect"
+      ? "border-rose-500"
+      : "border-white";
+  const answerTextClass =
+    questionStatus === "Correct"
+      ? "text-emerald-500"
+      : questionStatus === "Incorrect"
+      ? "text-rose-500"
+      : "text-muted-foreground";
   const score = question && test ? getQuestionMark(test, question) : 0;
   const displayNumber = questionEntry?.displayNumber ?? 0;
   const isBookmarked = Boolean(
@@ -1120,88 +1136,110 @@ export const QuestionDetail = () => {
 
                 <div className="space-y-3">
                   <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                    Options
+                    {question.qtype === "NAT" ? "Answer" : "Options"}
                   </p>
-                  <div className="grid gap-3">
-                    {[
-                      { label: "A", value: question.optionContentA },
-                      { label: "B", value: question.optionContentB },
-                      { label: "C", value: question.optionContentC },
-                      { label: "D", value: question.optionContentD },
-                    ]
-                      .filter((item) => item.value)
-                      .map((item) => {
-                        const isSelected = selectedOptions.includes(item.label);
-                        const isCorrect = correctOptions.includes(item.label);
-                        const isSelectedCorrect = isSelected && isCorrect;
-                        const isSelectedIncorrect = isSelected && !isCorrect;
-                        const isUnselectedCorrect = !isSelected && isCorrect;
-                        const optionCount = hasPeerAnswerStats
-                          ? peerAnswerStats?.options?.[item.label] ?? 0
-                          : null;
-                        return (
-                          <div
-                            key={item.label}
-                            className={cn(
-                              "flex gap-3 rounded-lg border p-2 text-sm",
-                              isSelectedCorrect &&
-                                "border-emerald-500/70 bg-emerald-500/20 text-foreground",
-                              isSelectedIncorrect &&
-                                "border-rose-500/70 bg-rose-500/20 text-foreground",
-                              isUnselectedCorrect &&
-                                "border-emerald-500/70 border-dashed bg-emerald-500/10 text-foreground",
-                              !isSelectedCorrect &&
-                                !isSelectedIncorrect &&
-                                !isUnselectedCorrect &&
-                                "border-border bg-background text-foreground"
-                            )}
-                          >
-                            <span
+                  {question.qtype === "NAT" ? (
+                    <div className="relative">
+                      <Input
+                        readOnly
+                        value={userAnswerValue}
+                        placeholder="Unattempted"
+                        className={cn(
+                          "h-10 border-2 bg-background pr-28 text-sm font-semibold text-foreground",
+                          answerBorderClass
+                        )}
+                      />
+                      <span
+                        className={cn(
+                          "pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold",
+                          answerTextClass
+                        )}
+                      >
+                        Correct: {formatAnswerValue(question.keyUpdate)}
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="grid gap-3">
+                      {[
+                        { label: "A", value: question.optionContentA },
+                        { label: "B", value: question.optionContentB },
+                        { label: "C", value: question.optionContentC },
+                        { label: "D", value: question.optionContentD },
+                      ]
+                        .filter((item) => item.value)
+                        .map((item) => {
+                          const isSelected = selectedOptions.includes(item.label);
+                          const isCorrect = correctOptions.includes(item.label);
+                          const isSelectedCorrect = isSelected && isCorrect;
+                          const isSelectedIncorrect = isSelected && !isCorrect;
+                          const isUnselectedCorrect = !isSelected && isCorrect;
+                          const optionCount = hasPeerAnswerStats
+                            ? peerAnswerStats?.options?.[item.label] ?? 0
+                            : null;
+                          return (
+                            <div
+                              key={item.label}
                               className={cn(
-                                "flex h-7 w-7 flex-shrink-0 items-center justify-center border text-xs font-semibold",
-                                isMultiSelect ? "rounded-md" : "rounded-full",
+                                "flex gap-3 rounded-lg border p-2 text-sm",
                                 isSelectedCorrect &&
-                                  "border-emerald-500 bg-emerald-500 text-emerald-950",
+                                  "border-emerald-500/70 bg-emerald-500/20 text-foreground",
                                 isSelectedIncorrect &&
-                                  "border-rose-500 bg-rose-500 text-white",
+                                  "border-rose-500/70 bg-rose-500/20 text-foreground",
                                 isUnselectedCorrect &&
-                                  "border-emerald-500 text-emerald-500",
+                                  "border-emerald-500/70 border-dashed bg-emerald-500/10 text-foreground",
                                 !isSelectedCorrect &&
                                   !isSelectedIncorrect &&
                                   !isUnselectedCorrect &&
-                                  "border-border text-muted-foreground",
-                                "place-self-center"
+                                  "border-border bg-background text-foreground"
                               )}
                             >
-                              {item.label}
-                            </span>
-                            <div className="flex min-w-0 flex-1 items-end justify-between gap-3">
-                              <div
+                              <span
                                 className={cn(
-                                  "question-html min-w-0 flex-1 leading-relaxed",
-                                  mode === "dark"
-                                    ? "question-html--blend-dark"
-                                    : "question-html--blend-light"
+                                  "flex h-7 w-7 flex-shrink-0 items-center justify-center border text-xs font-semibold",
+                                  isMultiSelect ? "rounded-md" : "rounded-full",
+                                  isSelectedCorrect &&
+                                    "border-emerald-500 bg-emerald-500 text-emerald-950",
+                                  isSelectedIncorrect &&
+                                    "border-rose-500 bg-rose-500 text-white",
+                                  isUnselectedCorrect &&
+                                    "border-emerald-500 text-emerald-500",
+                                  !isSelectedCorrect &&
+                                    !isSelectedIncorrect &&
+                                    !isUnselectedCorrect &&
+                                    "border-border text-muted-foreground",
+                                  "place-self-center"
                                 )}
-                                style={{ fontSize: zoomLevel * 1.15 + "rem" }}
-                                dangerouslySetInnerHTML={{
-                                  __html: item.value ?? "",
-                                }}
-                                onClick={handleRichContentClick}
-                              />
-                              {optionCount !== null ? (
-                                <div className="flex flex-col items-end text-[10px] uppercase tracking-wide text-muted-foreground">
-                                  <span>Others picked</span>
-                                  <span className="text-xs font-black text-foreground">
-                                    {optionCount}
-                                  </span>
-                                </div>
-                              ) : null}
+                              >
+                                {item.label}
+                              </span>
+                              <div className="flex min-w-0 flex-1 items-end justify-between gap-3">
+                                <div
+                                  className={cn(
+                                    "question-html min-w-0 flex-1 leading-relaxed",
+                                    mode === "dark"
+                                      ? "question-html--blend-dark"
+                                      : "question-html--blend-light"
+                                  )}
+                                  style={{ fontSize: zoomLevel * 1.15 + "rem" }}
+                                  dangerouslySetInnerHTML={{
+                                    __html: item.value ?? "",
+                                  }}
+                                  onClick={handleRichContentClick}
+                                />
+                                {optionCount !== null ? (
+                                  <div className="flex flex-col items-end text-[10px] uppercase tracking-wide text-muted-foreground">
+                                    <span>Others picked</span>
+                                    <span className="text-xs font-black text-foreground">
+                                      {optionCount}
+                                    </span>
+                                  </div>
+                                ) : null}
+                              </div>
                             </div>
-                          </div>
-                        );
-                      })}
-                  </div>
+                          );
+                        })}
+                    </div>
+                  )}
                   {hasPeerAnswerStats ? (
                     <div className="flex items-center justify-end text-[10px] uppercase tracking-wide text-muted-foreground">
                       <span>Unattempted (Others)</span>
