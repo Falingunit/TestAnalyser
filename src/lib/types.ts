@@ -58,6 +58,14 @@ export type AnswerValue =
   | BonusKey
   | null
 
+export type PeerAnswerStats = {
+  total: number
+  unattempted: number
+  correct: number
+  incorrect: number
+  options: Record<string, number>
+}
+
 export type QuestionRecord = {
   id: string
   subject: Subject
@@ -87,6 +95,7 @@ export type TestRecord = {
   answers: Record<string, AnswerValue>
   timings: Record<string, number>
   peerTimings?: Record<string, number>
+  peerAnswerStats?: Record<string, PeerAnswerStats>
   bookmarks: Record<string, boolean>
   questions: QuestionRecord[]
 }

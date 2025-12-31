@@ -135,6 +135,15 @@
     font-size: calc(1rem * var(--reader-font-scale));
   }
 
+  .question-html--blend-dark img {
+    filter: invert(1);
+    mix-blend-mode: screen;
+  }
+
+  .question-html--blend-light img {
+    mix-blend-mode: multiply;
+  }
+
   .question-html img {
     cursor: zoom-in;
   }

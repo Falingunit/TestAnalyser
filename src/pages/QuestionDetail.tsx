@@ -251,6 +251,11 @@ export const QuestionDetail = () => {
     typeof peerTimeSpent === "number" && Number.isFinite(peerTimeSpent)
       ? formatSeconds(peerTimeSpent)
       : "n/a";
+  const peerAnswerStats = question
+    ? test?.peerAnswerStats?.[question.id]
+    : undefined;
+  const hasPeerAnswerStats =
+    Boolean(peerAnswerStats) && (peerAnswerStats?.total ?? 0) > 0;
   const answer = question && test ? getAnswerForQuestion(test, question) : null;
   const score = question && test ? getQuestionMark(test, question) : 0;
   const displayNumber = questionEntry?.displayNumber ?? 0;
@@ -1099,10 +1104,12 @@ export const QuestionDetail = () => {
                     Q{displayNumber} - {question.subject}
                   </p>
                   <div
-                    className={
-                      "question-html rounded-lg bg-transparent leading-relaxed " +
-                      (mode === "dark" ? "mix-blend-screen invert" : "mix-blend-multiply")
-                    }
+                    className={cn(
+                      "question-html rounded-lg bg-transparent leading-relaxed",
+                      mode === "dark"
+                        ? "question-html--blend-dark"
+                        : "question-html--blend-light"
+                    )}
                     style={{ fontSize: zoomLevel + "rem" }}
                     dangerouslySetInnerHTML={{
                       __html: question.questionContent,
@@ -1129,6 +1136,9 @@ export const QuestionDetail = () => {
                         const isSelectedCorrect = isSelected && isCorrect;
                         const isSelectedIncorrect = isSelected && !isCorrect;
                         const isUnselectedCorrect = !isSelected && isCorrect;
+                        const optionCount = hasPeerAnswerStats
+                          ? peerAnswerStats?.options?.[item.label] ?? 0
+                          : null;
                         return (
                           <div
                             key={item.label}
@@ -1165,23 +1175,53 @@ export const QuestionDetail = () => {
                             >
                               {item.label}
                             </span>
-                            <div
-                              className={
-                                "question-html leading-relaxed " +
-                                (mode === "dark"
-                                  ? "mix-blend-screen invert"
-                                  : "mix-blend-multiply")
-                              }
-                              style={{ fontSize: zoomLevel * 1.15 + "rem" }}
-                              dangerouslySetInnerHTML={{
-                                __html: item.value ?? "",
-                              }}
-                              onClick={handleRichContentClick}
-                            />
+                            <div className="flex min-w-0 flex-1 items-end justify-between gap-3">
+                              <div
+                                className={cn(
+                                  "question-html min-w-0 flex-1 leading-relaxed",
+                                  mode === "dark"
+                                    ? "question-html--blend-dark"
+                                    : "question-html--blend-light"
+                                )}
+                                style={{ fontSize: zoomLevel * 1.15 + "rem" }}
+                                dangerouslySetInnerHTML={{
+                                  __html: item.value ?? "",
+                                }}
+                                onClick={handleRichContentClick}
+                              />
+                              {optionCount !== null ? (
+                                <div className="flex flex-col items-end text-[10px] uppercase tracking-wide text-muted-foreground">
+                                  <span>Others picked</span>
+                                  <span className="text-xs font-black text-foreground">
+                                    {optionCount}
+                                  </span>
+                                </div>
+                              ) : null}
+                            </div>
                           </div>
                         );
                       })}
                   </div>
+                  {hasPeerAnswerStats ? (
+                    <div className="flex items-center justify-end text-[10px] uppercase tracking-wide text-muted-foreground">
+                      <span>Unattempted (Others)</span>
+                      <span className="ml-2 text-xs font-black text-foreground">
+                        {peerAnswerStats?.unattempted ?? 0}
+                      </span>
+                    </div>
+                  ) : null}
+                  {hasPeerAnswerStats && question.qtype === "NAT" ? (
+                    <div className="flex items-center justify-end gap-4 text-[10px] uppercase tracking-wide text-muted-foreground">
+                      <span>Correct</span>
+                      <span className="text-xs font-black text-foreground">
+                        {peerAnswerStats?.correct ?? 0}
+                      </span>
+                      <span>Incorrect</span>
+                      <span className="text-xs font-black text-foreground">
+                        {peerAnswerStats?.incorrect ?? 0}
+                      </span>
+                    </div>
+                  ) : null}
                 </div>
               </div>
             </div>

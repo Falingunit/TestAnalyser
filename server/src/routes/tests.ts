@@ -18,6 +18,14 @@ const parseStoredJson = (value: string | null) => {
   }
 }
 
+const resolveQuestionKey = (question: {
+  keyUpdate: string | null
+  correctAnswer: string
+}) => {
+  const updated = parseStoredJson(question.keyUpdate)
+  return updated ?? parseStoredJson(question.correctAnswer)
+}
+
 const serializeJson = (value: unknown) => JSON.stringify(value ?? null)
 
 const serializeAttempt = (
@@ -54,6 +62,16 @@ const serializeAttempt = (
     }
   },
   peerTimings: Record<string, number> = {},
+  peerAnswerStats: Record<
+    string,
+    {
+      total: number
+      unattempted: number
+      correct: number
+      incorrect: number
+      options: Record<string, number>
+    }
+  > = {},
 ) => {
   const sortedQuestions = [...attempt.exam.questions].sort(
     (a, b) => a.questionNumber - b.questionNumber,
@@ -76,6 +94,7 @@ const serializeAttempt = (
     answers,
     timings,
     peerTimings,
+    peerAnswerStats,
     bookmarks,
     questions: sortedQuestions.map((question) => ({
       id: question.id,
@@ -126,6 +145,230 @@ const buildPeerTimings = (attempts: Array<{ timings: string }>) => {
   return result
 }
 
+const splitByOr = (value: string) =>
+  value
+    .split(/\s+(?:OR)\s+|\s*\|\s*/i)
+    .map((item) => item.trim())
+    .filter(Boolean)
+
+const isRangeValue = (value: unknown): value is { min: number; max: number } =>
+  Boolean(
+    value &&
+      typeof value === 'object' &&
+      'min' in value &&
+      'max' in value &&
+      typeof (value as { min?: unknown }).min === 'number' &&
+      typeof (value as { max?: unknown }).max === 'number',
+  )
+
+const normalizeNumericValue = (value: unknown): number | { min: number; max: number } | null => {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return value
+  }
+  if (isRangeValue(value)) {
+    return value.min === value.max ? value.min : value
+  }
+  if (typeof value === 'string') {
+    const trimmed = value.replace(/[---]/g, '-').trim()
+    if (!trimmed) {
+      return null
+    }
+    const rangeMatch = trimmed.match(
+      /(-?\d+(?:\.\d+)?)\s*(?:to|-)\s*(-?\d+(?:\.\d+)?)/i,
+    )
+    if (rangeMatch) {
+      const min = Number(rangeMatch[1])
+      const max = Number(rangeMatch[2])
+      if (!Number.isNaN(min) && !Number.isNaN(max)) {
+        return min === max ? min : { min, max }
+      }
+    }
+    const numeric = Number(trimmed)
+    if (!Number.isNaN(numeric)) {
+      return numeric
+    }
+  }
+  return null
+}
+
+const getKeyNumericAlternatives = (value: unknown) => {
+  if (typeof value === 'string') {
+    const segments = splitByOr(value)
+    return segments
+      .map((segment) => normalizeNumericValue(segment))
+      .filter((item): item is number | { min: number; max: number } => item !== null)
+  }
+  const normalized = normalizeNumericValue(value)
+  return normalized === null ? [] : [normalized]
+}
+
+const toOptionArray = (value: unknown): string[] => {
+  if (Array.isArray(value)) {
+    return value.map((item) => String(item).trim().toUpperCase()).filter(Boolean)
+  }
+  if (typeof value === 'string') {
+    const segments = splitByOr(value)
+    if (segments.length === 0) {
+      return []
+    }
+    return segments.flatMap((segment) => {
+      const normalized = segment.trim().toUpperCase()
+      if (!normalized) {
+        return []
+      }
+      if (normalized.includes(',')) {
+        return normalized
+          .split(',')
+          .map((item) => item.trim().toUpperCase())
+          .filter(Boolean)
+      }
+      if (/^[A-Z]+$/.test(normalized)) {
+        return normalized.split('')
+      }
+      return [normalized]
+    })
+  }
+  return []
+}
+
+const isBonusKey = (value: unknown) =>
+  Boolean(
+    value &&
+      typeof value === 'object' &&
+      !Array.isArray(value) &&
+      'bonus' in value &&
+      (value as { bonus?: unknown }).bonus === true,
+  )
+
+const isNumericCorrect = (selected: unknown, key: unknown) => {
+  if (isBonusKey(key)) {
+    return true
+  }
+  const selectedNumeric = normalizeNumericValue(selected)
+  if (selectedNumeric === null || typeof selectedNumeric !== 'number') {
+    return false
+  }
+  const keyAlternatives = getKeyNumericAlternatives(key)
+  if (keyAlternatives.length === 0) {
+    return false
+  }
+  return keyAlternatives.some((option) => {
+    if (typeof option === 'number') {
+      return selectedNumeric === option
+    }
+    return selectedNumeric >= option.min && selectedNumeric <= option.max
+  })
+}
+
+const isUnattemptedAnswer = (value: unknown, qtype: string) => {
+  if (value === null || value === undefined) {
+    return true
+  }
+  if (qtype === 'MAQ' && Array.isArray(value) && value.length === 0) {
+    return true
+  }
+  return false
+}
+
+const buildPeerAnswerStatsByExam = (
+  attempts: Array<{ examId: string; answers: string }>,
+  questionsByExam: Map<
+    string,
+    Array<{ id: string; qtype: string; key: unknown }>
+  >,
+) => {
+  const attemptsByExam = new Map<string, Array<{ answers: string }>>()
+  attempts.forEach((attempt) => {
+    const current = attemptsByExam.get(attempt.examId) ?? []
+    current.push({ answers: attempt.answers })
+    attemptsByExam.set(attempt.examId, current)
+  })
+
+  const result = new Map<
+    string,
+    Record<
+      string,
+      {
+        total: number
+        unattempted: number
+        correct: number
+        incorrect: number
+        options: Record<string, number>
+      }
+    >
+  >()
+
+  attemptsByExam.forEach((examAttempts, examId) => {
+    const questions = questionsByExam.get(examId) ?? []
+    if (questions.length === 0) {
+      result.set(examId, {})
+      return
+    }
+
+    const stats: Record<
+      string,
+      {
+        total: number
+        unattempted: number
+        correct: number
+        incorrect: number
+        options: Record<string, number>
+      }
+    > = {}
+    questions.forEach((question) => {
+      stats[question.id] = {
+        total: 0,
+        unattempted: 0,
+        correct: 0,
+        incorrect: 0,
+        options: {},
+      }
+    })
+
+    examAttempts.forEach((attempt) => {
+      const parsed = parseStoredJson(attempt.answers)
+      const answers =
+        parsed && typeof parsed === 'object'
+          ? (parsed as Record<string, unknown>)
+          : {}
+
+      questions.forEach((question) => {
+        const entry =
+          stats[question.id] ?? {
+            total: 0,
+            unattempted: 0,
+            correct: 0,
+            incorrect: 0,
+            options: {},
+          }
+        entry.total += 1
+        const value = answers[question.id]
+        if (isUnattemptedAnswer(value, question.qtype)) {
+          entry.unattempted += 1
+          stats[question.id] = entry
+          return
+        }
+        const selections = toOptionArray(value)
+        selections.forEach((option) => {
+          entry.options[option] = (entry.options[option] ?? 0) + 1
+        })
+        if (question.qtype === 'NAT') {
+          if (isNumericCorrect(value, question.key)) {
+            entry.correct += 1
+          } else {
+            entry.incorrect += 1
+          }
+        }
+        stats[question.id] = entry
+      })
+    })
+
+    result.set(examId, stats)
+  })
+
+  return result
+}
+
 const buildPeerTimingsByExam = (
   attempts: Array<{ examId: string; timings: string }>,
 ) => {
@@ -167,6 +410,29 @@ const fetchPeerTimingsForExam = async (examId: string, userId: string) => {
     select: { timings: true },
   })
   return buildPeerTimings(otherAttempts)
+}
+
+const fetchPeerAnswerStatsForExam = async (
+  examId: string,
+  userId: string,
+  questions: Array<{ id: string; qtype: string; key: unknown }>,
+) => {
+  const otherAttempts = await prisma.attempt.findMany({
+    where: { examId, userId: { not: userId } },
+    select: { answers: true },
+  })
+  const questionMap = new Map<
+    string,
+    Array<{ id: string; qtype: string; key: unknown }>
+  >([[examId, questions]])
+  const statsByExam = buildPeerAnswerStatsByExam(
+    otherAttempts.map((attempt) => ({
+      examId,
+      answers: attempt.answers,
+    })),
+    questionMap,
+  )
+  return statsByExam.get(examId) ?? {}
 }
 
 const isNonEmptyString = (value: unknown): value is string =>
@@ -236,13 +502,38 @@ router.get('/', requireAuth, async (req: AuthRequest, res, next) => {
               examId: { in: examIds },
               userId: { not: req.user.userId },
             },
-            select: { examId: true, timings: true },
+            select: { examId: true, timings: true, answers: true },
           })
     const peerTimingsByExam = buildPeerTimingsByExam(otherAttempts)
+    const questionsByExam = new Map<
+      string,
+      Array<{ id: string; qtype: string; key: unknown }>
+    >()
+    attempts.forEach((attempt) => {
+      questionsByExam.set(
+        attempt.examId,
+        attempt.exam.questions.map((question) => ({
+          id: question.id,
+          qtype: question.qtype,
+          key: resolveQuestionKey(question),
+        })),
+      )
+    })
+    const peerAnswerStatsByExam = buildPeerAnswerStatsByExam(
+      otherAttempts.map((attempt) => ({
+        examId: attempt.examId,
+        answers: attempt.answers,
+      })),
+      questionsByExam,
+    )
 
     return res.json({
       tests: attempts.map((attempt) =>
-        serializeAttempt(attempt, peerTimingsByExam.get(attempt.examId) ?? {}),
+        serializeAttempt(
+          attempt,
+          peerTimingsByExam.get(attempt.examId) ?? {},
+          peerAnswerStatsByExam.get(attempt.examId) ?? {},
+        ),
       ),
     })
   } catch (error) {
@@ -271,7 +562,16 @@ router.get('/:id', requireAuth, async (req: AuthRequest, res, next) => {
       attempt.examId,
       req.user.userId,
     )
-    return res.json({ test: serializeAttempt(attempt, peerTimings) })
+    const peerAnswerStats = await fetchPeerAnswerStatsForExam(
+      attempt.examId,
+      req.user.userId,
+      attempt.exam.questions.map((question) => ({
+        id: question.id,
+        qtype: question.qtype,
+        key: resolveQuestionKey(question),
+      })),
+    )
+    return res.json({ test: serializeAttempt(attempt, peerTimings, peerAnswerStats) })
   } catch (error) {
     return next(error)
   }
@@ -320,8 +620,17 @@ router.post('/:id/answer-key', requireAuth, async (req: AuthRequest, res, next) 
       attempt.examId,
       req.user.userId,
     )
+    const peerAnswerStats = await fetchPeerAnswerStatsForExam(
+      attempt.examId,
+      req.user.userId,
+      attempt.exam.questions.map((question) => ({
+        id: question.id,
+        qtype: question.qtype,
+        key: resolveQuestionKey(question),
+      })),
+    )
     if (jsonEquals(parseStoredJson(examQuestion.keyUpdate), normalizedKey)) {
-      return res.json({ test: serializeAttempt(attempt, peerTimings) })
+      return res.json({ test: serializeAttempt(attempt, peerTimings, peerAnswerStats) })
     }
 
     await prisma.question.update({
@@ -347,7 +656,18 @@ router.post('/:id/answer-key', requireAuth, async (req: AuthRequest, res, next) 
       updated.examId,
       req.user.userId,
     )
-    return res.json({ test: serializeAttempt(updated, updatedPeerTimings) })
+    const updatedPeerAnswerStats = await fetchPeerAnswerStatsForExam(
+      updated.examId,
+      req.user.userId,
+      updated.exam.questions.map((question) => ({
+        id: question.id,
+        qtype: question.qtype,
+        key: resolveQuestionKey(question),
+      })),
+    )
+    return res.json({
+      test: serializeAttempt(updated, updatedPeerTimings, updatedPeerAnswerStats),
+    })
   } catch (error) {
     return next(error)
   }
@@ -421,7 +741,16 @@ router.patch(
         refreshed.examId,
         req.user.userId,
       )
-      return res.json({ test: serializeAttempt(refreshed, peerTimings) })
+      const peerAnswerStats = await fetchPeerAnswerStatsForExam(
+        refreshed.examId,
+        req.user.userId,
+        refreshed.exam.questions.map((question) => ({
+          id: question.id,
+          qtype: question.qtype,
+          key: resolveQuestionKey(question),
+        })),
+      )
+      return res.json({ test: serializeAttempt(refreshed, peerTimings, peerAnswerStats) })
     } catch (error) {
       return next(error)
     }
@@ -479,7 +808,16 @@ router.post('/:id/marking-scheme', requireAuth, async (req: AuthRequest, res, ne
       updated.examId,
       req.user.userId,
     )
-    return res.json({ test: serializeAttempt(updated, peerTimings) })
+    const peerAnswerStats = await fetchPeerAnswerStatsForExam(
+      updated.examId,
+      req.user.userId,
+      updated.exam.questions.map((question) => ({
+        id: question.id,
+        qtype: question.qtype,
+        key: resolveQuestionKey(question),
+      })),
+    )
+    return res.json({ test: serializeAttempt(updated, peerTimings, peerAnswerStats) })
   } catch (error) {
     return next(error)
   }
@@ -589,7 +927,16 @@ router.post('/:id/resync', requireAuth, async (req: AuthRequest, res, next) => {
       refreshed.examId,
       req.user.userId,
     )
-    return res.json({ test: serializeAttempt(refreshed, peerTimings) })
+    const peerAnswerStats = await fetchPeerAnswerStatsForExam(
+      refreshed.examId,
+      req.user.userId,
+      refreshed.exam.questions.map((question) => ({
+        id: question.id,
+        qtype: question.qtype,
+        key: resolveQuestionKey(question),
+      })),
+    )
+    return res.json({ test: serializeAttempt(refreshed, peerTimings, peerAnswerStats) })
   } catch (error) {
     if (req.user) {
       await prisma.externalAccount.updateMany({
