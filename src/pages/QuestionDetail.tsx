@@ -149,6 +149,7 @@ export const QuestionDetail = () => {
     isAdmin,
   } = useAppStore();
   const test = state.tests.find((item) => item.id === testId);
+  const mode = currentUser?.preferences.mode ?? state.ui.mode;
   const displayQuestions = useMemo(() => {
     if (!test) {
       return [];
@@ -1098,7 +1099,10 @@ export const QuestionDetail = () => {
                     Q{displayNumber} - {question.subject}
                   </p>
                   <div
-                    className="question-html rounded-lg bg-transparent leading-relaxed"
+                    className={
+                      "question-html rounded-lg bg-transparent leading-relaxed " +
+                      (mode === "dark" ? "mix-blend-screen invert" : "mix-blend-multiply")
+                    }
                     style={{ fontSize: zoomLevel + "rem" }}
                     dangerouslySetInnerHTML={{
                       __html: question.questionContent,
@@ -1162,7 +1166,12 @@ export const QuestionDetail = () => {
                               {item.label}
                             </span>
                             <div
-                              className="question-html leading-relaxed"
+                              className={
+                                "question-html leading-relaxed " +
+                                (mode === "dark"
+                                  ? "mix-blend-screen invert"
+                                  : "mix-blend-multiply")
+                              }
                               style={{ fontSize: zoomLevel * 1.15 + "rem" }}
                               dangerouslySetInnerHTML={{
                                 __html: item.value ?? "",
@@ -1665,7 +1674,10 @@ export const QuestionDetail = () => {
                 <img
                   src={imageSrc}
                   alt="Question attachment"
-                  className="max-h-full max-w-full select-none"
+                  className={
+                    "max-h-full max-w-full select-none" +
+                    (mode === "dark" ? " invert" : "")
+                  }
                   draggable={false}
                   onClick={(event) => event.stopPropagation()}
                   style={{
