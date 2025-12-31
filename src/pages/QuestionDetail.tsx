@@ -219,6 +219,8 @@ export const QuestionDetail = () => {
     startDistance: number;
     startZoom: number;
   } | null>(null);
+  const clickSuppressRef = useRef(false);
+  const pointerStartRef = useRef<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
     document.documentElement.style.setProperty(
@@ -574,6 +576,7 @@ export const QuestionDetail = () => {
   };
 
   const clampZoom = (value: number) => Math.min(4, Math.max(0.1, value));
+  const dragThreshold = 4;
 
   const resetImageView = () => {
     setImageZoom(1);
@@ -609,12 +612,15 @@ export const QuestionDetail = () => {
   const handleImagePointerDown = (event: PointerEvent<HTMLDivElement>) => {
     event.preventDefault();
     event.currentTarget.setPointerCapture(event.pointerId);
+    clickSuppressRef.current = false;
+    pointerStartRef.current = { x: event.clientX, y: event.clientY };
     activePointers.current.set(event.pointerId, {
       x: event.clientX,
       y: event.clientY,
     });
 
     if (activePointers.current.size === 2) {
+      clickSuppressRef.current = true;
       const points = Array.from(activePointers.current.values());
       const distance = Math.hypot(
         points[0].x - points[1].x,
@@ -646,6 +652,7 @@ export const QuestionDetail = () => {
     });
 
     if (activePointers.current.size === 2) {
+      clickSuppressRef.current = true;
       const points = Array.from(activePointers.current.values());
       const distance = Math.hypot(
         points[0].x - points[1].x,
@@ -660,6 +667,13 @@ export const QuestionDetail = () => {
     if (!dragState.current) {
       return;
     }
+    if (pointerStartRef.current) {
+      const deltaX = event.clientX - pointerStartRef.current.x;
+      const deltaY = event.clientY - pointerStartRef.current.y;
+      if (Math.hypot(deltaX, deltaY) > dragThreshold) {
+        clickSuppressRef.current = true;
+      }
+    }
     const nextX =
       dragState.current.originX + (event.clientX - dragState.current.startX);
     const nextY =
@@ -672,8 +686,16 @@ export const QuestionDetail = () => {
     if (activePointers.current.size < 2) {
       pinchState.current = null;
     }
+    if (activePointers.current.size === 0) {
+      pointerStartRef.current = null;
+    }
     dragState.current = null;
     event.currentTarget.releasePointerCapture(event.pointerId);
+    if (clickSuppressRef.current) {
+      setTimeout(() => {
+        clickSuppressRef.current = false;
+      }, 0);
+    }
   };
 
   const togglePin = (id: string) => {
@@ -1599,7 +1621,7 @@ export const QuestionDetail = () => {
         }}
       >
         <DialogContent
-          className="inset-0 h-screen w-screen max-w-none tranneutral-x-0 tranneutral-y-0 rounded-none border-0 bg-transparent p-0 shadow-none"
+          className="inset-0 h-screen w-screen max-w-none translate-x-0 translate-y-0 rounded-none border-0 bg-transparent p-0 shadow-none"
           overlayClassName="bg-black/80 backdrop-blur-none"
         >
           <div className="relative h-full w-full">
@@ -1624,6 +1646,10 @@ export const QuestionDetail = () => {
                 if (event.target !== event.currentTarget) {
                   return;
                 }
+                if (clickSuppressRef.current) {
+                  clickSuppressRef.current = false;
+                  return;
+                }
                 setIsImageOpen(false);
                 setImageSrc(null);
                 resetImageView();
@@ -1643,7 +1669,7 @@ export const QuestionDetail = () => {
                   draggable={false}
                   onClick={(event) => event.stopPropagation()}
                   style={{
-                    transform: `tranneutral(${imageOffset.x}px, ${imageOffset.y}px) scale(${imageZoom})`,
+                    transform: `translate(${imageOffset.x}px, ${imageOffset.y}px) scale(${imageZoom})`,
                     transformOrigin: "center",
                   }}
                 />
