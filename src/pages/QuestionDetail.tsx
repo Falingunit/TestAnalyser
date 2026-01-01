@@ -739,13 +739,48 @@ export const QuestionDetail = () => {
       prevMessages.filter((message) => message.id !== id)
     );
   };
+  // 1. New Helper: Converts images in the clone to Base64
+  const embedImages = async (clonedRoot: HTMLElement) => {
+    const images = Array.from(clonedRoot.querySelectorAll("img"));
 
-  // Copy Image
+    await Promise.all(
+      images.map(async (img) => {
+        const src = img.src;
+        // Skip if empty or data URL (already embedded)
+        if (!src || src.startsWith("data:")) return;
+
+        try {
+          // Fetch the image data as a Blob
+          // 'cors' mode attempts to request permission from the server
+          const response = await fetch(src, { mode: "cors" });
+          const blob = await response.blob();
+
+          // Convert the Blob to a Base64 Data URL
+          const base64 = await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+          });
+
+          // Replace the image source with the Base64 data
+          img.src = base64;
+          img.srcset = ""; // Clear srcset to prevent browser reverting to original
+        } catch (error) {
+          console.warn("Could not embed image (CORS or Network Error):", src);
+          console.error("Error embedding image: ", error);
+          // If this fails, the original URL remains.
+          // If the server strictly blocks CORS, the image will still appear broken.
+        }
+      })
+    );
+  };
+
+  // Keep your existing waitForImages (it ensures source images are ready)
   const waitForImages = async (root: HTMLElement) => {
     const images = Array.from(root.querySelectorAll("img"));
-    if (images.length === 0) {
-      return;
-    }
+    if (images.length === 0) return;
+
     await Promise.all(
       images.map(
         (img) =>
@@ -766,6 +801,7 @@ export const QuestionDetail = () => {
     );
   };
 
+  // Keep your existing cloneWithInlineStyles
   const cloneWithInlineStyles = (root: HTMLElement) => {
     const clonedRoot = root.cloneNode(true) as HTMLElement;
     const sourceElements = [root, ...Array.from(root.querySelectorAll("*"))];
@@ -776,9 +812,8 @@ export const QuestionDetail = () => {
 
     sourceElements.forEach((sourceElement, index) => {
       const targetElement = targetElements[index];
-      if (!targetElement) {
-        return;
-      }
+      if (!targetElement) return;
+
       if (
         !(
           targetElement instanceof HTMLElement ||
@@ -787,8 +822,10 @@ export const QuestionDetail = () => {
       ) {
         return;
       }
+
       const computed = window.getComputedStyle(sourceElement);
-      for (let i = 0; i < computed.length; i += 1) {
+      // Iterating by index is safer for performance
+      for (let i = 0; i < computed.length; i++) {
         const prop = computed[i];
         targetElement.style.setProperty(
           prop,
@@ -799,7 +836,6 @@ export const QuestionDetail = () => {
     });
     return clonedRoot;
   };
-
   const renderQuestionImageBlob = async (root: HTMLElement) => {
     if (document.fonts?.ready) {
       await document.fonts.ready;
@@ -807,6 +843,9 @@ export const QuestionDetail = () => {
     await waitForImages(root);
 
     const clonedRoot = cloneWithInlineStyles(root);
+    // Convert all images in the clone to Base64 to prevent tainted canvas error
+    await embedImages(clonedRoot);
+
     const rect = root.getBoundingClientRect();
     const contentWidth = Math.ceil(rect.width);
     const contentHeight = Math.ceil(Math.max(rect.height, root.scrollHeight));
@@ -1168,7 +1207,9 @@ export const QuestionDetail = () => {
                       ]
                         .filter((item) => item.value)
                         .map((item) => {
-                          const isSelected = selectedOptions.includes(item.label);
+                          const isSelected = selectedOptions.includes(
+                            item.label
+                          );
                           const isCorrect = correctOptions.includes(item.label);
                           const isSelectedCorrect = isSelected && isCorrect;
                           const isSelectedIncorrect = isSelected && !isCorrect;
