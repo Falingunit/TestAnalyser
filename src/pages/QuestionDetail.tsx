@@ -1522,7 +1522,9 @@ export const QuestionDetail = () => {
               {isAdmin ? (
                 <Dialog>
                   <DialogTrigger asChild>
-                    <Button variant="secondary">Update answer key</Button>
+                    <Button variant="secondary" disabled>
+                      Update answer key
+                    </Button>
                   </DialogTrigger>
                   <DialogContent>
                     <DialogHeader>

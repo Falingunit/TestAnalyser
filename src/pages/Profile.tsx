@@ -223,6 +223,7 @@ export const Profile = () => {
                 </p>
               </div>
               <Switch
+                disabled={true}
                 checked={adminOverride}
                 onCheckedChange={setAdminOverride}
               />
