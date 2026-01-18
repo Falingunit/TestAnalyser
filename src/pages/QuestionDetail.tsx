@@ -36,6 +36,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogClose,
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
@@ -141,13 +142,8 @@ const keyOptionLabels = ["A", "B", "C", "D"] as const;
 
 export const QuestionDetail = () => {
   const { testId, questionId } = useParams();
-  const {
-    state,
-    updateAnswerKey,
-    toggleQuestionBookmark,
-    currentUser,
-    isAdmin,
-  } = useAppStore();
+  const { state, updateAnswerKey, toggleQuestionBookmark, currentUser } =
+    useAppStore();
   const test = state.tests.find((item) => item.id === testId);
   const mode = currentUser?.preferences.mode ?? state.ui.mode;
   const displayQuestions = useMemo(() => {
@@ -400,7 +396,7 @@ export const QuestionDetail = () => {
   const handleKeyUpdate = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setMessage(null);
-    if (!isAdmin) {
+    if (!hasAdminPriviliges) {
       setMessage("Only admins can update answer keys.");
       return;
     }
@@ -721,7 +717,7 @@ export const QuestionDetail = () => {
   };
 
   const togglePin = (id: string) => {
-    if (!isAdmin) {
+    if (!hasAdminPriviliges) {
       return;
     }
     setChatMessages((prevMessages) =>
@@ -732,7 +728,7 @@ export const QuestionDetail = () => {
   };
 
   const deleteMessage = (id: string, author: string) => {
-    if (!isAdmin && currentUser?.name !== author) {
+    if (!hasAdminPriviliges && currentUser?.name !== author) {
       return;
     }
     setChatMessages((prevMessages) =>
@@ -975,6 +971,9 @@ export const QuestionDetail = () => {
     "spssabaris@gmail.com",
     "sbaniruddh@gmail.com",
   ];
+
+  const hasAdminPriviliges =
+    currentUser && allowedUsers.includes(currentUser.email);
 
   return (
     <div className="flex h-[calc(100vh-90px)] flex-col gap-1 overflow-hidden">
@@ -1455,8 +1454,12 @@ export const QuestionDetail = () => {
                               variant="ghost"
                               size="sm"
                               onClick={() => togglePin(chat.id)}
-                              disabled={!isAdmin}
-                              title={isAdmin ? "Toggle pin" : "Admins only"}
+                              disabled={!hasAdminPriviliges}
+                              title={
+                                hasAdminPriviliges
+                                  ? "Toggle pin"
+                                  : "Admins only"
+                              }
                             >
                               {chat.pinned ? "Unpin" : "Pin"}
                             </Button>
@@ -1468,10 +1471,12 @@ export const QuestionDetail = () => {
                                 deleteMessage(chat.id, chat.author)
                               }
                               disabled={
-                                !isAdmin && currentUser?.name !== chat.author
+                                !hasAdminPriviliges &&
+                                currentUser?.name !== chat.author
                               }
                               title={
-                                isAdmin || currentUser?.name === chat.author
+                                hasAdminPriviliges ||
+                                currentUser?.name === chat.author
                                   ? "Delete message"
                                   : "Admins or message author only"
                               }
@@ -1694,7 +1699,9 @@ export const QuestionDetail = () => {
                         />
                       </div>
                       <DialogFooter>
-                        <Button type="submit">Save update</Button>
+                        <DialogClose>
+                          <Button type="submit">Save update</Button>
+                        </DialogClose>
                       </DialogFooter>
                     </form>
                   </DialogContent>
