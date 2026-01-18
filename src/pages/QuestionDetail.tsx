@@ -973,7 +973,7 @@ export const QuestionDetail = () => {
   const allowedUsers = [
     "testing@gmail.com",
     "spssabaris@gmail.com",
-    "sbaniruddh@gmail.com",
+    "sbaniruddh1@gmail.com",
   ];
 
   return (
