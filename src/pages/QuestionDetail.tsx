@@ -129,7 +129,7 @@ const parseNumericGroup = (value: string) => {
     return null;
   }
   const rangeMatch = trimmed.match(
-    /(-?\d+(?:\.\d+)?)\s*(?:to|-)\s*(-?\d+(?:\.\d+)?)/i
+    /(-?\d+(?:\.\d+)?)\s*(?:to|-)\s*(-?\d+(?:\.\d+)?)/i,
   );
   if (rangeMatch) {
     return { min: rangeMatch[1], max: rangeMatch[2] };
@@ -226,7 +226,7 @@ export const QuestionDetail = () => {
   useEffect(() => {
     document.documentElement.style.setProperty(
       "--zoom-scale",
-      zoomLevel.toString()
+      zoomLevel.toString(),
     );
   }, [zoomLevel]);
 
@@ -239,7 +239,7 @@ export const QuestionDetail = () => {
     : "n/a";
 
   const currentIndex = displayQuestions.findIndex(
-    (item) => item.question.id === questionId
+    (item) => item.question.id === questionId,
   );
   const questionEntry =
     currentIndex >= 0 ? displayQuestions[currentIndex] : null;
@@ -265,18 +265,18 @@ export const QuestionDetail = () => {
     questionStatus === "Correct"
       ? "border-emerald-500"
       : questionStatus === "Incorrect"
-      ? "border-rose-500"
-      : "border-white";
+        ? "border-rose-500"
+        : "border-white";
   const answerTextClass =
     questionStatus === "Correct"
       ? "text-emerald-500"
       : questionStatus === "Incorrect"
-      ? "text-rose-500"
-      : "text-muted-foreground";
+        ? "text-rose-500"
+        : "text-muted-foreground";
   const score = question && test ? getQuestionMark(test, question) : 0;
   const displayNumber = questionEntry?.displayNumber ?? 0;
   const isBookmarked = Boolean(
-    test && question ? test.bookmarks?.[question.id] : false
+    test && question ? test.bookmarks?.[question.id] : false,
   );
   const keyOptions = keyOptionLabels;
   const keyOptionOrder: readonly string[] = keyOptionLabels;
@@ -287,15 +287,15 @@ export const QuestionDetail = () => {
 
   const removeKeyAnswerGroup = (groupId: string) => {
     setKeyAnswerGroups((prev) =>
-      prev.length > 1 ? prev.filter((group) => group.id !== groupId) : prev
+      prev.length > 1 ? prev.filter((group) => group.id !== groupId) : prev,
     );
   };
 
   const updateSingleGroup = (groupId: string, value: string) => {
     setKeyAnswerGroups((prev) =>
       prev.map((group) =>
-        group.id === groupId ? { ...group, single: value } : group
-      )
+        group.id === groupId ? { ...group, single: value } : group,
+      ),
     );
   };
 
@@ -312,19 +312,19 @@ export const QuestionDetail = () => {
             ? group.multi.filter((item) => item !== value)
             : [...group.multi, value],
         };
-      })
+      }),
     );
   };
 
   const updateRangeGroup = (
     groupId: string,
     field: "min" | "max",
-    value: string
+    value: string,
   ) => {
     setKeyAnswerGroups((prev) =>
       prev.map((group) =>
-        group.id === groupId ? { ...group, [field]: value } : group
-      )
+        group.id === groupId ? { ...group, [field]: value } : group,
+      ),
     );
   };
 
@@ -367,7 +367,7 @@ export const QuestionDetail = () => {
           return;
         }
         ranges.push(
-          minValue === maxValue ? String(minValue) : `${minValue}-${maxValue}`
+          minValue === maxValue ? String(minValue) : `${minValue}-${maxValue}`,
         );
       });
       if (hasInvalid) {
@@ -380,7 +380,7 @@ export const QuestionDetail = () => {
       const groups = keyAnswerGroups
         .map((group) => {
           const selections = group.multi.map((item) =>
-            item.trim().toUpperCase()
+            item.trim().toUpperCase(),
           );
           if (selections.length === 0) {
             return null;
@@ -646,7 +646,7 @@ export const QuestionDetail = () => {
       const points = Array.from(activePointers.current.values());
       const distance = Math.hypot(
         points[0].x - points[1].x,
-        points[0].y - points[1].y
+        points[0].y - points[1].y,
       );
       pinchState.current = {
         startDistance: distance || 1,
@@ -678,7 +678,7 @@ export const QuestionDetail = () => {
       const points = Array.from(activePointers.current.values());
       const distance = Math.hypot(
         points[0].x - points[1].x,
-        points[0].y - points[1].y
+        points[0].y - points[1].y,
       );
       const start = pinchState.current?.startDistance ?? (distance || 1);
       const startZoom = pinchState.current?.startZoom ?? imageZoom;
@@ -726,8 +726,8 @@ export const QuestionDetail = () => {
     }
     setChatMessages((prevMessages) =>
       prevMessages.map((message) =>
-        message.id === id ? { ...message, pinned: !message.pinned } : message
-      )
+        message.id === id ? { ...message, pinned: !message.pinned } : message,
+      ),
     );
   };
 
@@ -736,7 +736,7 @@ export const QuestionDetail = () => {
       return;
     }
     setChatMessages((prevMessages) =>
-      prevMessages.filter((message) => message.id !== id)
+      prevMessages.filter((message) => message.id !== id),
     );
   };
   // 1. New Helper: Converts images in the clone to Base64
@@ -772,7 +772,7 @@ export const QuestionDetail = () => {
           // If this fails, the original URL remains.
           // If the server strictly blocks CORS, the image will still appear broken.
         }
-      })
+      }),
     );
   };
 
@@ -796,8 +796,8 @@ export const QuestionDetail = () => {
             };
             img.addEventListener("load", handleDone);
             img.addEventListener("error", handleDone);
-          })
-      )
+          }),
+      ),
     );
   };
 
@@ -830,7 +830,7 @@ export const QuestionDetail = () => {
         targetElement.style.setProperty(
           prop,
           computed.getPropertyValue(prop),
-          computed.getPropertyPriority(prop)
+          computed.getPropertyPriority(prop),
         );
       }
     });
@@ -882,12 +882,12 @@ export const QuestionDetail = () => {
     svg.setAttribute("height", `${contentHeight + padding * 2}`);
     svg.setAttribute(
       "viewBox",
-      `0 0 ${contentWidth + padding * 2} ${contentHeight + padding * 2}`
+      `0 0 ${contentWidth + padding * 2} ${contentHeight + padding * 2}`,
     );
 
     const foreignObject = document.createElementNS(
       "http://www.w3.org/2000/svg",
-      "foreignObject"
+      "foreignObject",
     );
     foreignObject.setAttribute("x", "0");
     foreignObject.setAttribute("y", "0");
@@ -921,7 +921,7 @@ export const QuestionDetail = () => {
       ctx.scale(dpr, dpr);
       ctx.drawImage(image, 0, 0);
       const blob = await new Promise<Blob | null>((resolve) =>
-        canvas.toBlob(resolve, "image/png")
+        canvas.toBlob(resolve, "image/png"),
       );
       if (!blob) {
         throw new Error("Unable to create image blob");
@@ -970,6 +970,12 @@ export const QuestionDetail = () => {
     );
   }
 
+  const allowedUsers = [
+    "testing@gmail.com",
+    "spssabaris@gmail.com",
+    "sbaniruddh@gmail.com",
+  ];
+
   return (
     <div className="flex h-[calc(100vh-90px)] flex-col gap-1 overflow-hidden">
       {/* Question Detail Helper Buttons */}
@@ -991,7 +997,7 @@ export const QuestionDetail = () => {
             <Star
               className={cn(
                 "h-4 w-4",
-                isBookmarked ? "text-amber-400" : "text-muted-foreground"
+                isBookmarked ? "text-amber-400" : "text-muted-foreground",
               )}
               fill={isBookmarked ? "currentColor" : "none"}
             />
@@ -1062,14 +1068,14 @@ export const QuestionDetail = () => {
                             item.id === question.id
                               ? "border-primary bg-primary text-primary-foreground"
                               : item.bonus
-                              ? "border-sky-500/60 bg-sky-500/15 text-foreground hover:border-sky-400"
-                              : item.status === "Correct"
-                              ? "border-emerald-500/60 bg-emerald-500/15 text-foreground hover:border-emerald-400"
-                              : item.status === "Partial"
-                              ? "border-amber-400/60 bg-amber-400/15 text-foreground hover:border-amber-300"
-                              : item.status === "Incorrect"
-                              ? "border-rose-500/60 bg-rose-500/15 text-foreground hover:border-rose-400"
-                              : "border-border/60 text-muted-foreground hover:border-primary/60"
+                                ? "border-sky-500/60 bg-sky-500/15 text-foreground hover:border-sky-400"
+                                : item.status === "Correct"
+                                  ? "border-emerald-500/60 bg-emerald-500/15 text-foreground hover:border-emerald-400"
+                                  : item.status === "Partial"
+                                    ? "border-amber-400/60 bg-amber-400/15 text-foreground hover:border-amber-300"
+                                    : item.status === "Incorrect"
+                                      ? "border-rose-500/60 bg-rose-500/15 text-foreground hover:border-rose-400"
+                                      : "border-border/60 text-muted-foreground hover:border-primary/60",
                           )}
                         >
                           <span>{item.number}</span>
@@ -1163,7 +1169,7 @@ export const QuestionDetail = () => {
                       "question-html rounded-lg bg-transparent leading-relaxed",
                       mode === "dark"
                         ? "question-html--blend-dark"
-                        : "question-html--blend-light"
+                        : "question-html--blend-light",
                     )}
                     style={{ fontSize: zoomLevel + "rem" }}
                     dangerouslySetInnerHTML={{
@@ -1185,13 +1191,13 @@ export const QuestionDetail = () => {
                         placeholder="Unattempted"
                         className={cn(
                           "h-10 border-2 bg-background pr-28 text-sm font-semibold text-foreground",
-                          answerBorderClass
+                          answerBorderClass,
                         )}
                       />
                       <span
                         className={cn(
                           "pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold",
-                          answerTextClass
+                          answerTextClass,
                         )}
                       >
                         Correct: {formatAnswerValue(question.keyUpdate)}
@@ -1208,14 +1214,14 @@ export const QuestionDetail = () => {
                         .filter((item) => item.value)
                         .map((item) => {
                           const isSelected = selectedOptions.includes(
-                            item.label
+                            item.label,
                           );
                           const isCorrect = correctOptions.includes(item.label);
                           const isSelectedCorrect = isSelected && isCorrect;
                           const isSelectedIncorrect = isSelected && !isCorrect;
                           const isUnselectedCorrect = !isSelected && isCorrect;
                           const optionCount = hasPeerAnswerStats
-                            ? peerAnswerStats?.options?.[item.label] ?? 0
+                            ? (peerAnswerStats?.options?.[item.label] ?? 0)
                             : null;
                           return (
                             <div
@@ -1231,7 +1237,7 @@ export const QuestionDetail = () => {
                                 !isSelectedCorrect &&
                                   !isSelectedIncorrect &&
                                   !isUnselectedCorrect &&
-                                  "border-border bg-background text-foreground"
+                                  "border-border bg-background text-foreground",
                               )}
                             >
                               <span
@@ -1248,7 +1254,7 @@ export const QuestionDetail = () => {
                                     !isSelectedIncorrect &&
                                     !isUnselectedCorrect &&
                                     "border-border text-muted-foreground",
-                                  "place-self-center"
+                                  "place-self-center",
                                 )}
                               >
                                 {item.label}
@@ -1259,7 +1265,7 @@ export const QuestionDetail = () => {
                                     "question-html min-w-0 flex-1 leading-relaxed",
                                     mode === "dark"
                                       ? "question-html--blend-dark"
-                                      : "question-html--blend-light"
+                                      : "question-html--blend-light",
                                   )}
                                   style={{ fontSize: zoomLevel * 1.15 + "rem" }}
                                   dangerouslySetInnerHTML={{
@@ -1403,34 +1409,6 @@ export const QuestionDetail = () => {
                     {peerTimeLabel}
                   </div>
                 </div>
-                {/* <div className="flex items-center justify-between">
-                  <span>Your answer</span>
-                  <span className="font-semibold text-foreground">
-                    {formatAnswerValue(answer)}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span>Correct key</span>
-                  <span className="font-semibold text-foreground">
-                    {formatAnswerValue(question.keyUpdate)}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span>Original key</span>
-                  <span className="font-semibold text-foreground">
-                    {formatAnswerValue(question.correctAnswer)}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span>Marks</span>
-                  <span className="font-semibold text-foreground">{score}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span>Time</span>
-                  <span className="font-semibold text-foreground">
-                    {formatSeconds(timeSpent)}
-                  </span>
-                </div> */}
               </div>
 
               <div className="space-y-2">
@@ -1459,7 +1437,7 @@ export const QuestionDetail = () => {
                         key={chat.id}
                         className={cn(
                           "rounded-lg border border-border p-3 text-xs",
-                          chat.pinned ? "bg-amber-500/10" : "bg-background"
+                          chat.pinned ? "bg-amber-500/10" : "bg-background",
                         )}
                       >
                         <div className="flex items-center justify-between gap-2">
@@ -1518,13 +1496,10 @@ export const QuestionDetail = () => {
                   <Button type="submit">Send</Button>
                 </form>
               </div>
-
-              {isAdmin ? (
+              {currentUser && allowedUsers.includes(currentUser.email) ? (
                 <Dialog>
                   <DialogTrigger asChild>
-                    <Button variant="secondary" disabled>
-                      Update answer key
-                    </Button>
+                    <Button variant="secondary">Update answer key</Button>
                   </DialogTrigger>
                   <DialogContent>
                     <DialogHeader>
@@ -1547,7 +1522,7 @@ export const QuestionDetail = () => {
                         <div
                           className={cn(
                             "space-y-3",
-                            keyUpdateBonus && "opacity-60"
+                            keyUpdateBonus && "opacity-60",
                           )}
                         >
                           {keyAnswerGroups.map((group, index) => (
@@ -1589,7 +1564,7 @@ export const QuestionDetail = () => {
                                         updateRangeGroup(
                                           group.id,
                                           "min",
-                                          event.target.value
+                                          event.target.value,
                                         )
                                       }
                                       disabled={keyUpdateBonus}
@@ -1608,7 +1583,7 @@ export const QuestionDetail = () => {
                                         updateRangeGroup(
                                           group.id,
                                           "max",
-                                          event.target.value
+                                          event.target.value,
                                         )
                                       }
                                       placeholder={
@@ -1630,7 +1605,7 @@ export const QuestionDetail = () => {
                                             ? "border-primary/60 bg-primary/10 text-foreground"
                                             : "border-border text-muted-foreground",
                                           keyUpdateBonus &&
-                                            "pointer-events-none"
+                                            "pointer-events-none",
                                         )}
                                       >
                                         <input
@@ -1640,7 +1615,7 @@ export const QuestionDetail = () => {
                                           onChange={() =>
                                             toggleMultiGroupOption(
                                               group.id,
-                                              option
+                                              option,
                                             )
                                           }
                                           disabled={keyUpdateBonus}
@@ -1668,7 +1643,7 @@ export const QuestionDetail = () => {
                                             ? "border-primary/60 bg-primary/10 text-foreground"
                                             : "border-border text-muted-foreground",
                                           keyUpdateBonus &&
-                                            "pointer-events-none"
+                                            "pointer-events-none",
                                         )}
                                       >
                                         <input
@@ -1770,7 +1745,7 @@ export const QuestionDetail = () => {
             </div>
             <div
               className={cn(
-                "relative flex h-full w-full touch-none items-center justify-center overflow-hidden cursor-grab"
+                "relative flex h-full w-full touch-none items-center justify-center overflow-hidden cursor-grab",
               )}
               onClick={(event) => {
                 if (event.target !== event.currentTarget) {
