@@ -1734,7 +1734,7 @@ export const QuestionDetail = () => {
       >
         <DialogContent
           className="inset-0 h-screen w-screen max-w-none translate-x-0 translate-y-0 rounded-none border-0 bg-transparent p-0 shadow-none"
-          overlayClassName="bg-black/10 backdrop-blur-sm"
+          overlayClassName="bg-black/30 backdrop-blur-none"
         >
           <div className="relative h-full w-full">
             <div className="absolute right-10 top-2 z-10">
