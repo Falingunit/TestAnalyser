@@ -274,9 +274,6 @@ const upsertExam = async (report: ScrapedReport) => {
         optionContentC: question.optionContentC,
         optionContentD: question.optionContentD,
         hasPartial: question.hasPartial,
-        correctMarking: question.correctMarking,
-        incorrectMarking: question.incorrectMarking,
-        unattemptedMarking: question.unattemptedMarking,
         questionNumber: question.questionNumber,
         ...(shouldSetKeyUpdate
           ? { keyUpdate: serializeJson(nextCorrectAnswer) }
