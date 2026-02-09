@@ -65,6 +65,11 @@ type Store = {
     testId: string;
     questionId: string;
     newKey: unknown;
+    markingScheme?: {
+      correct: number;
+      incorrect: number;
+      unattempted: number;
+    };
   }) => Promise<void>;
   updateMarkingScheme: (payload: {
     testId: string;
@@ -740,6 +745,7 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
     testId,
     questionId,
     newKey,
+    markingScheme,
   }) => {
     const token = loadToken();
     if (!token) {
@@ -752,7 +758,7 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
         {
           method: "POST",
           token,
-          body: JSON.stringify({ questionId, newKey }),
+          body: JSON.stringify({ questionId, newKey, markingScheme }),
         },
       );
       setState((prev) => ({

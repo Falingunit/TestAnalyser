@@ -190,6 +190,11 @@ export const QuestionDetail = () => {
 
   const [message, setMessage] = useState<string | null>(null);
   const [keyUpdateBonus, setKeyUpdateBonus] = useState(false);
+  const [markingDraft, setMarkingDraft] = useState({
+    correct: "",
+    incorrect: "",
+    unattempted: "",
+  });
   const [keyAnswerGroups, setKeyAnswerGroups] = useState<KeyAnswerGroup[]>([
     buildKeyGroup(),
   ]);
@@ -408,12 +413,28 @@ export const QuestionDetail = () => {
       setMessage("Enter a valid key or mark this question as bonus.");
       return;
     }
+    const correctMarking = parseNumberValue(markingDraft.correct);
+    const incorrectMarking = parseNumberValue(markingDraft.incorrect);
+    const unattemptedMarking = parseNumberValue(markingDraft.unattempted);
+    if (
+      correctMarking === null ||
+      incorrectMarking === null ||
+      unattemptedMarking === null
+    ) {
+      setMessage("Enter valid marking values for this question.");
+      return;
+    }
     await updateAnswerKey({
       testId: test.id,
       questionId: question.id,
       newKey: keyUpdateBonus ? { bonus: true } : keyValue,
+      markingScheme: {
+        correct: correctMarking,
+        incorrect: incorrectMarking,
+        unattempted: unattemptedMarking,
+      },
     });
-    setMessage("Answer key updated.");
+    setMessage("Answer key and marking scheme updated.");
     setKeyUpdateBonus(false);
   };
 
@@ -473,8 +494,14 @@ export const QuestionDetail = () => {
     if (!question) {
       setKeyAnswerGroups([buildKeyGroup()]);
       setKeyUpdateBonus(false);
+      setMarkingDraft({ correct: "", incorrect: "", unattempted: "" });
       return;
     }
+    setMarkingDraft({
+      correct: String(question.correctMarking),
+      incorrect: String(question.incorrectMarking),
+      unattempted: String(question.unattemptedMarking),
+    });
     const bonusActive = isBonusKey(question.keyUpdate);
     setKeyUpdateBonus(bonusActive);
     if (bonusActive) {
@@ -1504,14 +1531,14 @@ export const QuestionDetail = () => {
               {currentUser && allowedUsers.includes(currentUser.email) ? (
                 <Dialog>
                   <DialogTrigger asChild>
-                    <Button variant="secondary">Update answer key</Button>
+                    <Button variant="secondary">Update key/marking</Button>
                   </DialogTrigger>
                   <DialogContent>
                     <DialogHeader>
-                      <DialogTitle>Update answer key</DialogTitle>
+                      <DialogTitle>Update answer key and marking</DialogTitle>
                       <DialogDescription>
-                        Add one or more valid answers. Each entry is treated as
-                        OR.
+                        Add one or more valid answers and set question-level
+                        marking values.
                       </DialogDescription>
                     </DialogHeader>
                     <form className="space-y-4" onSubmit={handleKeyUpdate}>
@@ -1697,6 +1724,70 @@ export const QuestionDetail = () => {
                           checked={keyUpdateBonus}
                           onCheckedChange={setKeyUpdateBonus}
                         />
+                      </div>
+                      <div className="space-y-3 rounded-lg border border-border/60 p-3">
+                        <div className="space-y-1">
+                          <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                            Question marking scheme
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            Override this question&apos;s marks without changing
+                            other questions.
+                          </p>
+                        </div>
+                        <div className="grid gap-3 sm:grid-cols-3">
+                          <div className="space-y-2">
+                            <label className="text-xs text-muted-foreground">
+                              Correct
+                            </label>
+                            <Input
+                              type="number"
+                              inputMode="decimal"
+                              step="any"
+                              value={markingDraft.correct}
+                              onChange={(event) =>
+                                setMarkingDraft((prev) => ({
+                                  ...prev,
+                                  correct: event.target.value,
+                                }))
+                              }
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <label className="text-xs text-muted-foreground">
+                              Incorrect
+                            </label>
+                            <Input
+                              type="number"
+                              inputMode="decimal"
+                              step="any"
+                              value={markingDraft.incorrect}
+                              onChange={(event) =>
+                                setMarkingDraft((prev) => ({
+                                  ...prev,
+                                  incorrect: event.target.value,
+                                }))
+                              }
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <label className="text-xs text-muted-foreground">
+                              Unattempted
+                            </label>
+                            <Input
+                              type="number"
+                              inputMode="decimal"
+                              step="any"
+                              value={markingDraft.unattempted}
+                              onChange={(event) =>
+                                setMarkingDraft((prev) => ({
+                                  ...prev,
+                                  unattempted: event.target.value,
+                                }))
+                              }
+                            />
+                          </div>
+                        </div>
                       </div>
                       <DialogFooter>
                         <DialogClose>

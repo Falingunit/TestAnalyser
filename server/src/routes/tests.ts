@@ -583,9 +583,14 @@ router.post('/:id/answer-key', requireAuth, async (req: AuthRequest, res, next) 
       return res.status(401).json({ error: 'Unauthorized.' })
     }
 
-    const { questionId, newKey } = req.body as {
+    const { questionId, newKey, markingScheme } = req.body as {
       questionId?: string
       newKey?: unknown
+      markingScheme?: {
+        correct?: unknown
+        incorrect?: unknown
+        unattempted?: unknown
+      }
     }
 
     if (!isNonEmptyString(questionId)) {
@@ -612,8 +617,19 @@ router.post('/:id/answer-key', requireAuth, async (req: AuthRequest, res, next) 
 
     const normalizedKey =
       typeof newKey === 'string' ? newKey.trim().toUpperCase() : newKey
-    if (normalizedKey === undefined || normalizedKey === null) {
-      return res.status(400).json({ error: 'newKey is required.' })
+    const hasKeyUpdate = normalizedKey !== undefined && normalizedKey !== null
+    const nextCorrect = toFiniteNumber(markingScheme?.correct)
+    const nextIncorrect = toFiniteNumber(markingScheme?.incorrect)
+    const nextUnattempted = toFiniteNumber(markingScheme?.unattempted)
+    const hasMarkingUpdate =
+      nextCorrect !== null &&
+      nextIncorrect !== null &&
+      nextUnattempted !== null
+
+    if (!hasKeyUpdate && !hasMarkingUpdate) {
+      return res.status(400).json({
+        error: 'newKey or markingScheme is required.',
+      })
     }
 
     const peerTimings = await fetchPeerTimingsForExam(
@@ -629,15 +645,35 @@ router.post('/:id/answer-key', requireAuth, async (req: AuthRequest, res, next) 
         key: resolveQuestionKey(question),
       })),
     )
-    if (jsonEquals(parseStoredJson(examQuestion.keyUpdate), normalizedKey)) {
+    const keyChanged = hasKeyUpdate
+      ? !jsonEquals(parseStoredJson(examQuestion.keyUpdate), normalizedKey)
+      : false
+    const markingChanged = hasMarkingUpdate
+      ? examQuestion.correctMarking !== nextCorrect ||
+        examQuestion.incorrectMarking !== nextIncorrect ||
+        examQuestion.unattemptedMarking !== nextUnattempted
+      : false
+
+    if (!keyChanged && !markingChanged) {
       return res.json({ test: serializeAttempt(attempt, peerTimings, peerAnswerStats) })
     }
 
     await prisma.question.update({
       where: { id: examQuestion.id },
       data: {
-        keyUpdate: serializeJson(normalizedKey),
-        lastKeyUpdateTime: new Date(),
+        ...(keyChanged
+          ? {
+              keyUpdate: serializeJson(normalizedKey),
+              lastKeyUpdateTime: new Date(),
+            }
+          : {}),
+        ...(hasMarkingUpdate
+          ? {
+              correctMarking: nextCorrect,
+              incorrectMarking: nextIncorrect,
+              unattemptedMarking: nextUnattempted,
+            }
+          : {}),
       },
     })
 
