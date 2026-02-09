@@ -980,8 +980,9 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
     "sbaniruddh1@gmail.com",
     "testing@gmail.com",
   ];
-  const isAdmin =
-    currentUser?.email && adminEmails.includes(currentUser?.email);
+  const isAdmin = currentUser?.email
+    ? adminEmails.includes(currentUser?.email)
+    : false;
   const fontScale = currentUser?.preferences.fontScale ?? state.ui.fontScale;
 
   const value = {
