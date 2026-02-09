@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { Link, useParams } from "react-router-dom";
 import { Star } from "lucide-react";
 import { useAppStore } from "@/lib/store";
@@ -112,23 +112,34 @@ export const TestDetail = () => {
     resyncTest,
   } = useAppStore();
   const test = state.tests.find((item) => item.id === testId);
+
+  // NEW: Ref to track previous test ID for navigation detection
+  const prevTestIdRef = useRef(test?.id);
+
   const displayQuestions = useMemo(() => {
     if (!test) {
       return [];
     }
     return buildDisplayQuestions(test.questions);
   }, [test]);
+
   const firstQuestionId = displayQuestions[0]?.question.id ?? "";
   const [query, setQuery] = useState("");
   const [subject, setSubject] = useState<SubjectFilter>("ALL");
   const [type, setType] = useState<TypeFilter>("ALL");
   const [status, setStatus] = useState<StatusFilter>("ALL");
   const [onlyKeyUpdates, setOnlyKeyUpdates] = useState(false);
+
   const [markingDraft, setMarkingDraft] = useState<MarkingDraft>(() =>
-    buildEmptyMarkingDraft()
+    buildEmptyMarkingDraft(),
   );
   const [markingMessage, setMarkingMessage] = useState<string | null>(null);
+
+  // NEW: Loading and Edited states
+  const [isSaving, setIsSaving] = useState(false);
   const [isResyncing, setIsResyncing] = useState(false);
+  const [msFormEdited, setMsFormEdited] = useState(false); // Renamed from isDirty
+
   const [confirmResyncOpen, setConfirmResyncOpen] = useState(false);
   const [collapsedSubjects, setCollapsedSubjects] = useState<
     Record<Subject, boolean>
@@ -138,30 +149,45 @@ export const TestDetail = () => {
     MATHEMATICS: false,
   });
 
+  // FIXED: useEffect logic to prevent race conditions and overwrites
   useEffect(() => {
     if (!test) {
       setMarkingDraft(buildEmptyMarkingDraft());
-      setMarkingMessage(null);
       return;
     }
-    const nextDraft = buildEmptyMarkingDraft();
-    test.questions.forEach((question) => {
-      const qtype = question.qtype as QuestionType;
-      if (!questionTypes.includes(qtype)) {
-        return;
-      }
-      if (nextDraft[qtype].correct) {
-        return;
-      }
-      nextDraft[qtype] = {
-        correct: String(question.correctMarking),
-        incorrect: String(question.incorrectMarking),
-        unattempted: String(question.unattemptedMarking),
-      };
-    });
-    setMarkingDraft(nextDraft);
-    setMarkingMessage(null);
-  }, [test]);
+
+    const isNewTest = prevTestIdRef.current !== test.id;
+
+    // 1. Only clear message if we actually navigated to a new test page
+    if (isNewTest) {
+      setMarkingMessage(null);
+      setMsFormEdited(false); // Reset edited flag on new page load
+      prevTestIdRef.current = test.id;
+    }
+
+    // 2. Only update the draft from DB if:
+    //    a) It's a fresh page load (isNewTest)
+    //    b) OR The user hasn't started typing yet (!msFormEdited)
+    //    This prevents the input from jumping back to old values while typing.
+    if (isNewTest || !msFormEdited) {
+      const nextDraft = buildEmptyMarkingDraft();
+      test.questions.forEach((question) => {
+        const qtype = question.qtype as QuestionType;
+        if (!questionTypes.includes(qtype)) {
+          return;
+        }
+
+        // Populate draft
+        nextDraft[qtype] = {
+          correct: String(question.correctMarking),
+          incorrect: String(question.incorrectMarking),
+          unattempted: String(question.unattemptedMarking),
+        };
+      });
+      setMarkingDraft(nextDraft);
+    }
+    // Note: We deliberately removed setMarkingMessage(null) from here
+  }, [test, msFormEdited]); // Re-run when test updates
 
   if (!test) {
     return (
@@ -181,16 +207,17 @@ export const TestDetail = () => {
     currentUser?.preferences.acknowledgedKeyUpdates[test.id] ?? null;
   const hasNewKeyUpdates = Boolean(
     analysis.latestKeyUpdate &&
-      (!acknowledgedAt || acknowledgedAt < analysis.latestKeyUpdate)
+    (!acknowledgedAt || acknowledgedAt < analysis.latestKeyUpdate),
   );
   const account = state.externalAccounts.find(
-    (item) => item.userId === currentUser?.id && item.provider === "test.z7i.in"
+    (item) =>
+      item.userId === currentUser?.id && item.provider === "test.z7i.in",
   );
   const canResync = Boolean(
     test.externalExamId &&
-      account &&
-      account.syncStatus !== "syncing" &&
-      !isResyncing
+    account &&
+    account.syncStatus !== "syncing" &&
+    !isResyncing,
   );
 
   const availableTypes = useMemo(() => {
@@ -209,6 +236,8 @@ export const TestDetail = () => {
 
   const handleMarkingSchemeSave = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setMarkingMessage(null); // Clear previous messages
+
     if (!isAdmin) {
       setMarkingMessage("Only admins can update marking schemes.");
       return;
@@ -216,29 +245,73 @@ export const TestDetail = () => {
     if (!test) {
       return;
     }
+
     const scheme: Record<
       string,
       { correct: number; incorrect: number; unattempted: number }
     > = {};
+
     for (const qtype of availableTypes) {
       const entry = markingDraft[qtype];
+
+      // Validation: Check for empty strings first to avoid saving "0" accidentally
+      if (
+        entry.correct.trim() === "" ||
+        entry.incorrect.trim() === "" ||
+        entry.unattempted.trim() === ""
+      ) {
+        setMarkingMessage(
+          `Please enter a value for all ${formatQuestionType(qtype)} fields.`,
+        );
+        return;
+      }
+
       const correct = Number(entry.correct);
       const incorrect = Number(entry.incorrect);
       const unattempted = Number(entry.unattempted);
+
       if (
         !Number.isFinite(correct) ||
         !Number.isFinite(incorrect) ||
         !Number.isFinite(unattempted)
       ) {
         setMarkingMessage(
-          `Enter valid numbers for ${formatQuestionType(qtype)}.`
+          `Enter valid numbers for ${formatQuestionType(qtype)}.`,
         );
         return;
       }
       scheme[qtype] = { correct, incorrect, unattempted };
     }
-    await updateMarkingScheme({ testId: test.id, scheme });
-    setMarkingMessage("Marking scheme updated.");
+    try {
+      setIsSaving(true);
+      await updateMarkingScheme({ testId: test.id, scheme });
+
+      setMarkingMessage("Marking scheme updated.");
+      setMsFormEdited(false); // Reset edited state so we can accept new updates from DB
+
+      // Optional: Auto-clear message after 3 seconds
+      setTimeout(() => setMarkingMessage(null), 3000);
+    } catch (error) {
+      console.error(error);
+      setMarkingMessage("Failed to save marking scheme.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleInputChange = (
+    qtype: QuestionType,
+    field: "correct" | "incorrect" | "unattempted",
+    value: string,
+  ) => {
+    setMsFormEdited(true); // Mark form as edited when user types
+    setMarkingDraft((prev) => ({
+      ...prev,
+      [qtype]: {
+        ...prev[qtype],
+        [field]: value,
+      },
+    }));
   };
 
   const questionSnapshots = useMemo(() => {
@@ -285,7 +358,7 @@ export const TestDetail = () => {
           matchesStatus &&
           matchesKey
         );
-      }
+      },
     );
   }, [onlyKeyUpdates, query, questionSnapshots, status, subject, type]);
 
@@ -383,9 +456,9 @@ export const TestDetail = () => {
                 type="submit"
                 size="sm"
                 form="marking-scheme-form"
-                disabled={!isAdmin}
+                disabled={!isAdmin || isSaving} // Disabled while saving
               >
-                Save scheme
+                {isSaving ? "Saving..." : "Save scheme"}
               </Button>
             </div>
 
@@ -414,14 +487,8 @@ export const TestDetail = () => {
                         type="number"
                         step="1"
                         value={markingDraft[qtype].correct}
-                        onChange={(event) =>
-                          setMarkingDraft((prev) => ({
-                            ...prev,
-                            [qtype]: {
-                              ...prev[qtype],
-                              correct: event.target.value,
-                            },
-                          }))
+                        onChange={(e) =>
+                          handleInputChange(qtype, "correct", e.target.value)
                         }
                         className="h-8 text-right"
                         disabled={!isAdmin}
@@ -430,14 +497,8 @@ export const TestDetail = () => {
                         type="number"
                         step="1"
                         value={markingDraft[qtype].incorrect}
-                        onChange={(event) =>
-                          setMarkingDraft((prev) => ({
-                            ...prev,
-                            [qtype]: {
-                              ...prev[qtype],
-                              incorrect: event.target.value,
-                            },
-                          }))
+                        onChange={(e) =>
+                          handleInputChange(qtype, "incorrect", e.target.value)
                         }
                         className="h-8 text-right"
                         disabled={!isAdmin}
@@ -446,14 +507,12 @@ export const TestDetail = () => {
                         type="number"
                         step="1"
                         value={markingDraft[qtype].unattempted}
-                        onChange={(event) =>
-                          setMarkingDraft((prev) => ({
-                            ...prev,
-                            [qtype]: {
-                              ...prev[qtype],
-                              unattempted: event.target.value,
-                            },
-                          }))
+                        onChange={(e) =>
+                          handleInputChange(
+                            qtype,
+                            "unattempted",
+                            e.target.value,
+                          )
                         }
                         className="h-8 text-right"
                         disabled={!isAdmin}
@@ -468,7 +527,7 @@ export const TestDetail = () => {
             </form>
 
             {markingMessage ? (
-              <div className="rounded-lg border border-border bg-background p-3 text-xs text-muted-foreground">
+              <div className="rounded-lg border border-border bg-background p-3 text-xs text-muted-foreground animate-in fade-in slide-in-from-top-1">
                 {markingMessage}
               </div>
             ) : null}
@@ -486,8 +545,8 @@ export const TestDetail = () => {
           <DialogHeader>
             <DialogTitle>Resync this exam?</DialogTitle>
             <DialogDescription>
-              This will replace your current attempt with the latest data, but your
-              bookmarks, notes, and key changes will remain intact.
+              This will replace your current attempt with the latest data, but
+              your bookmarks, notes, and key changes will remain intact.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -510,8 +569,6 @@ export const TestDetail = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      <section></section>
 
       <section>
         <Card className="app-panel">
@@ -701,7 +758,7 @@ export const TestDetail = () => {
                               </span>
                             </div>
                           </Link>
-                        )
+                        ),
                       )}
                     </div>
                   ) : null}
