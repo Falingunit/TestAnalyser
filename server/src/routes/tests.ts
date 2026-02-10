@@ -121,6 +121,7 @@ const buildCalculatedRankByAttemptId = (
   attempts: Array<{
     id: string
     examId: string
+    userId: string
     answers: string
   }>,
   questionsByExam: Map<
@@ -135,13 +136,19 @@ const buildCalculatedRankByAttemptId = (
       id: string
     }>
   >,
+  participantKeyByUserId: Map<string, string>,
 ) => {
-  const scoresByExam = new Map<string, Array<{ id: string; score: number }>>()
+  const scoresByExam = new Map<
+    string,
+    Array<{ id: string; score: number; participantKey: string }>
+  >()
   attempts.forEach((attempt) => {
     const questions = questionsByExam.get(attempt.examId) ?? []
     if (questions.length === 0) {
       return
     }
+    const participantKey =
+      participantKeyByUserId.get(attempt.userId) ?? `user:${attempt.userId}`
     const parsed = parseStoredJson(attempt.answers)
     const answers =
       parsed && typeof parsed === 'object'
@@ -152,15 +159,32 @@ const buildCalculatedRankByAttemptId = (
       return sum + getQuestionMarkForAnswer(question, selected)
     }, 0)
     const current = scoresByExam.get(attempt.examId) ?? []
-    current.push({ id: attempt.id, score })
+    current.push({ id: attempt.id, score, participantKey })
     scoresByExam.set(attempt.examId, current)
   })
 
   const rankByAttemptId = new Map<string, number>()
   scoresByExam.forEach((entries) => {
+    const bestScoreByParticipant = new Map<string, number>()
     entries.forEach((entry) => {
-      const betterCount = entries.filter((other) => other.score > entry.score).length
-      rankByAttemptId.set(entry.id, betterCount + 1)
+      const current = bestScoreByParticipant.get(entry.participantKey)
+      if (current === undefined || entry.score > current) {
+        bestScoreByParticipant.set(entry.participantKey, entry.score)
+      }
+    })
+    const participantScores = Array.from(bestScoreByParticipant.values()).sort(
+      (a, b) => b - a,
+    )
+    const rankByScore = new Map<number, number>()
+    participantScores.forEach((score, index) => {
+      if (!rankByScore.has(score)) {
+        // Competition ranking: ties share rank, and next rank skips positions.
+        rankByScore.set(score, index + 1)
+      }
+    })
+    entries.forEach((entry) => {
+      const participantBest = bestScoreByParticipant.get(entry.participantKey) ?? entry.score
+      rankByAttemptId.set(entry.id, rankByScore.get(participantBest) ?? 1)
     })
   })
   return rankByAttemptId
@@ -598,11 +622,24 @@ const fetchCalculatedRankForAttempt = async (
 ) => {
   const attemptsForRank = await prisma.attempt.findMany({
     where: { examId: payload.examId },
-    select: { id: true, examId: true, answers: true },
+    select: { id: true, examId: true, userId: true, answers: true },
+  })
+  const userIds = Array.from(new Set(attemptsForRank.map((attempt) => attempt.userId)))
+  const linkedAccounts = await prisma.externalAccount.findMany({
+    where: {
+      provider: 'test.z7i.in',
+      userId: { in: userIds },
+    },
+    select: { userId: true, username: true },
+  })
+  const participantKeyByUserId = new Map<string, string>()
+  linkedAccounts.forEach((account) => {
+    participantKeyByUserId.set(account.userId, `external:test.z7i.in:${account.username}`)
   })
   const rankByAttemptId = buildCalculatedRankByAttemptId(
     attemptsForRank,
     new Map([[payload.examId, payload.questions]]),
+    participantKeyByUserId,
   )
   return rankByAttemptId.get(payload.attemptId) ?? null
 }
@@ -694,11 +731,32 @@ router.get('/', requireAuth, async (req: AuthRequest, res, next) => {
         ? []
         : await prisma.attempt.findMany({
             where: { examId: { in: examIds } },
-            select: { id: true, examId: true, answers: true },
+            select: { id: true, examId: true, userId: true, answers: true },
           })
+    const rankUserIds = Array.from(
+      new Set(attemptsForRank.map((attempt) => attempt.userId)),
+    )
+    const rankAccounts =
+      rankUserIds.length === 0
+        ? []
+        : await prisma.externalAccount.findMany({
+            where: {
+              provider: 'test.z7i.in',
+              userId: { in: rankUserIds },
+            },
+            select: { userId: true, username: true },
+          })
+    const participantKeyByUserId = new Map<string, string>()
+    rankAccounts.forEach((account) => {
+      participantKeyByUserId.set(
+        account.userId,
+        `external:test.z7i.in:${account.username}`,
+      )
+    })
     const calculatedRankByAttemptId = buildCalculatedRankByAttemptId(
       attemptsForRank,
       questionsByExam,
+      participantKeyByUserId,
     )
     const otherAttempts =
       examIds.length === 0
