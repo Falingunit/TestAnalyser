@@ -41,6 +41,7 @@ const serializeAttempt = (
       externalExamId: string | null
       title: string
       examDate: string
+      markingScheme: string | null
       questions: Array<{
         id: string
         subject: string
@@ -56,6 +57,7 @@ const serializeAttempt = (
         correctMarking: number
         incorrectMarking: number
         unattemptedMarking: number
+        markingOverridden: boolean
         questionNumber: number
         lastKeyUpdateTime: Date | null
       }>
@@ -91,6 +93,7 @@ const serializeAttempt = (
     title: attempt.exam.title,
     examDate: attempt.exam.examDate,
     rank: attempt.rank ?? null,
+    markingScheme: parseStoredJson(attempt.exam.markingScheme),
     answers,
     timings,
     peerTimings,
@@ -111,6 +114,7 @@ const serializeAttempt = (
       correctMarking: question.correctMarking,
       incorrectMarking: question.incorrectMarking,
       unattemptedMarking: question.unattemptedMarking,
+      markingOverridden: question.markingOverridden,
       questionNumber: question.questionNumber,
       lastKeyUpdateTime: question.lastKeyUpdateTime
         ? question.lastKeyUpdateTime.toISOString()
@@ -453,6 +457,14 @@ const toFiniteNumber = (value: unknown) => {
   return null
 }
 
+const toFiniteInteger = (value: unknown) => {
+  const parsed = toFiniteNumber(value)
+  if (parsed === null || !Number.isInteger(parsed)) {
+    return null
+  }
+  return parsed
+}
+
 const parseMarkingScheme = (value: unknown) => {
   if (!value || typeof value !== 'object') {
     return new Map<string, { correct: number; incorrect: number; unattempted: number }>()
@@ -468,9 +480,9 @@ const parseMarkingScheme = (value: unknown) => {
       incorrect?: unknown
       unattempted?: unknown
     }
-    const correct = toFiniteNumber(raw.correct)
-    const incorrect = toFiniteNumber(raw.incorrect)
-    const unattempted = toFiniteNumber(raw.unattempted)
+    const correct = toFiniteInteger(raw.correct)
+    const incorrect = toFiniteInteger(raw.incorrect)
+    const unattempted = toFiniteInteger(raw.unattempted)
     if (correct === null || incorrect === null || unattempted === null) {
       continue
     }
@@ -618,9 +630,9 @@ router.post('/:id/answer-key', requireAuth, async (req: AuthRequest, res, next) 
     const normalizedKey =
       typeof newKey === 'string' ? newKey.trim().toUpperCase() : newKey
     const hasKeyUpdate = normalizedKey !== undefined && normalizedKey !== null
-    const nextCorrect = toFiniteNumber(markingScheme?.correct)
-    const nextIncorrect = toFiniteNumber(markingScheme?.incorrect)
-    const nextUnattempted = toFiniteNumber(markingScheme?.unattempted)
+    const nextCorrect = toFiniteInteger(markingScheme?.correct)
+    const nextIncorrect = toFiniteInteger(markingScheme?.incorrect)
+    const nextUnattempted = toFiniteInteger(markingScheme?.unattempted)
     const hasMarkingUpdate =
       nextCorrect !== null &&
       nextIncorrect !== null &&
@@ -672,6 +684,7 @@ router.post('/:id/answer-key', requireAuth, async (req: AuthRequest, res, next) 
               correctMarking: nextCorrect,
               incorrectMarking: nextIncorrect,
               unattemptedMarking: nextUnattempted,
+              markingOverridden: true,
             }
           : {}),
       },
@@ -816,17 +829,94 @@ router.post('/:id/marking-scheme', requireAuth, async (req: AuthRequest, res, ne
       return res.status(404).json({ error: 'Test not found.' })
     }
 
+    const qtypes = Array.from(updates.keys())
+    const existing = await prisma.question.findMany({
+      where: {
+        examId: attempt.exam.id,
+        qtype: { in: qtypes },
+      },
+      select: {
+        id: true,
+        qtype: true,
+        correctMarking: true,
+        incorrectMarking: true,
+        unattemptedMarking: true,
+        markingOverridden: true,
+      },
+    })
+
+    const markOverrideOps: Array<ReturnType<typeof prisma.question.updateMany>> = []
+    qtypes.forEach((qtype) => {
+      const items = existing.filter((question) => question.qtype === qtype)
+      const candidates = items.filter((question) => !question.markingOverridden)
+      if (candidates.length <= 1) {
+        return
+      }
+
+      const frequency = new Map<string, number>()
+      candidates.forEach((question) => {
+        const key = `${question.correctMarking}|${question.incorrectMarking}|${question.unattemptedMarking}`
+        frequency.set(key, (frequency.get(key) ?? 0) + 1)
+      })
+
+      let baseline = ''
+      let baselineCount = -1
+      frequency.forEach((count, key) => {
+        if (count > baselineCount) {
+          baseline = key
+          baselineCount = count
+        }
+      })
+      if (!baseline) {
+        return
+      }
+
+      const overrideIds = candidates
+        .filter((question) => {
+          const key = `${question.correctMarking}|${question.incorrectMarking}|${question.unattemptedMarking}`
+          return key !== baseline
+        })
+        .map((question) => question.id)
+
+      if (overrideIds.length > 0) {
+        markOverrideOps.push(
+          prisma.question.updateMany({
+            where: { id: { in: overrideIds } },
+            data: { markingOverridden: true },
+          }),
+        )
+      }
+    })
+
     await prisma.$transaction(
-      Array.from(updates.entries()).map(([qtype, values]) =>
-        prisma.question.updateMany({
-          where: { examId: attempt.exam.id, qtype },
+      [
+        ...markOverrideOps,
+        prisma.exam.update({
+          where: { id: attempt.exam.id },
           data: {
-            correctMarking: values.correct,
-            incorrectMarking: values.incorrect,
-            unattemptedMarking: values.unattempted,
+            markingScheme: serializeJson({
+              ...Object.fromEntries(
+                parseMarkingScheme(parseStoredJson(attempt.exam.markingScheme)).entries(),
+              ),
+              ...Object.fromEntries(updates.entries()),
+            }),
           },
         }),
-      ),
+        ...Array.from(updates.entries()).map(([qtype, values]) =>
+          prisma.question.updateMany({
+            where: {
+              examId: attempt.exam.id,
+              qtype,
+              markingOverridden: false,
+            },
+            data: {
+              correctMarking: values.correct,
+              incorrectMarking: values.incorrect,
+              unattemptedMarking: values.unattempted,
+            },
+          }),
+        ),
+      ],
     )
 
     const updated = await prisma.attempt.findFirst({

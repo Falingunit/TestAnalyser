@@ -46,7 +46,7 @@ const buildSegments = (
   { value: correct, className: "bg-emerald-500" },
   { value: partial, className: "bg-amber-400" },
   { value: incorrect, className: "bg-rose-500" },
-  { value: unattempted, className: "bg-white" },
+  { value: unattempted, className: "bg-zinc-300 dark:bg-zinc-700" },
 ];
 
 export const TestSummaryCard = ({

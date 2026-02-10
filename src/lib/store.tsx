@@ -70,14 +70,14 @@ type Store = {
       incorrect: number;
       unattempted: number;
     };
-  }) => Promise<void>;
+  }) => Promise<AuthResult>;
   updateMarkingScheme: (payload: {
     testId: string;
     scheme: Record<
       string,
       { correct: number; incorrect: number; unattempted: number }
     >;
-  }) => Promise<void>;
+  }) => Promise<AuthResult>;
   setTheme: (theme: ThemeName) => void;
   setMode: (mode: ColorMode) => void;
   acknowledgeKeyUpdates: (testId: string) => Promise<void>;
@@ -749,7 +749,7 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
   }) => {
     const token = loadToken();
     if (!token) {
-      return;
+      return { ok: false, message: "Missing session token." };
     }
 
     try {
@@ -765,8 +765,15 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
         ...prev,
         tests: replaceTest(prev.tests, data.test),
       }));
+      return { ok: true };
     } catch (error) {
-      console.error(error);
+      const message =
+        error instanceof ApiError
+          ? error.message
+          : error instanceof Error
+            ? error.message
+            : "Unable to update answer key.";
+      return { ok: false, message };
     }
   };
 
@@ -840,7 +847,7 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
   }) => {
     const token = loadToken();
     if (!token) {
-      return;
+      return { ok: false, message: "Missing session token." };
     }
 
     try {
@@ -856,8 +863,15 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
         ...prev,
         tests: replaceTest(prev.tests, data.test),
       }));
+      return { ok: true };
     } catch (error) {
-      console.error(error);
+      const message =
+        error instanceof ApiError
+          ? error.message
+          : error instanceof Error
+            ? error.message
+            : "Unable to update marking scheme.";
+      return { ok: false, message };
     }
   };
 

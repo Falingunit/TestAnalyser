@@ -30,6 +30,7 @@ export type Question = {
   correctMarking: number
   incorrectMarking: number
   unattemptedMarking: number
+  markingOverridden: boolean
   questionNumber: number
   lastKeyUpdateTime: string | null
 }
@@ -40,6 +41,10 @@ export type TestAttempt = {
   externalExamId?: string
   title: string
   examDate: string
+  markingScheme?: Record<
+    string,
+    { correct: number; incorrect: number; unattempted: number }
+  > | null
   answers: Record<string, AnswerValue>
   timings: Record<string, number>
   questions: Question[]

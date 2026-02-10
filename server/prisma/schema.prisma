@@ -58,6 +58,7 @@ model Exam {
   title          String
   externalExamId String?
   examDate       String
+  markingScheme  String?
   questions      Question[]
   attempts       Attempt[]
 
@@ -80,6 +81,7 @@ model Question {
   correctMarking     Int
   incorrectMarking   Int
   unattemptedMarking Int
+  markingOverridden  Boolean   @default(false)
   questionNumber     Int
   keyUpdate          String?
   lastKeyUpdateTime  DateTime?

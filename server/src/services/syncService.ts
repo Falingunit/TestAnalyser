@@ -12,6 +12,13 @@ import type {
 type ExistingQuestion = {
   id: string
   questionNumber: number
+  subject: string
+  qtype: string
+  questionContent: string
+  optionContentA: string | null
+  optionContentB: string | null
+  optionContentC: string | null
+  optionContentD: string | null
   correctAnswer: string | null
   keyUpdate: string | null
 }
@@ -161,6 +168,31 @@ const assignQuestionNumbers = (questions: ScrapedQuestion[]) => {
   })
 }
 
+const normalizeSignatureText = (value: string | null | undefined) =>
+  (value ?? '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase()
+
+const buildQuestionSignature = (payload: {
+  subject: string
+  qtype: string
+  questionContent: string
+  optionContentA?: string | null
+  optionContentB?: string | null
+  optionContentC?: string | null
+  optionContentD?: string | null
+}) =>
+  [
+    payload.subject,
+    payload.qtype,
+    normalizeSignatureText(payload.questionContent),
+    normalizeSignatureText(payload.optionContentA),
+    normalizeSignatureText(payload.optionContentB),
+    normalizeSignatureText(payload.optionContentC),
+    normalizeSignatureText(payload.optionContentD),
+  ].join('|')
+
 const upsertExam = async (report: ScrapedReport) => {
   const normalized = normalizeReport(report)
   if (!normalized.externalExamId) {
@@ -196,6 +228,22 @@ const upsertExam = async (report: ScrapedReport) => {
       question,
     ]),
   )
+  const existingBySignature = new Map<string, ExistingQuestion[]>()
+  existingQuestions.forEach((question: ExistingQuestion) => {
+    const signature = buildQuestionSignature({
+      subject: question.subject,
+      qtype: question.qtype,
+      questionContent: question.questionContent,
+      optionContentA: question.optionContentA,
+      optionContentB: question.optionContentB,
+      optionContentC: question.optionContentC,
+      optionContentD: question.optionContentD,
+    })
+    const current = existingBySignature.get(signature) ?? []
+    current.push(question)
+    existingBySignature.set(signature, current)
+  })
+  const usedExistingIds = new Set<string>()
 
   const questionBySourceNumber = new Map<
     number,
@@ -219,7 +267,28 @@ const upsertExam = async (report: ScrapedReport) => {
       parsedCorrectAnswer,
       question.qtype,
     )
-    const existing = existingByNumber.get(question.questionNumber)
+    let existing = existingByNumber.get(question.questionNumber)
+    let matchedBySignature = false
+    if (existing && usedExistingIds.has(existing.id)) {
+      existing = undefined
+    }
+    if (!existing) {
+      const signature = buildQuestionSignature({
+        subject: question.subject,
+        qtype: question.qtype,
+        questionContent: question.questionContent,
+        optionContentA: question.optionContentA,
+        optionContentB: question.optionContentB,
+        optionContentC: question.optionContentC,
+        optionContentD: question.optionContentD,
+      })
+      const candidates = existingBySignature.get(signature) ?? []
+      const candidate = candidates.find((item) => !usedExistingIds.has(item.id))
+      if (candidate) {
+        existing = candidate
+        matchedBySignature = true
+      }
+    }
 
     if (!existing) {
       const storedAnswer = serializeJson(ensuredCorrectAnswer)
@@ -257,6 +326,7 @@ const upsertExam = async (report: ScrapedReport) => {
       })
       continue
     }
+    usedExistingIds.add(existing.id)
 
     const existingCorrectAnswer = parseStoredJson(existing.correctAnswer)
     const shouldSetKeyUpdate = existing.keyUpdate === null
@@ -274,7 +344,7 @@ const upsertExam = async (report: ScrapedReport) => {
         optionContentC: question.optionContentC,
         optionContentD: question.optionContentD,
         hasPartial: question.hasPartial,
-        questionNumber: question.questionNumber,
+        ...(matchedBySignature ? {} : { questionNumber: question.questionNumber }),
         ...(shouldSetKeyUpdate
           ? { keyUpdate: serializeJson(nextCorrectAnswer) }
           : {}),

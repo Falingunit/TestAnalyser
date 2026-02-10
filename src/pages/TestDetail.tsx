@@ -171,13 +171,44 @@ export const TestDetail = () => {
     //    This prevents the input from jumping back to old values while typing.
     if (isNewTest || !msFormEdited) {
       const nextDraft = buildEmptyMarkingDraft();
+      questionTypes.forEach((qtype) => {
+        const entry = test.markingScheme?.[qtype];
+        if (!entry) {
+          return;
+        }
+        nextDraft[qtype] = {
+          correct: String(entry.correct),
+          incorrect: String(entry.incorrect),
+          unattempted: String(entry.unattempted),
+        };
+      });
+      const defaults = new Set<QuestionType>();
+      const fallback = new Set<QuestionType>();
       test.questions.forEach((question) => {
         const qtype = question.qtype as QuestionType;
         if (!questionTypes.includes(qtype)) {
           return;
         }
-
-        // Populate draft
+        if (
+          nextDraft[qtype].correct &&
+          nextDraft[qtype].incorrect &&
+          nextDraft[qtype].unattempted
+        ) {
+          return;
+        }
+        if (!question.markingOverridden && !defaults.has(qtype)) {
+          defaults.add(qtype);
+          nextDraft[qtype] = {
+            correct: String(question.correctMarking),
+            incorrect: String(question.incorrectMarking),
+            unattempted: String(question.unattemptedMarking),
+          };
+          return;
+        }
+        if (fallback.has(qtype)) {
+          return;
+        }
+        fallback.add(qtype);
         nextDraft[qtype] = {
           correct: String(question.correctMarking),
           incorrect: String(question.incorrectMarking),
@@ -189,32 +220,19 @@ export const TestDetail = () => {
     // Note: We deliberately removed setMarkingMessage(null) from here
   }, [test, msFormEdited]); // Re-run when test updates
 
-  if (!test) {
-    return (
-      <Card className="app-panel">
-        <CardContent className="space-y-3 p-6">
-          <p className="text-sm text-muted-foreground">Test not found.</p>
-          <Button asChild variant="outline">
-            <Link to="/app/tests">Back to tests</Link>
-          </Button>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  const analysis = buildAnalysis(test);
+  const analysis = useMemo(() => (test ? buildAnalysis(test) : null), [test]);
   const acknowledgedAt =
-    currentUser?.preferences.acknowledgedKeyUpdates[test.id] ?? null;
+    test ? currentUser?.preferences.acknowledgedKeyUpdates[test.id] ?? null : null;
+  const latestKeyUpdate = analysis?.latestKeyUpdate ?? null;
   const hasNewKeyUpdates = Boolean(
-    analysis.latestKeyUpdate &&
-    (!acknowledgedAt || acknowledgedAt < analysis.latestKeyUpdate),
+    latestKeyUpdate && (!acknowledgedAt || acknowledgedAt < latestKeyUpdate),
   );
   const account = state.externalAccounts.find(
     (item) =>
       item.userId === currentUser?.id && item.provider === "test.z7i.in",
   );
   const canResync = Boolean(
-    test.externalExamId &&
+    test?.externalExamId &&
     account &&
     account.syncStatus !== "syncing" &&
     !isResyncing,
@@ -280,12 +298,25 @@ export const TestDetail = () => {
         );
         return;
       }
+      if (
+        !Number.isInteger(correct) ||
+        !Number.isInteger(incorrect) ||
+        !Number.isInteger(unattempted)
+      ) {
+        setMarkingMessage(
+          `${formatQuestionType(qtype)} values must be whole numbers.`,
+        );
+        return;
+      }
       scheme[qtype] = { correct, incorrect, unattempted };
     }
     try {
       setIsSaving(true);
-      await updateMarkingScheme({ testId: test.id, scheme });
-
+      const result = await updateMarkingScheme({ testId: test.id, scheme });
+      if (!result.ok) {
+        setMarkingMessage(result.message ?? "Failed to save marking scheme.");
+        return;
+      }
       setMarkingMessage("Marking scheme updated.");
       setMsFormEdited(false); // Reset edited state so we can accept new updates from DB
 
@@ -377,6 +408,19 @@ export const TestDetail = () => {
       }))
       .filter((group) => group.items.length > 0);
   }, [filteredQuestions]);
+
+  if (!test || !analysis) {
+    return (
+      <Card className="app-panel">
+        <CardContent className="space-y-3 p-6">
+          <p className="text-sm text-muted-foreground">Test not found.</p>
+          <Button asChild variant="outline">
+            <Link to="/app/tests">Back to tests</Link>
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -522,7 +566,7 @@ export const TestDetail = () => {
                 </div>
               </div>
               <p className="text-xs text-muted-foreground">
-                Changes apply to all questions in this test.
+                Changes apply to non-overridden questions in this test.
               </p>
             </form>
 

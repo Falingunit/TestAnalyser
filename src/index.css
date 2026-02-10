@@ -97,6 +97,14 @@
     @apply bg-background text-foreground antialiased font-body;
   }
 
+  input[type="number"] {
+    color-scheme: light;
+  }
+
+  .dark input[type="number"] {
+    color-scheme: dark;
+  }
+
   h1,
   h2,
   h3,

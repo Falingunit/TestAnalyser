@@ -66,6 +66,12 @@ export type PeerAnswerStats = {
   options: Record<string, number>
 }
 
+export type MarkingSchemeEntry = {
+  correct: number
+  incorrect: number
+  unattempted: number
+}
+
 export type QuestionRecord = {
   id: string
   subject: Subject
@@ -81,6 +87,7 @@ export type QuestionRecord = {
   correctMarking: number
   incorrectMarking: number
   unattemptedMarking: number
+  markingOverridden: boolean
   questionNumber: number
   lastKeyUpdateTime: string | null
 }
@@ -92,6 +99,7 @@ export type TestRecord = {
   title: string
   examDate: string
   rank: number | null
+  markingScheme?: Record<string, MarkingSchemeEntry> | null
   answers: Record<string, AnswerValue>
   timings: Record<string, number>
   peerTimings?: Record<string, number>

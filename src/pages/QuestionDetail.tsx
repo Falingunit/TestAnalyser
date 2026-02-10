@@ -267,7 +267,7 @@ export const QuestionDetail = () => {
       ? "border-emerald-500"
       : questionStatus === "Incorrect"
         ? "border-rose-500"
-        : "border-white";
+        : "border-border";
   const answerTextClass =
     questionStatus === "Correct"
       ? "text-emerald-500"
@@ -424,7 +424,15 @@ export const QuestionDetail = () => {
       setMessage("Enter valid marking values for this question.");
       return;
     }
-    await updateAnswerKey({
+    if (
+      !Number.isInteger(correctMarking) ||
+      !Number.isInteger(incorrectMarking) ||
+      !Number.isInteger(unattemptedMarking)
+    ) {
+      setMessage("Marking values must be whole numbers.");
+      return;
+    }
+    const result = await updateAnswerKey({
       testId: test.id,
       questionId: question.id,
       newKey: keyUpdateBonus ? { bonus: true } : keyValue,
@@ -434,6 +442,10 @@ export const QuestionDetail = () => {
         unattempted: unattemptedMarking,
       },
     });
+    if (!result.ok) {
+      setMessage(result.message ?? "Unable to update this question.");
+      return;
+    }
     setMessage("Answer key and marking scheme updated.");
     setKeyUpdateBonus(false);
   };
@@ -960,9 +972,20 @@ export const QuestionDetail = () => {
     if (!root) {
       return;
     }
+    const fallbackText = root.innerText?.trim() ?? "";
     const ClipboardItemCtor = window.ClipboardItem;
     if (!navigator.clipboard || !ClipboardItemCtor) {
-      setMessage("Clipboard image copy is not supported in this browser.");
+      if (navigator.clipboard && fallbackText) {
+        try {
+          await navigator.clipboard.writeText(fallbackText);
+          setMessage("Image copy unsupported. Question text copied instead.");
+          return;
+        } catch {
+          setMessage("Clipboard is not supported in this browser.");
+          return;
+        }
+      }
+      setMessage("Clipboard is not supported in this browser.");
       return;
     }
     setIsCopying(true);
@@ -974,7 +997,16 @@ export const QuestionDetail = () => {
       ]);
       setMessage("Question image copied to clipboard.");
     } catch {
-      setMessage("Unable to copy question image. Try again.");
+      if (fallbackText) {
+        try {
+          await navigator.clipboard.writeText(fallbackText);
+          setMessage("Image copy failed. Question text copied instead.");
+          return;
+        } catch {
+          // fall through to generic message
+        }
+      }
+      setMessage("Unable to copy question. Try again.");
     } finally {
       setIsCopying(false);
     }
@@ -1743,7 +1775,7 @@ export const QuestionDetail = () => {
                             <Input
                               type="number"
                               inputMode="decimal"
-                              step="any"
+                              step="1"
                               value={markingDraft.correct}
                               onChange={(event) =>
                                 setMarkingDraft((prev) => ({
@@ -1760,7 +1792,7 @@ export const QuestionDetail = () => {
                             <Input
                               type="number"
                               inputMode="decimal"
-                              step="any"
+                              step="1"
                               value={markingDraft.incorrect}
                               onChange={(event) =>
                                 setMarkingDraft((prev) => ({
@@ -1777,7 +1809,7 @@ export const QuestionDetail = () => {
                             <Input
                               type="number"
                               inputMode="decimal"
-                              step="any"
+                              step="1"
                               value={markingDraft.unattempted}
                               onChange={(event) =>
                                 setMarkingDraft((prev) => ({
