@@ -82,8 +82,10 @@ export const Tests = () => {
     const sorted = [...filtered].sort((a, b) => {
       const analysisA = analysisMap.get(a.id)
       const analysisB = analysisMap.get(b.id)
-      const rankA = a.rank ?? Number.POSITIVE_INFINITY
-      const rankB = b.rank ?? Number.POSITIVE_INFINITY
+      const rankA =
+        a.calculatedRank ?? a.rank ?? Number.POSITIVE_INFINITY
+      const rankB =
+        b.calculatedRank ?? b.rank ?? Number.POSITIVE_INFINITY
       switch (sort) {
         case 'date-asc':
           return new Date(a.examDate).getTime() - new Date(b.examDate).getTime()

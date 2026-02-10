@@ -99,6 +99,7 @@ export type TestRecord = {
   title: string
   examDate: string
   rank: number | null
+  calculatedRank?: number | null
   markingScheme?: Record<string, MarkingSchemeEntry> | null
   answers: Record<string, AnswerValue>
   timings: Record<string, number>

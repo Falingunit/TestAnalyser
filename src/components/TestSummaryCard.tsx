@@ -182,8 +182,15 @@ export const TestSummaryCard = ({
     ? `${analysis.scoreCurrent}/${totalScore}`
     : "n/a";
   const accuracyLabel = analysis ? `${analysis.accuracy}%` : "n/a";
-  const rankValue = test.rank === null ? "n/a" : String(test.rank);
-  const rankBadgeLabel = test.rank === null ? null : `Rank ${test.rank}`;
+  const calculatedRankValue =
+    test.calculatedRank === null || test.calculatedRank === undefined
+      ? "n/a"
+      : String(test.calculatedRank);
+  const originalRankValue = test.rank === null ? "n/a" : String(test.rank);
+  const rankBadgeLabel =
+    test.calculatedRank === null || test.calculatedRank === undefined
+      ? null
+      : `Rank ${test.calculatedRank}`;
   const totalSegments = buildSegments(
     analysis?.correct ?? 0,
     analysis?.partial ?? 0,
@@ -301,7 +308,12 @@ export const TestSummaryCard = ({
               </div>
               <div className="mt-2 grid grid-cols-2 gap-2">
                 <p className="text-2xl font-semibold">{scoreLabel}</p>
-                <p className="text-2xl font-semibold text-right">{rankValue}</p>
+                <div className="text-right">
+                  <p className="text-2xl font-semibold">{calculatedRankValue}</p>
+                  <p className="text-[11px] text-muted-foreground">
+                    Original: {originalRankValue}
+                  </p>
+                </div>
               </div>
               {analysis &&
               analysis.keyChanges.length > 0 &&

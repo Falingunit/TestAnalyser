@@ -41,6 +41,7 @@ export type TestAttempt = {
   externalExamId?: string
   title: string
   examDate: string
+  calculatedRank?: number | null
   markingScheme?: Record<
     string,
     { correct: number; incorrect: number; unattempted: number }

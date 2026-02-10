@@ -26,6 +26,146 @@ const resolveQuestionKey = (question: {
   return updated ?? parseStoredJson(question.correctAnswer)
 }
 
+const getKeyOptionGroups = (value: unknown): string[][] => {
+  if (Array.isArray(value)) {
+    return [toOptionArray(value)]
+  }
+  if (typeof value === 'string') {
+    const segments = splitByOr(value)
+    if (segments.length === 0) {
+      return []
+    }
+    return segments.map((segment) => toOptionArray(segment))
+  }
+  return []
+}
+
+const getQuestionMarkForAnswer = (
+  question: {
+    qtype: string
+    correctAnswer: string
+    keyUpdate: string | null
+    correctMarking: number
+    incorrectMarking: number
+    unattemptedMarking: number
+  },
+  selected: unknown,
+) => {
+  const key = resolveQuestionKey(question)
+  if (isBonusKey(key)) {
+    return question.correctMarking
+  }
+  if (isUnattemptedAnswer(selected, question.qtype)) {
+    return question.unattemptedMarking
+  }
+
+  if (question.qtype === 'NAT') {
+    return isNumericCorrect(selected, key)
+      ? question.correctMarking
+      : question.incorrectMarking
+  }
+
+  if (question.qtype === 'MAQ') {
+    const selectedOptions = toOptionArray(selected)
+    if (selectedOptions.length === 0) {
+      return question.unattemptedMarking
+    }
+    const selectedSet = new Set(selectedOptions)
+    const keyGroups = getKeyOptionGroups(key)
+    if (keyGroups.length === 0) {
+      return question.incorrectMarking
+    }
+    let bestScore = question.incorrectMarking
+    keyGroups.forEach((group) => {
+      const keySet = new Set(group)
+      if (keySet.size === 0) {
+        return
+      }
+      let hasIncorrect = false
+      let correctCount = 0
+      for (const option of selectedSet) {
+        if (keySet.has(option)) {
+          correctCount += 1
+        } else {
+          hasIncorrect = true
+        }
+      }
+      let score = question.incorrectMarking
+      if (!hasIncorrect && correctCount === keySet.size) {
+        score = question.correctMarking
+      } else if (!hasIncorrect) {
+        score = correctCount
+      }
+      if (score > bestScore) {
+        bestScore = score
+      }
+    })
+    return bestScore
+  }
+
+  const selectedOptions = toOptionArray(selected)
+  if (selectedOptions.length === 0) {
+    return question.unattemptedMarking
+  }
+  const keyGroups = getKeyOptionGroups(key)
+  if (keyGroups.length === 0) {
+    return question.incorrectMarking
+  }
+  const isCorrect = keyGroups.some((group) =>
+    group.some((option) => selectedOptions.includes(option)),
+  )
+  return isCorrect ? question.correctMarking : question.incorrectMarking
+}
+
+const buildCalculatedRankByAttemptId = (
+  attempts: Array<{
+    id: string
+    examId: string
+    answers: string
+  }>,
+  questionsByExam: Map<
+    string,
+    Array<{
+      qtype: string
+      correctAnswer: string
+      keyUpdate: string | null
+      correctMarking: number
+      incorrectMarking: number
+      unattemptedMarking: number
+      id: string
+    }>
+  >,
+) => {
+  const scoresByExam = new Map<string, Array<{ id: string; score: number }>>()
+  attempts.forEach((attempt) => {
+    const questions = questionsByExam.get(attempt.examId) ?? []
+    if (questions.length === 0) {
+      return
+    }
+    const parsed = parseStoredJson(attempt.answers)
+    const answers =
+      parsed && typeof parsed === 'object'
+        ? (parsed as Record<string, unknown>)
+        : {}
+    const score = questions.reduce((sum, question) => {
+      const selected = answers[question.id]
+      return sum + getQuestionMarkForAnswer(question, selected)
+    }, 0)
+    const current = scoresByExam.get(attempt.examId) ?? []
+    current.push({ id: attempt.id, score })
+    scoresByExam.set(attempt.examId, current)
+  })
+
+  const rankByAttemptId = new Map<string, number>()
+  scoresByExam.forEach((entries) => {
+    entries.forEach((entry) => {
+      const betterCount = entries.filter((other) => other.score > entry.score).length
+      rankByAttemptId.set(entry.id, betterCount + 1)
+    })
+  })
+  return rankByAttemptId
+}
+
 const serializeJson = (value: unknown) => JSON.stringify(value ?? null)
 
 const serializeAttempt = (
@@ -63,6 +203,7 @@ const serializeAttempt = (
       }>
     }
   },
+  calculatedRank: number | null = null,
   peerTimings: Record<string, number> = {},
   peerAnswerStats: Record<
     string,
@@ -93,6 +234,7 @@ const serializeAttempt = (
     title: attempt.exam.title,
     examDate: attempt.exam.examDate,
     rank: attempt.rank ?? null,
+    calculatedRank,
     markingScheme: parseStoredJson(attempt.exam.markingScheme),
     answers,
     timings,
@@ -439,6 +581,32 @@ const fetchPeerAnswerStatsForExam = async (
   return statsByExam.get(examId) ?? {}
 }
 
+const fetchCalculatedRankForAttempt = async (
+  payload: {
+    attemptId: string
+    examId: string
+    questions: Array<{
+      qtype: string
+      correctAnswer: string
+      keyUpdate: string | null
+      correctMarking: number
+      incorrectMarking: number
+      unattemptedMarking: number
+      id: string
+    }>
+  },
+) => {
+  const attemptsForRank = await prisma.attempt.findMany({
+    where: { examId: payload.examId },
+    select: { id: true, examId: true, answers: true },
+  })
+  const rankByAttemptId = buildCalculatedRankByAttemptId(
+    attemptsForRank,
+    new Map([[payload.examId, payload.questions]]),
+  )
+  return rankByAttemptId.get(payload.attemptId) ?? null
+}
+
 const isNonEmptyString = (value: unknown): value is string =>
   typeof value === 'string' && value.trim().length > 0
 
@@ -506,6 +674,32 @@ router.get('/', requireAuth, async (req: AuthRequest, res, next) => {
     })
 
     const examIds = Array.from(new Set(attempts.map((attempt) => attempt.examId)))
+    const questionsByExam = new Map<
+      string,
+      Array<{
+        qtype: string
+        correctAnswer: string
+        keyUpdate: string | null
+        correctMarking: number
+        incorrectMarking: number
+        unattemptedMarking: number
+        id: string
+      }>
+    >()
+    attempts.forEach((attempt) => {
+      questionsByExam.set(attempt.examId, attempt.exam.questions)
+    })
+    const attemptsForRank =
+      examIds.length === 0
+        ? []
+        : await prisma.attempt.findMany({
+            where: { examId: { in: examIds } },
+            select: { id: true, examId: true, answers: true },
+          })
+    const calculatedRankByAttemptId = buildCalculatedRankByAttemptId(
+      attemptsForRank,
+      questionsByExam,
+    )
     const otherAttempts =
       examIds.length === 0
         ? []
@@ -517,12 +711,12 @@ router.get('/', requireAuth, async (req: AuthRequest, res, next) => {
             select: { examId: true, timings: true, answers: true },
           })
     const peerTimingsByExam = buildPeerTimingsByExam(otherAttempts)
-    const questionsByExam = new Map<
+    const questionsForPeerByExam = new Map<
       string,
       Array<{ id: string; qtype: string; key: unknown }>
     >()
     attempts.forEach((attempt) => {
-      questionsByExam.set(
+      questionsForPeerByExam.set(
         attempt.examId,
         attempt.exam.questions.map((question) => ({
           id: question.id,
@@ -536,13 +730,14 @@ router.get('/', requireAuth, async (req: AuthRequest, res, next) => {
         examId: attempt.examId,
         answers: attempt.answers,
       })),
-      questionsByExam,
+      questionsForPeerByExam,
     )
 
     return res.json({
       tests: attempts.map((attempt) =>
         serializeAttempt(
           attempt,
+          calculatedRankByAttemptId.get(attempt.id) ?? null,
           peerTimingsByExam.get(attempt.examId) ?? {},
           peerAnswerStatsByExam.get(attempt.examId) ?? {},
         ),
@@ -574,6 +769,11 @@ router.get('/:id', requireAuth, async (req: AuthRequest, res, next) => {
       attempt.examId,
       req.user.userId,
     )
+    const calculatedRank = await fetchCalculatedRankForAttempt({
+      attemptId: attempt.id,
+      examId: attempt.examId,
+      questions: attempt.exam.questions,
+    })
     const peerAnswerStats = await fetchPeerAnswerStatsForExam(
       attempt.examId,
       req.user.userId,
@@ -583,7 +783,14 @@ router.get('/:id', requireAuth, async (req: AuthRequest, res, next) => {
         key: resolveQuestionKey(question),
       })),
     )
-    return res.json({ test: serializeAttempt(attempt, peerTimings, peerAnswerStats) })
+    return res.json({
+      test: serializeAttempt(
+        attempt,
+        calculatedRank,
+        peerTimings,
+        peerAnswerStats,
+      ),
+    })
   } catch (error) {
     return next(error)
   }
@@ -667,7 +874,14 @@ router.post('/:id/answer-key', requireAuth, async (req: AuthRequest, res, next) 
       : false
 
     if (!keyChanged && !markingChanged) {
-      return res.json({ test: serializeAttempt(attempt, peerTimings, peerAnswerStats) })
+      const calculatedRank = await fetchCalculatedRankForAttempt({
+        attemptId: attempt.id,
+        examId: attempt.examId,
+        questions: attempt.exam.questions,
+      })
+      return res.json({
+        test: serializeAttempt(attempt, calculatedRank, peerTimings, peerAnswerStats),
+      })
     }
 
     await prisma.question.update({
@@ -714,8 +928,18 @@ router.post('/:id/answer-key', requireAuth, async (req: AuthRequest, res, next) 
         key: resolveQuestionKey(question),
       })),
     )
+    const updatedCalculatedRank = await fetchCalculatedRankForAttempt({
+      attemptId: updated.id,
+      examId: updated.examId,
+      questions: updated.exam.questions,
+    })
     return res.json({
-      test: serializeAttempt(updated, updatedPeerTimings, updatedPeerAnswerStats),
+      test: serializeAttempt(
+        updated,
+        updatedCalculatedRank,
+        updatedPeerTimings,
+        updatedPeerAnswerStats,
+      ),
     })
   } catch (error) {
     return next(error)
@@ -799,7 +1023,14 @@ router.patch(
           key: resolveQuestionKey(question),
         })),
       )
-      return res.json({ test: serializeAttempt(refreshed, peerTimings, peerAnswerStats) })
+      const calculatedRank = await fetchCalculatedRankForAttempt({
+        attemptId: refreshed.id,
+        examId: refreshed.examId,
+        questions: refreshed.exam.questions,
+      })
+      return res.json({
+        test: serializeAttempt(refreshed, calculatedRank, peerTimings, peerAnswerStats),
+      })
     } catch (error) {
       return next(error)
     }
@@ -943,7 +1174,14 @@ router.post('/:id/marking-scheme', requireAuth, async (req: AuthRequest, res, ne
         key: resolveQuestionKey(question),
       })),
     )
-    return res.json({ test: serializeAttempt(updated, peerTimings, peerAnswerStats) })
+    const calculatedRank = await fetchCalculatedRankForAttempt({
+      attemptId: updated.id,
+      examId: updated.examId,
+      questions: updated.exam.questions,
+    })
+    return res.json({
+      test: serializeAttempt(updated, calculatedRank, peerTimings, peerAnswerStats),
+    })
   } catch (error) {
     return next(error)
   }
@@ -1062,7 +1300,14 @@ router.post('/:id/resync', requireAuth, async (req: AuthRequest, res, next) => {
         key: resolveQuestionKey(question),
       })),
     )
-    return res.json({ test: serializeAttempt(refreshed, peerTimings, peerAnswerStats) })
+    const calculatedRank = await fetchCalculatedRankForAttempt({
+      attemptId: refreshed.id,
+      examId: refreshed.examId,
+      questions: refreshed.exam.questions,
+    })
+    return res.json({
+      test: serializeAttempt(refreshed, calculatedRank, peerTimings, peerAnswerStats),
+    })
   } catch (error) {
     if (req.user) {
       await prisma.externalAccount.updateMany({
