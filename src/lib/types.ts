@@ -109,6 +109,19 @@ export type TestRecord = {
   questions: QuestionRecord[]
 }
 
+export type LeaderboardEntry = {
+  participantKey: string
+  externalUsername: string
+  displayName: string
+  akaNames: string[]
+  rank: number
+  score: number
+  totalScore: number
+  attemptCount: number
+  isCurrentUserParticipant: boolean
+  test: TestRecord
+}
+
 export type AppState = {
   externalAccounts: ExternalAccount[]
   tests: TestRecord[]

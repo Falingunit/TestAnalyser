@@ -16,6 +16,7 @@ import type {
   User,
   UserPreferences,
   TestRecord,
+  LeaderboardEntry,
 } from "./types";
 
 const TOKEN_KEY = "testanalyser-token";
@@ -81,6 +82,11 @@ type Store = {
   setTheme: (theme: ThemeName) => void;
   setMode: (mode: ColorMode) => void;
   acknowledgeKeyUpdates: (testId: string) => Promise<void>;
+  fetchTestLeaderboard: (testId: string) => Promise<{
+    ok: boolean;
+    message?: string;
+    leaderboard?: LeaderboardEntry[];
+  }>;
 };
 
 const StoreContext = createContext<Store | null>(null);
@@ -995,6 +1001,31 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
     };
     await savePreferences(updated);
   };
+
+  const fetchTestLeaderboard: Store["fetchTestLeaderboard"] = async (testId) => {
+    const token = loadToken();
+    if (!token) {
+      return { ok: false, message: "Missing session token." };
+    }
+
+    try {
+      const data = await requestJson<{ leaderboard: LeaderboardEntry[] }>(
+        `/api/tests/${testId}/leaderboard`,
+        {
+          token,
+        },
+      );
+      return { ok: true, leaderboard: data.leaderboard };
+    } catch (error) {
+      const message =
+        error instanceof ApiError
+          ? error.message
+          : error instanceof Error
+            ? error.message
+            : "Unable to fetch leaderboard.";
+      return { ok: false, message };
+    }
+  };
   const adminEmails = [
     "spssabaris@gmail.com",
     "sbaniruddh1@gmail.com",
@@ -1029,6 +1060,7 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
     setTheme,
     setMode,
     acknowledgeKeyUpdates,
+    fetchTestLeaderboard,
   };
 
   return (

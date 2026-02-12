@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { Star } from "lucide-react";
 import { useAppStore } from "@/lib/store";
 import {
@@ -11,8 +11,9 @@ import {
   getTimeForQuestion,
   isBonusKey,
 } from "@/lib/analysis";
-import type { QuestionType, Subject } from "@/lib/types";
+import type { LeaderboardEntry, QuestionType, Subject } from "@/lib/types";
 import { TestSummaryCard } from "@/components/TestSummaryCard";
+import { SegmentedProgressBar } from "@/components/SegmentedProgressBar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -101,8 +102,11 @@ const buildEmptyMarkingDraft = (): MarkingDraft => ({
   VMAQ: { correct: "", incorrect: "", unattempted: "" },
 });
 
+const LEADERBOARD_PREVIEW_TESTS_KEY = "testanalyser-leaderboard-preview-tests";
+
 export const TestDetail = () => {
   const { testId } = useParams();
+  const navigate = useNavigate();
   const {
     state,
     currentUser,
@@ -110,6 +114,7 @@ export const TestDetail = () => {
     updateMarkingScheme,
     isAdmin,
     resyncTest,
+    fetchTestLeaderboard,
   } = useAppStore();
   const test = state.tests.find((item) => item.id === testId);
 
@@ -141,6 +146,14 @@ export const TestDetail = () => {
   const [msFormEdited, setMsFormEdited] = useState(false); // Renamed from isDirty
 
   const [confirmResyncOpen, setConfirmResyncOpen] = useState(false);
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [isLoadingLeaderboard, setIsLoadingLeaderboard] = useState(false);
+  const [leaderboardMessage, setLeaderboardMessage] = useState<string | null>(
+    null,
+  );
+  const [selectedLeaderboardKey, setSelectedLeaderboardKey] = useState<
+    string | null
+  >(null);
   const [collapsedSubjects, setCollapsedSubjects] = useState<
     Record<Subject, boolean>
   >({
@@ -409,6 +422,84 @@ export const TestDetail = () => {
       .filter((group) => group.items.length > 0);
   }, [filteredQuestions]);
 
+  useEffect(() => {
+    if (!test) {
+      setLeaderboard([]);
+      setLeaderboardMessage(null);
+      setIsLoadingLeaderboard(false);
+      return;
+    }
+    let active = true;
+    setIsLoadingLeaderboard(true);
+    setLeaderboardMessage(null);
+    void fetchTestLeaderboard(test.id)
+      .then((result) => {
+        if (!active) {
+          return;
+        }
+        if (!result.ok) {
+          setLeaderboard([]);
+          setLeaderboardMessage(
+            result.message ?? "Unable to load leaderboard.",
+          );
+          return;
+        }
+        setLeaderboard(result.leaderboard ?? []);
+      })
+      .catch(() => {
+        if (!active) {
+          return;
+        }
+        setLeaderboard([]);
+        setLeaderboardMessage("Unable to load leaderboard.");
+      })
+      .finally(() => {
+        if (active) {
+          setIsLoadingLeaderboard(false);
+        }
+      });
+    return () => {
+      active = false;
+    };
+  }, [fetchTestLeaderboard, test]);
+
+  const selectedLeaderboardEntry = useMemo(
+    () =>
+      selectedLeaderboardKey
+        ? leaderboard.find(
+            (entry) => entry.participantKey === selectedLeaderboardKey,
+          ) ?? null
+        : null,
+    [leaderboard, selectedLeaderboardKey],
+  );
+  const selectedLeaderboardAnalysis = useMemo(
+    () =>
+      selectedLeaderboardEntry ? buildAnalysis(selectedLeaderboardEntry.test) : null,
+    [selectedLeaderboardEntry],
+  );
+
+  const openLeaderboardQuestions = (entry: LeaderboardEntry) => {
+    const first = buildDisplayQuestions(entry.test.questions)[0];
+    const firstQuestionId = first?.question.id;
+    if (!firstQuestionId) {
+      return;
+    }
+    const raw = sessionStorage.getItem(LEADERBOARD_PREVIEW_TESTS_KEY);
+    const parsed =
+      raw && typeof raw === "string"
+        ? (JSON.parse(raw) as Record<string, unknown>)
+        : {};
+    parsed[entry.test.id] = entry.test;
+    sessionStorage.setItem(LEADERBOARD_PREVIEW_TESTS_KEY, JSON.stringify(parsed));
+    const params = new URLSearchParams({
+      readonly: "1",
+      participantKey: entry.participantKey,
+      viewerName: entry.displayName,
+      viewerUsername: entry.externalUsername,
+    });
+    navigate(`/app/questions/${entry.test.id}/${firstQuestionId}?${params.toString()}`);
+  };
+
   if (!test || !analysis) {
     return (
       <Card className="app-panel">
@@ -486,101 +577,95 @@ export const TestDetail = () => {
         />
         {/* Marking Scheme */}
         <Card className="app-panel col-span-2 border-none">
-          <CardContent className="space-y-4 p-6">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div className="space-y-1">
-                <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                  Marking scheme
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Update marks for each question type in this test.
-                </p>
+            <CardContent className="space-y-4 p-6">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="space-y-1">
+                  <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                    Marking scheme
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Update marks for each question type in this test.
+                  </p>
+                </div>
+                <Button
+                  type="submit"
+                  size="sm"
+                  form="marking-scheme-form"
+                  disabled={!isAdmin || isSaving} // Disabled while saving
+                >
+                  {isSaving ? "Saving..." : "Save scheme"}
+                </Button>
               </div>
-              <Button
-                type="submit"
-                size="sm"
-                form="marking-scheme-form"
-                disabled={!isAdmin || isSaving} // Disabled while saving
+
+              <form
+                id="marking-scheme-form"
+                className="space-y-4"
+                onSubmit={handleMarkingSchemeSave}
               >
-                {isSaving ? "Saving..." : "Save scheme"}
-              </Button>
-            </div>
-
-            <form
-              id="marking-scheme-form"
-              className="space-y-4"
-              onSubmit={handleMarkingSchemeSave}
-            >
-              <div className="overflow-hidden rounded-lg border border-border/60">
-                <div className="grid grid-cols-[minmax(0,1fr)_repeat(3,minmax(0,90px))] gap-3 bg-muted/50 px-3 py-2 text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-                  <span>Type</span>
-                  <span className="text-right">Correct</span>
-                  <span className="text-right">Incorrect</span>
-                  <span className="text-right">Unattempted</span>
+                <div className="overflow-hidden rounded-lg border border-border/60">
+                  <div className="grid grid-cols-[minmax(0,1fr)_repeat(3,minmax(0,90px))] gap-3 bg-muted/50 px-3 py-2 text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+                    <span>Type</span>
+                    <span className="text-right">Correct</span>
+                    <span className="text-right">Incorrect</span>
+                    <span className="text-right">Unattempted</span>
+                  </div>
+                  <div className="divide-y divide-border/60">
+                    {availableTypes.map((qtype) => (
+                      <div
+                        key={qtype}
+                        className="grid grid-cols-[minmax(0,1fr)_repeat(3,minmax(0,90px))] items-center gap-3 px-3 py-2 text-xs text-muted-foreground"
+                      >
+                        <span className="text-foreground/90">
+                          {formatQuestionType(qtype)}
+                        </span>
+                        <Input
+                          type="number"
+                          step="1"
+                          value={markingDraft[qtype].correct}
+                          onChange={(e) =>
+                            handleInputChange(qtype, "correct", e.target.value)
+                          }
+                          className="h-8 text-right"
+                          disabled={!isAdmin}
+                        />
+                        <Input
+                          type="number"
+                          step="1"
+                          value={markingDraft[qtype].incorrect}
+                          onChange={(e) =>
+                            handleInputChange(qtype, "incorrect", e.target.value)
+                          }
+                          className="h-8 text-right"
+                          disabled={!isAdmin}
+                        />
+                        <Input
+                          type="number"
+                          step="1"
+                          value={markingDraft[qtype].unattempted}
+                          onChange={(e) =>
+                            handleInputChange(
+                              qtype,
+                              "unattempted",
+                              e.target.value,
+                            )
+                          }
+                          className="h-8 text-right"
+                          disabled={!isAdmin}
+                        />
+                      </div>
+                    ))}
+                  </div>
                 </div>
-                <div className="divide-y divide-border/60">
-                  {availableTypes.map((qtype) => (
-                    <div
-                      key={qtype}
-                      className="grid grid-cols-[minmax(0,1fr)_repeat(3,minmax(0,90px))] items-center gap-3 px-3 py-2 text-xs text-muted-foreground"
-                    >
-                      <span className="text-foreground/90">
-                        {formatQuestionType(qtype)}
-                      </span>
-                      <Input
-                        type="number"
-                        step="1"
-                        value={markingDraft[qtype].correct}
-                        onChange={(e) =>
-                          handleInputChange(qtype, "correct", e.target.value)
-                        }
-                        className="h-8 text-right"
-                        disabled={!isAdmin}
-                      />
-                      <Input
-                        type="number"
-                        step="1"
-                        value={markingDraft[qtype].incorrect}
-                        onChange={(e) =>
-                          handleInputChange(qtype, "incorrect", e.target.value)
-                        }
-                        className="h-8 text-right"
-                        disabled={!isAdmin}
-                      />
-                      <Input
-                        type="number"
-                        step="1"
-                        value={markingDraft[qtype].unattempted}
-                        onChange={(e) =>
-                          handleInputChange(
-                            qtype,
-                            "unattempted",
-                            e.target.value,
-                          )
-                        }
-                        className="h-8 text-right"
-                        disabled={!isAdmin}
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Changes apply to non-overridden questions in this test.
-              </p>
-            </form>
-
-            {markingMessage ? (
-              <div className="rounded-lg border border-border bg-background p-3 text-xs text-muted-foreground animate-in fade-in slide-in-from-top-1">
-                {markingMessage}
-              </div>
-            ) : null}
-            {!isAdmin ? (
-              <p className="text-xs text-muted-foreground">
-                Only admins can update marking schemes.
-              </p>
-            ) : null}
-          </CardContent>
+                {markingMessage ? (
+                  <p className="text-xs text-muted-foreground">{markingMessage}</p>
+                ) : null}
+              </form>
+              {!isAdmin ? (
+                <p className="text-xs text-muted-foreground">
+                  Only admins can update marking schemes.
+                </p>
+              ) : null}
+            </CardContent>
         </Card>
       </section>
 
@@ -613,6 +698,159 @@ export const TestDetail = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog
+        open={Boolean(selectedLeaderboardEntry)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setSelectedLeaderboardKey(null);
+          }
+        }}
+      >
+        <DialogContent className="max-w-7xl w-[95vw] h-[88vh] overflow-hidden">
+          <DialogHeader>
+            <DialogTitle>
+              {selectedLeaderboardEntry
+                ? `${selectedLeaderboardEntry.displayName} summary`
+                : "Summary"}
+            </DialogTitle>
+            <DialogDescription>
+              @{selectedLeaderboardEntry?.externalUsername ?? "participant"}
+              {selectedLeaderboardEntry &&
+              selectedLeaderboardEntry.akaNames.length > 0
+                ? ` - a.k.a. ${selectedLeaderboardEntry.akaNames.join(", ")}`
+                : ""}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex items-center justify-end gap-2">
+            <Button
+              type="button"
+              size="sm"
+              onClick={() => {
+                if (selectedLeaderboardEntry) {
+                  openLeaderboardQuestions(selectedLeaderboardEntry);
+                  setSelectedLeaderboardKey(null);
+                }
+              }}
+            >
+              Open questions
+            </Button>
+          </div>
+          <div className="mt-2 h-[calc(100%-110px)] overflow-y-auto pr-1">
+            {selectedLeaderboardEntry && selectedLeaderboardAnalysis ? (
+              <TestSummaryCard
+                test={selectedLeaderboardEntry.test}
+                analysis={selectedLeaderboardAnalysis}
+                defaultExpanded
+                actions={<></>}
+                collapsedAction={<></>}
+                reviewAction={<></>}
+              />
+            ) : null}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <section>
+        <Card className="app-panel">
+          <CardContent className="space-y-4 p-6">
+            <div className="space-y-1">
+              <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                Leaderboard
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Ranked by best score per external account for this exam.
+              </p>
+            </div>
+
+            {isLoadingLeaderboard ? (
+              <p className="text-sm text-muted-foreground">
+                Loading leaderboard...
+              </p>
+            ) : leaderboardMessage ? (
+              <div className="rounded-lg border border-border bg-background p-3 text-xs text-muted-foreground">
+                {leaderboardMessage}
+              </div>
+            ) : leaderboard.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                No leaderboard entries available yet.
+              </p>
+            ) : (
+              <div className="overflow-hidden rounded-lg border border-border/60">
+                <div className="grid grid-cols-[72px_minmax(0,220px)_minmax(0,220px)_minmax(240px,1fr)_120px] gap-3 bg-muted/50 px-3 py-2 text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+                  <span>Rank</span>
+                  <span>Name</span>
+                  <span className="text-right">Linked</span>
+                  <span className="text-right">Score</span>
+                  <span className="text-right">Summary</span>
+                </div>
+                <div className="divide-y divide-border/60">
+                  {leaderboard.map((entry) => (
+                    <div
+                      key={entry.participantKey}
+                      className="grid grid-cols-[72px_minmax(0,220px)_minmax(0,220px)_minmax(240px,1fr)_120px] items-start gap-3 px-3 py-2 text-xs text-muted-foreground"
+                    >
+                      <span className="font-semibold text-foreground">
+                        #{entry.rank}
+                      </span>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="truncate text-sm font-semibold text-foreground">
+                            {entry.displayName}
+                          </span>
+                          {entry.isCurrentUserParticipant ? (
+                            <Badge variant="secondary">You</Badge>
+                          ) : null}
+                        </div>
+                      </div>
+                      <div className="min-w-0 text-right">
+                        <p className="truncate text-[11px] text-muted-foreground">
+                          @{entry.externalUsername}
+                        </p>
+                        {entry.akaNames.length > 0 ? (
+                          <p className="truncate text-[11px] text-muted-foreground">
+                            a.k.a. {entry.akaNames.join(", ")}
+                          </p>
+                        ) : null}
+                      </div>
+                      <div className="justify-self-end w-full max-w-[280px]">
+                        <span className="block text-right text-foreground/90">
+                          {entry.score}/{entry.totalScore}
+                        </span>
+                        <SegmentedProgressBar
+                          className="mt-1 h-2"
+                          segments={[
+                            {
+                              value: Math.max(0, entry.score),
+                              className: "bg-emerald-500",
+                            },
+                            {
+                              value: Math.max(0, entry.totalScore - entry.score),
+                              className: "bg-zinc-300 dark:bg-zinc-700",
+                            },
+                          ]}
+                        />
+                      </div>
+                      <div className="justify-self-end text-right">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() =>
+                            setSelectedLeaderboardKey(entry.participantKey)
+                          }
+                        >
+                          View
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </section>
 
       <section>
         <Card className="app-panel">
@@ -818,6 +1056,10 @@ export const TestDetail = () => {
           </CardContent>
         </Card>
       </section>
+
     </div>
   );
 };
+
+
+

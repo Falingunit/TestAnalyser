@@ -605,6 +605,27 @@ const fetchPeerAnswerStatsForExam = async (
   return statsByExam.get(examId) ?? {}
 }
 
+const buildParticipantKeyByUserId = async (userIds: string[]) => {
+  if (userIds.length === 0) {
+    return new Map<string, string>()
+  }
+  const linkedAccounts = await prisma.externalAccount.findMany({
+    where: {
+      provider: 'test.z7i.in',
+      userId: { in: userIds },
+    },
+    select: { userId: true, username: true },
+  })
+  const participantKeyByUserId = new Map<string, string>()
+  linkedAccounts.forEach((account) => {
+    participantKeyByUserId.set(
+      account.userId,
+      `external:test.z7i.in:${account.username}`,
+    )
+  })
+  return participantKeyByUserId
+}
+
 const fetchCalculatedRankForAttempt = async (
   payload: {
     attemptId: string
@@ -625,17 +646,7 @@ const fetchCalculatedRankForAttempt = async (
     select: { id: true, examId: true, userId: true, answers: true },
   })
   const userIds = Array.from(new Set(attemptsForRank.map((attempt) => attempt.userId)))
-  const linkedAccounts = await prisma.externalAccount.findMany({
-    where: {
-      provider: 'test.z7i.in',
-      userId: { in: userIds },
-    },
-    select: { userId: true, username: true },
-  })
-  const participantKeyByUserId = new Map<string, string>()
-  linkedAccounts.forEach((account) => {
-    participantKeyByUserId.set(account.userId, `external:test.z7i.in:${account.username}`)
-  })
+  const participantKeyByUserId = await buildParticipantKeyByUserId(userIds)
   const rankByAttemptId = buildCalculatedRankByAttemptId(
     attemptsForRank,
     new Map([[payload.examId, payload.questions]]),
@@ -736,23 +747,7 @@ router.get('/', requireAuth, async (req: AuthRequest, res, next) => {
     const rankUserIds = Array.from(
       new Set(attemptsForRank.map((attempt) => attempt.userId)),
     )
-    const rankAccounts =
-      rankUserIds.length === 0
-        ? []
-        : await prisma.externalAccount.findMany({
-            where: {
-              provider: 'test.z7i.in',
-              userId: { in: rankUserIds },
-            },
-            select: { userId: true, username: true },
-          })
-    const participantKeyByUserId = new Map<string, string>()
-    rankAccounts.forEach((account) => {
-      participantKeyByUserId.set(
-        account.userId,
-        `external:test.z7i.in:${account.username}`,
-      )
-    })
+    const participantKeyByUserId = await buildParticipantKeyByUserId(rankUserIds)
     const calculatedRankByAttemptId = buildCalculatedRankByAttemptId(
       attemptsForRank,
       questionsByExam,
@@ -849,6 +844,203 @@ router.get('/:id', requireAuth, async (req: AuthRequest, res, next) => {
         peerAnswerStats,
       ),
     })
+  } catch (error) {
+    return next(error)
+  }
+})
+
+router.get('/:id/leaderboard', requireAuth, async (req: AuthRequest, res, next) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ error: 'Unauthorized.' })
+    }
+
+    const attempt = await prisma.attempt.findFirst({
+      where: { id: req.params.id, userId: req.user.userId },
+      include: {
+        exam: { include: { questions: true } },
+      },
+    })
+    if (!attempt) {
+      return res.status(404).json({ error: 'Test not found.' })
+    }
+
+    const examAttempts = await prisma.attempt.findMany({
+      where: { examId: attempt.examId },
+      include: {
+        exam: { include: { questions: true } },
+      },
+    })
+    const userIds = Array.from(new Set(examAttempts.map((item) => item.userId)))
+    const participantKeyByUserId = await buildParticipantKeyByUserId(userIds)
+    const rankByAttemptId = buildCalculatedRankByAttemptId(
+      examAttempts.map((item) => ({
+        id: item.id,
+        examId: item.examId,
+        userId: item.userId,
+        answers: item.answers,
+      })),
+      new Map([[attempt.examId, attempt.exam.questions]]),
+      participantKeyByUserId,
+    )
+
+    const scoreByAttemptId = new Map<string, number>()
+    const totalScore = attempt.exam.questions.reduce(
+      (sum, question) => sum + question.correctMarking,
+      0,
+    )
+    examAttempts.forEach((item) => {
+      const parsed = parseStoredJson(item.answers)
+      const answers =
+        parsed && typeof parsed === 'object'
+          ? (parsed as Record<string, unknown>)
+          : {}
+      const score = attempt.exam.questions.reduce((sum, question) => {
+        const selected = answers[question.id]
+        return sum + getQuestionMarkForAnswer(question, selected)
+      }, 0)
+      scoreByAttemptId.set(item.id, score)
+    })
+
+    const aggregated = new Map<
+      string,
+      {
+        attempt: typeof examAttempts[number]
+        score: number
+        rank: number
+        attemptCount: number
+      }
+    >()
+
+    examAttempts.forEach((item) => {
+      const participantKey =
+        participantKeyByUserId.get(item.userId) ?? `user:${item.userId}`
+      const score = scoreByAttemptId.get(item.id) ?? 0
+      const rank = rankByAttemptId.get(item.id) ?? 1
+      const current = aggregated.get(participantKey)
+      if (!current) {
+        aggregated.set(participantKey, {
+          attempt: item,
+          score,
+          rank,
+          attemptCount: 1,
+        })
+        return
+      }
+      current.attemptCount += 1
+      if (score > current.score) {
+        aggregated.set(participantKey, {
+          attempt: item,
+          score,
+          rank,
+          attemptCount: current.attemptCount,
+        })
+      }
+    })
+
+    const currentParticipantKey =
+      participantKeyByUserId.get(req.user.userId) ?? `user:${req.user.userId}`
+    const externalUsernames = Array.from(aggregated.keys())
+      .filter((key) => key.startsWith('external:test.z7i.in:'))
+      .map((key) => key.replace('external:test.z7i.in:', ''))
+    const linkedLocalAccounts =
+      externalUsernames.length === 0
+        ? []
+        : await prisma.externalAccount.findMany({
+            where: {
+              provider: 'test.z7i.in',
+              username: { in: externalUsernames },
+            },
+            select: {
+              username: true,
+              user: {
+                select: {
+                  name: true,
+                  email: true,
+                  createdAt: true,
+                },
+              },
+            },
+          })
+    const nameMetaByParticipantKey = new Map<
+      string,
+      { displayName: string; akaNames: string[] }
+    >()
+    const localAccountsByUsername = new Map<
+      string,
+      Array<{ name: string; email: string; createdAt: Date }>
+    >()
+    linkedLocalAccounts.forEach((account) => {
+      const current = localAccountsByUsername.get(account.username) ?? []
+      current.push({
+        name: account.user.name,
+        email: account.user.email,
+        createdAt: account.user.createdAt,
+      })
+      localAccountsByUsername.set(account.username, current)
+    })
+    localAccountsByUsername.forEach((accounts, username) => {
+      const sorted = [...accounts].sort((a, b) => {
+        if (a.createdAt.getTime() !== b.createdAt.getTime()) {
+          return a.createdAt.getTime() - b.createdAt.getTime()
+        }
+        return a.email.localeCompare(b.email)
+      })
+      const normalizeIdentity = (payload: { name: string; email: string }) => {
+        const base = payload.name.trim() || payload.email.trim()
+        return base || username
+      }
+      const ordered = sorted.map((item) => normalizeIdentity(item))
+      const dedupedOrdered: string[] = []
+      ordered.forEach((item) => {
+        if (!dedupedOrdered.includes(item)) {
+          dedupedOrdered.push(item)
+        }
+      })
+      nameMetaByParticipantKey.set(`external:test.z7i.in:${username}`, {
+        displayName: dedupedOrdered[0] ?? username,
+        akaNames: dedupedOrdered.slice(1),
+      })
+    })
+    const leaderboard = Array.from(aggregated.entries())
+      .map(([participantKey, payload]) => {
+        const testPayload = serializeAttempt(
+          payload.attempt,
+          payload.rank,
+          {},
+          {},
+        )
+        const externalUsername = participantKey.startsWith('external:test.z7i.in:')
+          ? participantKey.replace('external:test.z7i.in:', '')
+          : participantKey
+        const labelMeta = nameMetaByParticipantKey.get(participantKey) ?? {
+          displayName: externalUsername,
+          akaNames: [],
+        }
+        return {
+          participantKey,
+          externalUsername,
+          displayName: labelMeta.displayName,
+          akaNames: labelMeta.akaNames,
+          rank: payload.rank,
+          score: payload.score,
+          totalScore,
+          attemptCount: payload.attemptCount,
+          isCurrentUserParticipant: participantKey === currentParticipantKey,
+          test: testPayload,
+        }
+      })
+      .sort((a, b) => {
+        if (a.rank !== b.rank) {
+          return a.rank - b.rank
+        }
+        if (a.score !== b.score) {
+          return b.score - a.score
+        }
+        return a.externalUsername.localeCompare(b.externalUsername)
+      })
+
+    return res.json({ leaderboard })
   } catch (error) {
     return next(error)
   }

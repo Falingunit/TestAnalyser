@@ -7,7 +7,7 @@ import {
   type MouseEvent,
   type PointerEvent,
 } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 import { Copy, Star } from "lucide-react";
 import { useAppStore } from "@/lib/store";
 import {
@@ -19,7 +19,7 @@ import {
   getTimeForQuestion,
   isBonusKey,
 } from "@/lib/analysis";
-import type { Subject } from "@/lib/types";
+import type { Subject, TestRecord } from "@/lib/types";
 import {
   buildDisplayQuestions,
   subjectDisplayOrder,
@@ -139,12 +139,40 @@ const parseNumericGroup = (value: string) => {
 };
 
 const keyOptionLabels = ["A", "B", "C", "D"] as const;
+const LEADERBOARD_PREVIEW_TESTS_KEY = "testanalyser-leaderboard-preview-tests";
+
+const loadLeaderboardPreviewTest = (testId?: string) => {
+  if (!testId) {
+    return null;
+  }
+  try {
+    const raw = sessionStorage.getItem(LEADERBOARD_PREVIEW_TESTS_KEY);
+    if (!raw) {
+      return null;
+    }
+    const parsed = JSON.parse(raw) as Record<string, TestRecord>;
+    const candidate = parsed[testId];
+    return candidate ?? null;
+  } catch {
+    return null;
+  }
+};
 
 export const QuestionDetail = () => {
   const { testId, questionId } = useParams();
+  const [searchParams] = useSearchParams();
   const { state, updateAnswerKey, toggleQuestionBookmark, currentUser } =
     useAppStore();
-  const test = state.tests.find((item) => item.id === testId);
+  const isReadonlyView = searchParams.get("readonly") === "1";
+  const previewParticipantName = searchParams.get("viewerName")?.trim() ?? "";
+  const previewParticipantUsername =
+    searchParams.get("viewerUsername")?.trim() ?? "";
+  const previewParticipantKey = searchParams.get("participantKey")?.trim() ?? "";
+  const previewTest = useMemo(() => loadLeaderboardPreviewTest(testId), [testId]);
+  const ownedTest = state.tests.find((item) => item.id === testId);
+  const test = isReadonlyView
+    ? (previewTest ?? ownedTest)
+    : (ownedTest ?? previewTest);
   const mode = currentUser?.preferences.mode ?? state.ui.mode;
   const displayQuestions = useMemo(() => {
     if (!test) {
@@ -451,7 +479,7 @@ export const QuestionDetail = () => {
   };
 
   const handleBookmarkToggle = async () => {
-    if (!test || !question || isBookmarking) {
+    if (!test || !question || isBookmarking || isReadonlyView) {
       return;
     }
     setIsBookmarking(true);
@@ -475,13 +503,37 @@ export const QuestionDetail = () => {
   const correctOptions = question ? toOptionArray(question.keyUpdate) : [];
   const isMultiSelect = question?.qtype === "MAQ";
   const notesKey =
-    test && question
+    !isReadonlyView && test && question
       ? `testanalyser-question-notes-${test.id}-${question.id}`
       : null;
   const chatKey =
-    test && question
+    !isReadonlyView && test && question
       ? `testanalyser-question-chat-${test.id}-${question.id}`
       : null;
+  const readonlySearch = useMemo(() => {
+    if (!isReadonlyView) {
+      return "";
+    }
+    const params = new URLSearchParams({ readonly: "1" });
+    if (previewParticipantKey) {
+      params.set("participantKey", previewParticipantKey);
+    }
+    if (previewParticipantName) {
+      params.set("viewerName", previewParticipantName);
+    }
+    if (previewParticipantUsername) {
+      params.set("viewerUsername", previewParticipantUsername);
+    }
+    return `?${params.toString()}`;
+  }, [
+    isReadonlyView,
+    previewParticipantKey,
+    previewParticipantName,
+    previewParticipantUsername,
+  ]);
+  const resolvedTestId = test?.id ?? testId ?? "";
+  const questionLink = (targetQuestionId: string) =>
+    `/app/questions/${resolvedTestId}/${targetQuestionId}${readonlySearch}`;
   const orderedMessages = useMemo(() => {
     return [...chatMessages].sort((a, b) => {
       const pinDelta = Number(Boolean(b.pinned)) - Number(Boolean(a.pinned));
@@ -1042,24 +1094,26 @@ export const QuestionDetail = () => {
           <Link to={`/app/tests/${test.id}`}>Back to test</Link>
         </Button>
         <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            onClick={handleBookmarkToggle}
-            disabled={isBookmarking}
-            aria-pressed={isBookmarked}
-            title={isBookmarked ? "Remove star" : "Star question"}
-            className="h-8 w-8"
-          >
-            <Star
-              className={cn(
-                "h-4 w-4",
-                isBookmarked ? "text-amber-400" : "text-muted-foreground",
-              )}
-              fill={isBookmarked ? "currentColor" : "none"}
-            />
-          </Button>
+          {!isReadonlyView ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={handleBookmarkToggle}
+              disabled={isBookmarking}
+              aria-pressed={isBookmarked}
+              title={isBookmarked ? "Remove star" : "Star question"}
+              className="h-8 w-8"
+            >
+              <Star
+                className={cn(
+                  "h-4 w-4",
+                  isBookmarked ? "text-amber-400" : "text-muted-foreground",
+                )}
+                fill={isBookmarked ? "currentColor" : "none"}
+              />
+            </Button>
+          ) : null}
           <Button
             type="button"
             variant="ghost"
@@ -1101,6 +1155,18 @@ export const QuestionDetail = () => {
           </div>
         </div>
       </div>
+      {isReadonlyView ? (
+        <div className="rounded-md border border-border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
+          Viewing leaderboard attempt:
+          <span className="ml-1 font-semibold text-foreground">
+            {previewParticipantName || "Participant"}
+          </span>
+          {previewParticipantUsername ? (
+            <span className="ml-1">@{previewParticipantUsername}</span>
+          ) : null}
+          <span className="ml-2">Read-only mode.</span>
+        </div>
+      ) : null}
 
       <section className="grid min-h-0 flex-1 gap-1 lg:grid-cols-[220px_minmax(0,1fr)_minmax(0,320px)]">
         {/* Question Side Panel */}
@@ -1120,7 +1186,7 @@ export const QuestionDetail = () => {
                       {section.items.map((item) => (
                         <Link
                           key={item.id}
-                          to={`/app/questions/${test.id}/${item.id}`}
+                          to={questionLink(item.id)}
                           className={cn(
                             "relative flex aspect-square w-full items-center justify-center rounded-md border text-xs font-medium",
                             item.id === question.id
@@ -1137,7 +1203,7 @@ export const QuestionDetail = () => {
                           )}
                         >
                           <span>{item.number}</span>
-                          {item.bookmarked ? (
+                          {!isReadonlyView && item.bookmarked ? (
                             <Star
                               className="absolute right-0 top-0 h-3 w-3 text-amber-400"
                               fill="currentColor"
@@ -1372,7 +1438,7 @@ export const QuestionDetail = () => {
             <div className="flex items-center justify-between">
               <Button asChild variant="outline" disabled={!prev}>
                 {prev ? (
-                  <Link to={`/app/questions/${test.id}/${prev.question.id}`}>
+                  <Link to={questionLink(prev.question.id)}>
                     Previous
                   </Link>
                 ) : (
@@ -1381,7 +1447,7 @@ export const QuestionDetail = () => {
               </Button>
               <Button asChild variant="outline" disabled={!next}>
                 {next ? (
-                  <Link to={`/app/questions/${test.id}/${next.question.id}`}>
+                  <Link to={questionLink(next.question.id)}>
                     Next
                   </Link>
                 ) : (
@@ -1469,98 +1535,102 @@ export const QuestionDetail = () => {
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                  Notes
-                </p>
-                <Textarea
-                  value={notes}
-                  onChange={(event) => setNotes(event.target.value)}
-                  placeholder="Add your notes for this question"
-                />
-              </div>
-
-              <div className="space-y-3">
-                <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                  Key discussion
-                </p>
+              {!isReadonlyView ? (
                 <div className="space-y-2">
-                  {activeMessages.length === 0 ? (
-                    <p className="text-xs text-muted-foreground">
-                      No messages yet. Start the discussion.
-                    </p>
-                  ) : (
-                    activeMessages.map((chat) => (
-                      <div
-                        key={chat.id}
-                        className={cn(
-                          "rounded-lg border border-border p-3 text-xs",
-                          chat.pinned ? "bg-amber-500/10" : "bg-background",
-                        )}
-                      >
-                        <div className="flex items-center justify-between gap-2">
-                          <div className="space-y-1">
-                            <p className="font-semibold text-foreground">
-                              {chat.author}
-                            </p>
-                            <p className="text-[11px] text-muted-foreground">
-                              {new Date(chat.createdAt).toLocaleString()}
-                            </p>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => togglePin(chat.id)}
-                              disabled={!hasAdminPriviliges}
-                              title={
-                                hasAdminPriviliges
-                                  ? "Toggle pin"
-                                  : "Admins only"
-                              }
-                            >
-                              {chat.pinned ? "Unpin" : "Pin"}
-                            </Button>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() =>
-                                deleteMessage(chat.id, chat.author)
-                              }
-                              disabled={
-                                !hasAdminPriviliges &&
-                                currentUser?.name !== chat.author
-                              }
-                              title={
-                                hasAdminPriviliges ||
-                                currentUser?.name === chat.author
-                                  ? "Delete message"
-                                  : "Admins or message author only"
-                              }
-                            >
-                              Delete
-                            </Button>
-                          </div>
-                        </div>
-                        <p className="mt-2 text-xs text-foreground/90">
-                          {chat.body}
-                        </p>
-                      </div>
-                    ))
-                  )}
-                </div>
-                <form className="flex gap-2" onSubmit={handleChatSubmit}>
-                  <Input
-                    value={chatInput}
-                    onChange={(event) => setChatInput(event.target.value)}
-                    placeholder="Add a message"
+                  <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                    Notes
+                  </p>
+                  <Textarea
+                    value={notes}
+                    onChange={(event) => setNotes(event.target.value)}
+                    placeholder="Add your notes for this question"
                   />
-                  <Button type="submit">Send</Button>
-                </form>
-              </div>
-              {currentUser && allowedUsers.includes(currentUser.email) ? (
+                </div>
+              ) : null}
+
+              {!isReadonlyView ? (
+                <div className="space-y-3">
+                  <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                    Key discussion
+                  </p>
+                  <div className="space-y-2">
+                    {activeMessages.length === 0 ? (
+                      <p className="text-xs text-muted-foreground">
+                        No messages yet. Start the discussion.
+                      </p>
+                    ) : (
+                      activeMessages.map((chat) => (
+                        <div
+                          key={chat.id}
+                          className={cn(
+                            "rounded-lg border border-border p-3 text-xs",
+                            chat.pinned ? "bg-amber-500/10" : "bg-background",
+                          )}
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="space-y-1">
+                              <p className="font-semibold text-foreground">
+                                {chat.author}
+                              </p>
+                              <p className="text-[11px] text-muted-foreground">
+                                {new Date(chat.createdAt).toLocaleString()}
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => togglePin(chat.id)}
+                                disabled={!hasAdminPriviliges}
+                                title={
+                                  hasAdminPriviliges
+                                    ? "Toggle pin"
+                                    : "Admins only"
+                                }
+                              >
+                                {chat.pinned ? "Unpin" : "Pin"}
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() =>
+                                  deleteMessage(chat.id, chat.author)
+                                }
+                                disabled={
+                                  !hasAdminPriviliges &&
+                                  currentUser?.name !== chat.author
+                                }
+                                title={
+                                  hasAdminPriviliges ||
+                                  currentUser?.name === chat.author
+                                    ? "Delete message"
+                                    : "Admins or message author only"
+                                }
+                              >
+                                Delete
+                              </Button>
+                            </div>
+                          </div>
+                          <p className="mt-2 text-xs text-foreground/90">
+                            {chat.body}
+                          </p>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                  <form className="flex gap-2" onSubmit={handleChatSubmit}>
+                    <Input
+                      value={chatInput}
+                      onChange={(event) => setChatInput(event.target.value)}
+                      placeholder="Add a message"
+                    />
+                    <Button type="submit">Send</Button>
+                  </form>
+                </div>
+              ) : null}
+              {!isReadonlyView && currentUser && allowedUsers.includes(currentUser.email) ? (
                 <Dialog>
                   <DialogTrigger asChild>
                     <Button variant="secondary">Update key/marking</Button>
@@ -1829,11 +1899,11 @@ export const QuestionDetail = () => {
                     </form>
                   </DialogContent>
                 </Dialog>
-              ) : (
+              ) : !isReadonlyView ? (
                 <p className="text-xs text-muted-foreground">
                   Only admins can update answer keys.
                 </p>
-              )}
+              ) : null}
 
               {message ? (
                 <div className="rounded-lg border border-border bg-background p-3 text-xs text-muted-foreground">
