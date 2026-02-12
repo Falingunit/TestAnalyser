@@ -477,6 +477,25 @@ export const TestDetail = () => {
       selectedLeaderboardEntry ? buildAnalysis(selectedLeaderboardEntry.test) : null,
     [selectedLeaderboardEntry],
   );
+  const leaderboardRows = useMemo(() => {
+    const sorted = [...leaderboard].sort((a, b) => {
+      if (a.score !== b.score) {
+        return b.score - a.score;
+      }
+      return a.externalUsername.localeCompare(b.externalUsername);
+    });
+    let previousScore: number | null = null;
+    let previousRank = 1;
+    return sorted.map((entry, index) => {
+      const rank =
+        previousScore !== null && entry.score === previousScore
+          ? previousRank
+          : index + 1;
+      previousScore = entry.score;
+      previousRank = rank;
+      return { ...entry, computedRank: rank };
+    });
+  }, [leaderboard]);
 
   const openLeaderboardQuestions = (entry: LeaderboardEntry) => {
     const first = buildDisplayQuestions(entry.test.questions)[0];
@@ -771,7 +790,7 @@ export const TestDetail = () => {
               <div className="rounded-lg border border-border bg-background p-3 text-xs text-muted-foreground">
                 {leaderboardMessage}
               </div>
-            ) : leaderboard.length === 0 ? (
+            ) : leaderboardRows.length === 0 ? (
               <p className="text-sm text-muted-foreground">
                 No leaderboard entries available yet.
               </p>
@@ -785,13 +804,13 @@ export const TestDetail = () => {
                   <span className="text-right">Summary</span>
                 </div>
                 <div className="divide-y divide-border/60">
-                  {leaderboard.map((entry) => (
+                  {leaderboardRows.map((entry) => (
                     <div
                       key={entry.participantKey}
                       className="grid grid-cols-[72px_minmax(0,220px)_minmax(0,220px)_minmax(240px,1fr)_120px] items-start gap-3 px-3 py-2 text-xs text-muted-foreground"
                     >
                       <span className="font-semibold text-foreground">
-                        #{entry.rank}
+                        #{entry.computedRank}
                       </span>
                       <div className="min-w-0">
                         <div className="flex items-center gap-2">
