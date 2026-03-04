@@ -628,7 +628,14 @@ const fetchPeerAnswerStatsForExam = async (
   })
   const questionMap = new Map<
     string,
-    Array<{ id: string; qtype: string; key: unknown }>
+    Array<{
+      id: string
+      qtype: string
+      key: unknown
+      correctMarking: number
+      incorrectMarking: number
+      unattemptedMarking: number
+    }>
   >([[examId, questions]])
   const statsByExam = buildPeerAnswerStatsByExam(
     otherAttempts.map((attempt) => ({
