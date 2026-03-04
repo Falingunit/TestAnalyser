@@ -444,7 +444,14 @@ const buildPeerAnswerStatsByExam = (
   attempts: Array<{ examId: string; answers: string }>,
   questionsByExam: Map<
     string,
-    Array<{ id: string; qtype: string; key: unknown }>
+    Array<{
+      id: string
+      qtype: string
+      key: unknown
+      correctMarking: number
+      incorrectMarking: number
+      unattemptedMarking: number
+    }>
   >,
 ) => {
   const attemptsByExam = new Map<string, Array<{ answers: string }>>()
@@ -501,6 +508,27 @@ const buildPeerAnswerStatsByExam = (
         parsed && typeof parsed === 'object'
           ? (parsed as Record<string, unknown>)
           : {}
+
+      const totalScore = questions.reduce((sum, question) => {
+        const selected = answers[question.id]
+        return (
+          sum +
+          getQuestionMarkForAnswer(
+            {
+              qtype: question.qtype,
+              correctAnswer: serializeJson(question.key),
+              keyUpdate: null,
+              correctMarking: question.correctMarking,
+              incorrectMarking: question.incorrectMarking,
+              unattemptedMarking: question.unattemptedMarking,
+            },
+            selected,
+          )
+        )
+      }, 0)
+      if (totalScore <= 0) {
+        return
+      }
 
       questions.forEach((question) => {
         const entry =
@@ -585,7 +613,14 @@ const fetchPeerTimingsForExam = async (examId: string, userId: string) => {
 const fetchPeerAnswerStatsForExam = async (
   examId: string,
   userId: string,
-  questions: Array<{ id: string; qtype: string; key: unknown }>,
+  questions: Array<{
+    id: string
+    qtype: string
+    key: unknown
+    correctMarking: number
+    incorrectMarking: number
+    unattemptedMarking: number
+  }>,
 ) => {
   const otherAttempts = await prisma.attempt.findMany({
     where: { examId, userId: { not: userId } },
@@ -766,7 +801,14 @@ router.get('/', requireAuth, async (req: AuthRequest, res, next) => {
     const peerTimingsByExam = buildPeerTimingsByExam(otherAttempts)
     const questionsForPeerByExam = new Map<
       string,
-      Array<{ id: string; qtype: string; key: unknown }>
+      Array<{
+        id: string
+        qtype: string
+        key: unknown
+        correctMarking: number
+        incorrectMarking: number
+        unattemptedMarking: number
+      }>
     >()
     attempts.forEach((attempt) => {
       questionsForPeerByExam.set(
@@ -775,6 +817,9 @@ router.get('/', requireAuth, async (req: AuthRequest, res, next) => {
           id: question.id,
           qtype: question.qtype,
           key: resolveQuestionKey(question),
+          correctMarking: question.correctMarking,
+          incorrectMarking: question.incorrectMarking,
+          unattemptedMarking: question.unattemptedMarking,
         })),
       )
     })
@@ -834,6 +879,9 @@ router.get('/:id', requireAuth, async (req: AuthRequest, res, next) => {
         id: question.id,
         qtype: question.qtype,
         key: resolveQuestionKey(question),
+        correctMarking: question.correctMarking,
+        incorrectMarking: question.incorrectMarking,
+        unattemptedMarking: question.unattemptedMarking,
       })),
     )
     return res.json({
@@ -916,6 +964,9 @@ router.get('/:id/leaderboard', requireAuth, async (req: AuthRequest, res, next) 
       const participantKey =
         participantKeyByUserId.get(item.userId) ?? `user:${item.userId}`
       const score = scoreByAttemptId.get(item.id) ?? 0
+      if (score <= 0) {
+        return
+      }
       const rank = rankByAttemptId.get(item.id) ?? 1
       const current = aggregated.get(participantKey)
       if (!current) {
@@ -1112,6 +1163,9 @@ router.post('/:id/answer-key', requireAuth, async (req: AuthRequest, res, next) 
         id: question.id,
         qtype: question.qtype,
         key: resolveQuestionKey(question),
+        correctMarking: question.correctMarking,
+        incorrectMarking: question.incorrectMarking,
+        unattemptedMarking: question.unattemptedMarking,
       })),
     )
     const keyChanged = hasKeyUpdate
@@ -1176,6 +1230,9 @@ router.post('/:id/answer-key', requireAuth, async (req: AuthRequest, res, next) 
         id: question.id,
         qtype: question.qtype,
         key: resolveQuestionKey(question),
+        correctMarking: question.correctMarking,
+        incorrectMarking: question.incorrectMarking,
+        unattemptedMarking: question.unattemptedMarking,
       })),
     )
     const updatedCalculatedRank = await fetchCalculatedRankForAttempt({
@@ -1271,6 +1328,9 @@ router.patch(
           id: question.id,
           qtype: question.qtype,
           key: resolveQuestionKey(question),
+          correctMarking: question.correctMarking,
+          incorrectMarking: question.incorrectMarking,
+          unattemptedMarking: question.unattemptedMarking,
         })),
       )
       const calculatedRank = await fetchCalculatedRankForAttempt({
@@ -1422,6 +1482,9 @@ router.post('/:id/marking-scheme', requireAuth, async (req: AuthRequest, res, ne
         id: question.id,
         qtype: question.qtype,
         key: resolveQuestionKey(question),
+        correctMarking: question.correctMarking,
+        incorrectMarking: question.incorrectMarking,
+        unattemptedMarking: question.unattemptedMarking,
       })),
     )
     const calculatedRank = await fetchCalculatedRankForAttempt({
@@ -1548,6 +1611,9 @@ router.post('/:id/resync', requireAuth, async (req: AuthRequest, res, next) => {
         id: question.id,
         qtype: question.qtype,
         key: resolveQuestionKey(question),
+        correctMarking: question.correctMarking,
+        incorrectMarking: question.incorrectMarking,
+        unattemptedMarking: question.unattemptedMarking,
       })),
     )
     const calculatedRank = await fetchCalculatedRankForAttempt({
