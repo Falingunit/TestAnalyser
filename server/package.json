@@ -12,6 +12,10 @@
   },
   "dependencies": {
     "@prisma/client": "^5.20.0",
+    "bcryptjs": "^2.4.3",
+    "cheerio": "^1.0.0",
+    "cors": "^2.8.6",
+    "dotenv": "^16.4.5",
     "bcryptjs": "^3.0.3",
     "cheerio": "^1.2.0",
     "cors": "^2.8.5",
