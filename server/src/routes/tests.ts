@@ -700,6 +700,9 @@ const fetchCalculatedRankForAttempt = async (
 const isNonEmptyString = (value: unknown): value is string =>
   typeof value === 'string' && value.trim().length > 0
 
+const toSingleParam = (value: string | string[] | undefined) =>
+  Array.isArray(value) ? value[0] : value
+
 const toFiniteNumber = (value: unknown) => {
   if (typeof value === 'number' && Number.isFinite(value)) {
     return value
@@ -858,9 +861,13 @@ router.get('/:id', requireAuth, async (req: AuthRequest, res, next) => {
     if (!req.user) {
       return res.status(401).json({ error: 'Unauthorized.' })
     }
+    const attemptId = toSingleParam(req.params.id)
+    if (!isNonEmptyString(attemptId)) {
+      return res.status(400).json({ error: 'Invalid test id.' })
+    }
 
     const attempt = await prisma.attempt.findFirst({
-      where: { id: req.params.id, userId: req.user.userId },
+      where: { id: attemptId, userId: req.user.userId },
       include: {
         exam: { include: { questions: true } },
       },
@@ -909,9 +916,13 @@ router.get('/:id/leaderboard', requireAuth, async (req: AuthRequest, res, next) 
     if (!req.user) {
       return res.status(401).json({ error: 'Unauthorized.' })
     }
+    const attemptId = toSingleParam(req.params.id)
+    if (!isNonEmptyString(attemptId)) {
+      return res.status(400).json({ error: 'Invalid test id.' })
+    }
 
     const attempt = await prisma.attempt.findFirst({
-      where: { id: req.params.id, userId: req.user.userId },
+      where: { id: attemptId, userId: req.user.userId },
       include: {
         exam: { include: { questions: true } },
       },
@@ -1109,6 +1120,10 @@ router.post('/:id/answer-key', requireAuth, async (req: AuthRequest, res, next) 
     if (!req.user) {
       return res.status(401).json({ error: 'Unauthorized.' })
     }
+    const attemptId = toSingleParam(req.params.id)
+    if (!isNonEmptyString(attemptId)) {
+      return res.status(400).json({ error: 'Invalid test id.' })
+    }
 
     const { questionId, newKey, markingScheme } = req.body as {
       questionId?: string
@@ -1125,7 +1140,7 @@ router.post('/:id/answer-key', requireAuth, async (req: AuthRequest, res, next) 
     }
 
     const attempt = await prisma.attempt.findFirst({
-      where: { id: req.params.id, userId: req.user.userId },
+      where: { id: attemptId, userId: req.user.userId },
       include: {
         exam: { include: { questions: true } },
       },
@@ -1269,16 +1284,20 @@ router.patch(
         return res.status(401).json({ error: 'Unauthorized.' })
       }
 
-      const { questionId } = req.params
+      const attemptId = toSingleParam(req.params.id)
+      const questionId = toSingleParam(req.params.questionId)
       const bookmarked =
         typeof req.body?.bookmarked === 'boolean' ? req.body.bookmarked : undefined
 
+      if (!isNonEmptyString(attemptId)) {
+        return res.status(400).json({ error: 'Invalid test id.' })
+      }
       if (!isNonEmptyString(questionId)) {
         return res.status(400).json({ error: 'questionId is required.' })
       }
 
       const attempt = await prisma.attempt.findFirst({
-        where: { id: req.params.id, userId: req.user.userId },
+        where: { id: attemptId, userId: req.user.userId },
         include: {
           exam: { include: { questions: true } },
         },
@@ -1359,6 +1378,10 @@ router.post('/:id/marking-scheme', requireAuth, async (req: AuthRequest, res, ne
     if (!req.user) {
       return res.status(401).json({ error: 'Unauthorized.' })
     }
+    const attemptId = toSingleParam(req.params.id)
+    if (!isNonEmptyString(attemptId)) {
+      return res.status(400).json({ error: 'Invalid test id.' })
+    }
 
     const { scheme } = req.body as { scheme?: unknown }
     const updates = parseMarkingScheme(scheme)
@@ -1367,7 +1390,7 @@ router.post('/:id/marking-scheme', requireAuth, async (req: AuthRequest, res, ne
     }
 
     const attempt = await prisma.attempt.findFirst({
-      where: { id: req.params.id, userId: req.user.userId },
+      where: { id: attemptId, userId: req.user.userId },
       include: {
         exam: { include: { questions: true } },
       },
@@ -1512,9 +1535,13 @@ router.post('/:id/resync', requireAuth, async (req: AuthRequest, res, next) => {
     if (!req.user) {
       return res.status(401).json({ error: 'Unauthorized.' })
     }
+    const attemptId = toSingleParam(req.params.id)
+    if (!isNonEmptyString(attemptId)) {
+      return res.status(400).json({ error: 'Invalid test id.' })
+    }
 
     const attempt = await prisma.attempt.findFirst({
-      where: { id: req.params.id, userId: req.user.userId },
+      where: { id: attemptId, userId: req.user.userId },
       include: { exam: true },
     })
 

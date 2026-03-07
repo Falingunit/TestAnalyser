@@ -27,8 +27,15 @@ const parseCorsOrigins = (value: string | undefined) => {
   return origins.length > 0 ? origins : fallback
 }
 
+const normalizeDatabaseUrl = (value: string) => {
+  if (value === 'file:./dev.db') {
+    return 'file:./prisma/dev.db'
+  }
+  return value
+}
+
 export const env = {
-  databaseUrl: requireEnv('DATABASE_URL'),
+  databaseUrl: normalizeDatabaseUrl(requireEnv('DATABASE_URL')),
   jwtSecret: requireEnv('JWT_SECRET'),
   encryptionKey: requireEnv('ENCRYPTION_KEY'),
   port: parseNumber(process.env.PORT ?? '', 4000),
