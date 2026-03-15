@@ -66,6 +66,7 @@ type Store = {
     testId: string;
     questionId: string;
     newKey: unknown;
+    qtype?: "MCQ" | "MAQ" | "NAT" | "VMAQ";
     markingScheme?: {
       correct: number;
       incorrect: number;
@@ -752,6 +753,7 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
     testId,
     questionId,
     newKey,
+    qtype,
     markingScheme,
   }) => {
     const token = loadToken();
@@ -765,7 +767,7 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
         {
           method: "POST",
           token,
-          body: JSON.stringify({ questionId, newKey, markingScheme }),
+          body: JSON.stringify({ questionId, newKey, qtype, markingScheme }),
         },
       );
       setState((prev) => ({

@@ -12,6 +12,7 @@ import type {
 type ExistingQuestion = {
   id: string
   questionNumber: number
+  sourceQtypeRaw?: string | null
   subject: string
   qtype: string
   questionContent: string
@@ -404,6 +405,7 @@ const upsertExam = async (report: ScrapedReport) => {
       const created = await prisma.question.create({
         data: {
           examId: exam.id,
+          sourceQtypeRaw: question.sourceQtypeRaw ?? question.qtype,
           subject: question.subject,
           qtype: storedQtype,
           correctAnswer: storedAnswer,
@@ -441,6 +443,7 @@ const upsertExam = async (report: ScrapedReport) => {
       where: { id: existing.id },
       data: {
         subject: question.subject,
+        sourceQtypeRaw: question.sourceQtypeRaw ?? question.qtype,
         qtype: storedQtype,
         correctAnswer: serializeJson(nextCorrectAnswer),
         questionContent: question.questionContent,

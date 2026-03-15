@@ -19,7 +19,7 @@ import {
   getTimeForQuestion,
   isBonusKey,
 } from "@/lib/analysis";
-import type { Subject, TestRecord } from "@/lib/types";
+import type { QuestionType, Subject, TestRecord } from "@/lib/types";
 import {
   buildDisplayQuestions,
   subjectDisplayOrder,
@@ -40,7 +40,14 @@ import {
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
-import { cn } from "@/lib/utils";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { cn, formatQuestionType } from "@/lib/utils";
 
 const formatSeconds = (value: number) => {
   if (!Number.isFinite(value)) {
@@ -139,6 +146,7 @@ const parseNumericGroup = (value: string) => {
 };
 
 const keyOptionLabels = ["A", "B", "C", "D"] as const;
+const questionTypes: QuestionType[] = ["MCQ", "MAQ", "NAT", "VMAQ"];
 const LEADERBOARD_PREVIEW_TESTS_KEY = "testanalyser-leaderboard-preview-tests";
 
 const loadLeaderboardPreviewTest = (testId?: string) => {
@@ -218,6 +226,7 @@ export const QuestionDetail = () => {
 
   const [message, setMessage] = useState<string | null>(null);
   const [keyUpdateBonus, setKeyUpdateBonus] = useState(false);
+  const [questionTypeDraft, setQuestionTypeDraft] = useState<QuestionType>("MCQ");
   const [markingDraft, setMarkingDraft] = useState({
     correct: "",
     incorrect: "",
@@ -375,7 +384,7 @@ export const QuestionDetail = () => {
       return null;
     }
 
-    if (question.qtype === "NAT") {
+    if (questionTypeDraft === "NAT") {
       const ranges: string[] = [];
       let hasInvalid = false;
       keyAnswerGroups.forEach((group) => {
@@ -405,7 +414,7 @@ export const QuestionDetail = () => {
       return ranges.length > 0 ? ranges.join(" OR ") : null;
     }
 
-    if (question.qtype === "MAQ") {
+    if (questionTypeDraft === "MAQ") {
       const groups = keyAnswerGroups
         .map((group) => {
           const selections = group.multi.map((item) =>
@@ -464,6 +473,7 @@ export const QuestionDetail = () => {
       testId: test.id,
       questionId: question.id,
       newKey: keyUpdateBonus ? { bonus: true } : keyValue,
+      qtype: questionTypeDraft,
       markingScheme: {
         correct: correctMarking,
         incorrect: incorrectMarking,
@@ -474,7 +484,7 @@ export const QuestionDetail = () => {
       setMessage(result.message ?? "Unable to update this question.");
       return;
     }
-    setMessage("Answer key and marking scheme updated.");
+    setMessage("Answer key, question type, and marking scheme updated.");
     setKeyUpdateBonus(false);
   };
 
@@ -558,9 +568,11 @@ export const QuestionDetail = () => {
     if (!question) {
       setKeyAnswerGroups([buildKeyGroup()]);
       setKeyUpdateBonus(false);
+      setQuestionTypeDraft("MCQ");
       setMarkingDraft({ correct: "", incorrect: "", unattempted: "" });
       return;
     }
+    setQuestionTypeDraft(question.qtype);
     setMarkingDraft({
       correct: String(question.correctMarking),
       incorrect: String(question.incorrectMarking),
@@ -1683,7 +1695,7 @@ export const QuestionDetail = () => {
                                 ) : null}
                               </div>
 
-                              {question.qtype === "NAT" ? (
+                              {questionTypeDraft === "NAT" ? (
                                 <div className="grid gap-3 sm:grid-cols-2">
                                   <div className="space-y-2">
                                     <label className="text-xs text-muted-foreground">
@@ -1727,7 +1739,7 @@ export const QuestionDetail = () => {
                                     />
                                   </div>
                                 </div>
-                              ) : question.qtype === "MAQ" ? (
+                              ) : questionTypeDraft === "MAQ" ? (
                                 <div className="flex flex-wrap gap-2">
                                   {keyOptions.length > 0 ? (
                                     keyOptions.map((option) => (
@@ -1836,6 +1848,30 @@ export const QuestionDetail = () => {
                             Override this question&apos;s marks without changing
                             other questions.
                           </p>
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-xs text-muted-foreground">
+                            Question type
+                          </label>
+                          <Select
+                            value={questionTypeDraft}
+                            onValueChange={(value) => {
+                              setQuestionTypeDraft(value as QuestionType);
+                              setKeyAnswerGroups([buildKeyGroup()]);
+                              setKeyUpdateBonus(false);
+                            }}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select type" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {questionTypes.map((qtype) => (
+                                <SelectItem key={qtype} value={qtype}>
+                                  {formatQuestionType(qtype)}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         </div>
                         <div className="grid gap-3 sm:grid-cols-3">
                           <div className="space-y-2">

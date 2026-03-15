@@ -68,6 +68,7 @@ model Exam {
 model Question {
   id                 String    @id @default(cuid())
   examId             String
+  sourceQtypeRaw     String?
   subject            String
   qtype              String
   correctAnswer      String

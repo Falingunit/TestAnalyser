@@ -733,6 +733,32 @@ const QUESTION_TYPES = ['MCQ', 'MAQ', 'NAT', 'VMAQ'] as const
 const isQuestionType = (value: unknown): value is (typeof QUESTION_TYPES)[number] =>
   typeof value === 'string' && QUESTION_TYPES.includes(value as (typeof QUESTION_TYPES)[number])
 
+const getDefaultMarkingForType = (qtype: (typeof QUESTION_TYPES)[number]) => {
+  switch (qtype) {
+    case 'VMAQ':
+      return { correct: 3, incorrect: -1, unattempted: 0 }
+    case 'MAQ':
+      return { correct: 4, incorrect: -2, unattempted: 0 }
+    case 'NAT':
+      return { correct: 4, incorrect: -1, unattempted: 0 }
+    default:
+      return { correct: 4, incorrect: -1, unattempted: 0 }
+  }
+}
+
+const applyStoredQuestionTypeMapping = (
+  sourceQtypeRaw: string | null | undefined,
+  fallbackQtype: string,
+  mapping: Record<string, string>,
+) => {
+  const normalizedSource =
+    typeof sourceQtypeRaw === 'string' ? sourceQtypeRaw.trim().toUpperCase() : ''
+  if (normalizedSource && mapping[normalizedSource] && isQuestionType(mapping[normalizedSource])) {
+    return mapping[normalizedSource]
+  }
+  return isQuestionType(fallbackQtype) ? fallbackQtype : 'MCQ'
+}
+
 const parseQuestionTypeMapping = (value: unknown) => {
   if (!value || typeof value !== 'object') {
     return {} as Record<string, string>
@@ -1177,9 +1203,10 @@ router.post('/:id/answer-key', requireAuth, async (req: AuthRequest, res, next) 
       return res.status(400).json({ error: 'Invalid test id.' })
     }
 
-    const { questionId, newKey, markingScheme } = req.body as {
+    const { questionId, newKey, qtype, markingScheme } = req.body as {
       questionId?: string
       newKey?: unknown
+      qtype?: unknown
       markingScheme?: {
         correct?: unknown
         incorrect?: unknown
@@ -1211,7 +1238,9 @@ router.post('/:id/answer-key', requireAuth, async (req: AuthRequest, res, next) 
 
     const normalizedKey =
       typeof newKey === 'string' ? newKey.trim().toUpperCase() : newKey
+    const nextQtype = isQuestionType(qtype) ? qtype : null
     const hasKeyUpdate = normalizedKey !== undefined && normalizedKey !== null
+    const hasQtypeUpdate = nextQtype !== null
     const nextCorrect = toFiniteInteger(markingScheme?.correct)
     const nextIncorrect = toFiniteInteger(markingScheme?.incorrect)
     const nextUnattempted = toFiniteInteger(markingScheme?.unattempted)
@@ -1220,9 +1249,9 @@ router.post('/:id/answer-key', requireAuth, async (req: AuthRequest, res, next) 
       nextIncorrect !== null &&
       nextUnattempted !== null
 
-    if (!hasKeyUpdate && !hasMarkingUpdate) {
+    if (!hasKeyUpdate && !hasMarkingUpdate && !hasQtypeUpdate) {
       return res.status(400).json({
-        error: 'newKey or markingScheme is required.',
+        error: 'newKey, qtype, or markingScheme is required.',
       })
     }
 
@@ -1245,13 +1274,14 @@ router.post('/:id/answer-key', requireAuth, async (req: AuthRequest, res, next) 
     const keyChanged = hasKeyUpdate
       ? !jsonEquals(parseStoredJson(examQuestion.keyUpdate), normalizedKey)
       : false
+    const qtypeChanged = hasQtypeUpdate ? examQuestion.qtype !== nextQtype : false
     const markingChanged = hasMarkingUpdate
       ? examQuestion.correctMarking !== nextCorrect ||
         examQuestion.incorrectMarking !== nextIncorrect ||
         examQuestion.unattemptedMarking !== nextUnattempted
       : false
 
-    if (!keyChanged && !markingChanged) {
+    if (!keyChanged && !markingChanged && !qtypeChanged) {
       const calculatedRank = await fetchCalculatedRankForAttempt({
         attemptId: attempt.id,
         examId: attempt.examId,
@@ -1269,6 +1299,13 @@ router.post('/:id/answer-key', requireAuth, async (req: AuthRequest, res, next) 
           ? {
               keyUpdate: serializeJson(normalizedKey),
               lastKeyUpdateTime: new Date(),
+            }
+          : {}),
+        ...(qtypeChanged && nextQtype
+          ? {
+              qtype: nextQtype,
+              hasPartial: nextQtype === 'MAQ',
+              ...(!hasMarkingUpdate ? getDefaultMarkingForType(nextQtype) : {}),
             }
           : {}),
         ...(hasMarkingUpdate
@@ -1463,15 +1500,20 @@ router.post('/:id/marking-scheme', requireAuth, async (req: AuthRequest, res, ne
       currentSettings.questionTypeMapping,
       nextTypeMapping,
     )
+    const mergedMarkingScheme = {
+      ...Object.fromEntries(currentSettings.markingScheme.entries()),
+      ...Object.fromEntries(updates.entries()),
+    }
 
     const qtypes = Array.from(updates.keys())
     const existing = await prisma.question.findMany({
       where: {
         examId: attempt.exam.id,
-        qtype: { in: qtypes },
+        ...(mappingChanged ? {} : { qtype: { in: qtypes } }),
       },
       select: {
         id: true,
+        sourceQtypeRaw: true,
         qtype: true,
         correctMarking: true,
         incorrectMarking: true,
@@ -1531,8 +1573,7 @@ router.post('/:id/marking-scheme', requireAuth, async (req: AuthRequest, res, ne
           data: {
             markingScheme: serializeJson({
               markingScheme: {
-                ...Object.fromEntries(currentSettings.markingScheme.entries()),
-                ...Object.fromEntries(updates.entries()),
+                ...mergedMarkingScheme,
               },
               questionTypeMapping: nextTypeMapping,
             }),
@@ -1556,74 +1597,33 @@ router.post('/:id/marking-scheme', requireAuth, async (req: AuthRequest, res, ne
     )
 
     let resyncMessage: string | null = null
-    if (mappingChanged && attempt.exam.externalExamId) {
-      const account = await prisma.externalAccount.findUnique({
-        where: {
-          userId_provider: { userId: req.user.userId, provider: 'test.z7i.in' },
-        },
-        include: { credential: true },
+    if (mappingChanged) {
+      const remapUpdates = existing.map((question) => {
+        const nextQtype = applyStoredQuestionTypeMapping(
+          question.sourceQtypeRaw,
+          question.qtype,
+          nextTypeMapping,
+        )
+        return prisma.question.update({
+          where: { id: question.id },
+          data: {
+            qtype: nextQtype,
+            hasPartial: nextQtype === 'MAQ',
+            ...(!question.markingOverridden
+              ? (mergedMarkingScheme[nextQtype] ?? getDefaultMarkingForType(nextQtype))
+              : {}),
+          },
+        })
       })
 
-      if (account?.credential && account.syncStatus !== 'SYNCING') {
-        const syncStartedAt = new Date()
-        await prisma.externalAccount.update({
-          where: { id: account.id },
-          data: {
-            status: 'CONNECTED',
-            statusMessage: null,
-            syncStatus: 'SYNCING',
-            syncTotal: 0,
-            syncCompleted: 0,
-            syncStartedAt,
-            syncFinishedAt: null,
-          },
-        })
+      if (remapUpdates.length > 0) {
+        await prisma.$transaction(remapUpdates)
+      }
 
-        const password = decryptSecret({
-          encrypted: account.credential.encryptedPassword,
-          iv: account.credential.iv,
-          tag: account.credential.tag,
-        })
-
-        await syncExternalAccount({
-          userId: req.user.userId,
-          provider: account.provider,
-          username: account.username,
-          password,
-          onlyExamIds: [attempt.exam.externalExamId],
-          forceAttemptExamIds: [attempt.exam.externalExamId],
-          onProgress: async (progress: ScrapeProgress) => {
-            try {
-              await prisma.externalAccount.update({
-                where: { id: account.id },
-                data: {
-                  syncTotal: progress.total,
-                  syncCompleted: progress.completed,
-                },
-              })
-            } catch (progressError) {
-              console.error(progressError)
-            }
-          },
-        })
-
-        const now = new Date()
-        await prisma.externalAccount.update({
-          where: { id: account.id },
-          data: {
-            status: 'CONNECTED',
-            statusMessage: null,
-            lastSyncAt: now,
-            syncStatus: 'IDLE',
-            syncFinishedAt: now,
-          },
-        })
-      } else if (!account?.credential) {
+      const missingCount = existing.filter((question) => !question.sourceQtypeRaw).length
+      if (missingCount > 0) {
         resyncMessage =
-          'Question type mapping saved. Reconnect the external account or resync later to reclassify existing questions.'
-      } else {
-        resyncMessage =
-          'Question type mapping saved. A sync is already running, so reclassification will apply on the next resync.'
+          'Question type mapping saved. Some older questions still need one resync to capture source type data before they can be remapped.'
       }
     }
 

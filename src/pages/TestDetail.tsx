@@ -700,10 +700,6 @@ export const TestDetail = () => {
                   <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
                     Marking scheme
                   </p>
-                  <p className="text-sm text-muted-foreground">
-                    Update marks and remap source question-type tokens to the fixed
-                    internal types used by the app.
-                  </p>
                 </div>
                 <Button
                   type="submit"
@@ -776,15 +772,9 @@ export const TestDetail = () => {
                 </div>
                 <div className="space-y-3 rounded-lg border border-border/60 p-3">
                   <div className="flex items-center justify-between gap-3">
-                    <div className="space-y-1">
-                      <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                        Source type mapping
-                      </p>
-                      <p className="text-[11px] text-muted-foreground">
-                        Example: map `B` to `MAQ` to rescrape those questions as
-                        multiple correct with partial marking.
-                      </p>
-                    </div>
+                    <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                      Source type mapping
+                    </p>
                     <Button
                       type="button"
                       variant="outline"
@@ -823,13 +813,13 @@ export const TestDetail = () => {
                           <SelectTrigger>
                             <SelectValue placeholder="Select type" />
                           </SelectTrigger>
-                          <SelectContent>
-                            {questionTypes.map((qtype) => (
-                              <SelectItem key={qtype} value={qtype}>
-                                {qtype} - {formatQuestionType(qtype)}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
+                            <SelectContent>
+                              {questionTypes.map((qtype) => (
+                                <SelectItem key={qtype} value={qtype}>
+                                  {formatQuestionType(qtype)}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
                         </Select>
                         <Button
                           type="button"
@@ -843,11 +833,6 @@ export const TestDetail = () => {
                       </div>
                     ))}
                   </div>
-                  <p className="text-[11px] text-muted-foreground">
-                    Saving a changed mapping will rescrape this exam when the
-                    external account is connected, so old questions are reclassified
-                    from source data.
-                  </p>
                 </div>
                 {markingMessage ? (
                   <p className="text-xs text-muted-foreground">{markingMessage}</p>
