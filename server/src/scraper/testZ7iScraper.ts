@@ -562,6 +562,10 @@ const parseQuestionwisePayload = (
     }
 
     const rawQtype = normalizeQuestionType(row.question_type)
+    const sourceQtypeRaw =
+      typeof row.question_type === 'string' && row.question_type.trim()
+        ? row.question_type.trim()
+        : null
     const correctAnswerRaw = includeCorrectAnswer
       ? normalizeAnswer(
           typeof row.ans === 'string'
@@ -585,20 +589,19 @@ const parseQuestionwisePayload = (
       })
 
     const marking = getMarkingForType(qtype)
-    const useOptions =
-      qtype === 'NAT' ? [null, null, null, null] : [optionA, optionB, optionC, optionD]
     const questionContent = typeof row.question === 'string' ? row.question : ''
 
     questions.push({
       sourceNumber,
+      sourceQtypeRaw,
       subject,
       qtype,
       correctAnswerRaw,
       questionContent,
-      optionContentA: useOptions[0],
-      optionContentB: useOptions[1],
-      optionContentC: useOptions[2],
-      optionContentD: useOptions[3],
+      optionContentA: optionA,
+      optionContentB: optionB,
+      optionContentC: optionC,
+      optionContentD: optionD,
       hasPartial: qtype === 'MAQ',
       correctMarking: marking.correct,
       incorrectMarking: marking.incorrect,
@@ -743,19 +746,17 @@ const parseSolutionQuestions = (html: string, subject: ScrapedSubject) => {
     const optionContents = ['A', 'B', 'C', 'D'].map((letter, idx) => {
       return optionMap.get(letter) || listOptions[idx] || null
     })
-    const useOptions =
-      qtype === 'NAT' ? [null, null, null, null] : optionContents
-
     const question: ScrapedQuestion & { isEnglish: boolean } = {
       sourceNumber,
+      sourceQtypeRaw: questionTypeText?.trim() || null,
       subject,
       qtype,
       correctAnswerRaw,
       questionContent,
-      optionContentA: useOptions[0],
-      optionContentB: useOptions[1],
-      optionContentC: useOptions[2],
-      optionContentD: useOptions[3],
+      optionContentA: optionContents[0],
+      optionContentB: optionContents[1],
+      optionContentC: optionContents[2],
+      optionContentD: optionContents[3],
       hasPartial: qtype === 'MAQ',
       correctMarking: marking.correct,
       incorrectMarking: marking.incorrect,

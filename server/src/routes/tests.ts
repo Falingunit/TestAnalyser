@@ -250,6 +250,7 @@ const serializeAttempt = (
     rawBookmarks && typeof rawBookmarks === 'object'
       ? (rawBookmarks as Record<string, boolean>)
       : {}
+  const settings = parseExamSettings(parseStoredJson(attempt.exam.markingScheme))
 
   return {
     id: attempt.id,
@@ -259,7 +260,8 @@ const serializeAttempt = (
     examDate: attempt.exam.examDate,
     rank: attempt.rank ?? null,
     calculatedRank,
-    markingScheme: parseStoredJson(attempt.exam.markingScheme),
+    markingScheme: Object.fromEntries(settings.markingScheme.entries()),
+    questionTypeMapping: settings.questionTypeMapping,
     answers,
     timings,
     peerTimings,
@@ -726,6 +728,27 @@ const toFiniteInteger = (value: unknown) => {
   return parsed
 }
 
+const QUESTION_TYPES = ['MCQ', 'MAQ', 'NAT', 'VMAQ'] as const
+
+const isQuestionType = (value: unknown): value is (typeof QUESTION_TYPES)[number] =>
+  typeof value === 'string' && QUESTION_TYPES.includes(value as (typeof QUESTION_TYPES)[number])
+
+const parseQuestionTypeMapping = (value: unknown) => {
+  if (!value || typeof value !== 'object') {
+    return {} as Record<string, string>
+  }
+
+  const mapping: Record<string, string> = {}
+  Object.entries(value as Record<string, unknown>).forEach(([key, rawValue]) => {
+    const normalizedKey = key.trim().toUpperCase()
+    if (!normalizedKey || !isQuestionType(rawValue)) {
+      return
+    }
+    mapping[normalizedKey] = rawValue
+  })
+  return mapping
+}
+
 const parseMarkingScheme = (value: unknown) => {
   if (!value || typeof value !== 'object') {
     return new Map<string, { correct: number; incorrect: number; unattempted: number }>()
@@ -751,6 +774,35 @@ const parseMarkingScheme = (value: unknown) => {
   }
 
   return entries
+}
+
+const parseExamSettings = (value: unknown) => {
+  if (!value || typeof value !== 'object') {
+    return {
+      markingScheme: new Map<
+        string,
+        { correct: number; incorrect: number; unattempted: number }
+      >(),
+      questionTypeMapping: {} as Record<string, string>,
+    }
+  }
+
+  const root = value as Record<string, unknown>
+  const hasNestedSettings =
+    (root.markingScheme && typeof root.markingScheme === 'object') ||
+    (root.questionTypeMapping && typeof root.questionTypeMapping === 'object')
+
+  if (!hasNestedSettings) {
+    return {
+      markingScheme: parseMarkingScheme(value),
+      questionTypeMapping: {} as Record<string, string>,
+    }
+  }
+
+  return {
+    markingScheme: parseMarkingScheme(root.markingScheme),
+    questionTypeMapping: parseQuestionTypeMapping(root.questionTypeMapping),
+  }
 }
 
 router.get('/', requireAuth, async (req: AuthRequest, res, next) => {
@@ -1383,10 +1435,16 @@ router.post('/:id/marking-scheme', requireAuth, async (req: AuthRequest, res, ne
       return res.status(400).json({ error: 'Invalid test id.' })
     }
 
-    const { scheme } = req.body as { scheme?: unknown }
+    const { scheme, questionTypeMapping } = req.body as {
+      scheme?: unknown
+      questionTypeMapping?: unknown
+    }
     const updates = parseMarkingScheme(scheme)
-    if (updates.size === 0) {
-      return res.status(400).json({ error: 'scheme is required.' })
+    const nextTypeMapping = parseQuestionTypeMapping(questionTypeMapping)
+    if (updates.size === 0 && Object.keys(nextTypeMapping).length === 0) {
+      return res
+        .status(400)
+        .json({ error: 'scheme or questionTypeMapping is required.' })
     }
 
     const attempt = await prisma.attempt.findFirst({
@@ -1399,6 +1457,12 @@ router.post('/:id/marking-scheme', requireAuth, async (req: AuthRequest, res, ne
     if (!attempt) {
       return res.status(404).json({ error: 'Test not found.' })
     }
+
+    const currentSettings = parseExamSettings(parseStoredJson(attempt.exam.markingScheme))
+    const mappingChanged = !jsonEquals(
+      currentSettings.questionTypeMapping,
+      nextTypeMapping,
+    )
 
     const qtypes = Array.from(updates.keys())
     const existing = await prisma.question.findMany({
@@ -1466,10 +1530,11 @@ router.post('/:id/marking-scheme', requireAuth, async (req: AuthRequest, res, ne
           where: { id: attempt.exam.id },
           data: {
             markingScheme: serializeJson({
-              ...Object.fromEntries(
-                parseMarkingScheme(parseStoredJson(attempt.exam.markingScheme)).entries(),
-              ),
-              ...Object.fromEntries(updates.entries()),
+              markingScheme: {
+                ...Object.fromEntries(currentSettings.markingScheme.entries()),
+                ...Object.fromEntries(updates.entries()),
+              },
+              questionTypeMapping: nextTypeMapping,
             }),
           },
         }),
@@ -1489,6 +1554,78 @@ router.post('/:id/marking-scheme', requireAuth, async (req: AuthRequest, res, ne
         ),
       ],
     )
+
+    let resyncMessage: string | null = null
+    if (mappingChanged && attempt.exam.externalExamId) {
+      const account = await prisma.externalAccount.findUnique({
+        where: {
+          userId_provider: { userId: req.user.userId, provider: 'test.z7i.in' },
+        },
+        include: { credential: true },
+      })
+
+      if (account?.credential && account.syncStatus !== 'SYNCING') {
+        const syncStartedAt = new Date()
+        await prisma.externalAccount.update({
+          where: { id: account.id },
+          data: {
+            status: 'CONNECTED',
+            statusMessage: null,
+            syncStatus: 'SYNCING',
+            syncTotal: 0,
+            syncCompleted: 0,
+            syncStartedAt,
+            syncFinishedAt: null,
+          },
+        })
+
+        const password = decryptSecret({
+          encrypted: account.credential.encryptedPassword,
+          iv: account.credential.iv,
+          tag: account.credential.tag,
+        })
+
+        await syncExternalAccount({
+          userId: req.user.userId,
+          provider: account.provider,
+          username: account.username,
+          password,
+          onlyExamIds: [attempt.exam.externalExamId],
+          forceAttemptExamIds: [attempt.exam.externalExamId],
+          onProgress: async (progress: ScrapeProgress) => {
+            try {
+              await prisma.externalAccount.update({
+                where: { id: account.id },
+                data: {
+                  syncTotal: progress.total,
+                  syncCompleted: progress.completed,
+                },
+              })
+            } catch (progressError) {
+              console.error(progressError)
+            }
+          },
+        })
+
+        const now = new Date()
+        await prisma.externalAccount.update({
+          where: { id: account.id },
+          data: {
+            status: 'CONNECTED',
+            statusMessage: null,
+            lastSyncAt: now,
+            syncStatus: 'IDLE',
+            syncFinishedAt: now,
+          },
+        })
+      } else if (!account?.credential) {
+        resyncMessage =
+          'Question type mapping saved. Reconnect the external account or resync later to reclassify existing questions.'
+      } else {
+        resyncMessage =
+          'Question type mapping saved. A sync is already running, so reclassification will apply on the next resync.'
+      }
+    }
 
     const updated = await prisma.attempt.findFirst({
       where: { id: attempt.id },
@@ -1524,6 +1661,7 @@ router.post('/:id/marking-scheme', requireAuth, async (req: AuthRequest, res, ne
     })
     return res.json({
       test: serializeAttempt(updated, calculatedRank, peerTimings, peerAnswerStats),
+      message: resyncMessage,
     })
   } catch (error) {
     return next(error)

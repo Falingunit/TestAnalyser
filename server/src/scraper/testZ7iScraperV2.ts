@@ -321,6 +321,10 @@ const parseQuestionwisePayload = (
     }
 
     const rawQtype = normalizeQuestionType(row.question_type)
+    const sourceQtypeRaw =
+      typeof row.question_type === 'string' && row.question_type.trim()
+        ? row.question_type.trim()
+        : null
     const correctAnswerRaw = includeCorrectAnswer
       ? normalizeAnswer(
           typeof row.ans === 'string'
@@ -344,20 +348,19 @@ const parseQuestionwisePayload = (
       })
 
     const marking = getMarkingForType(qtype)
-    const useOptions =
-      qtype === 'NAT' ? [null, null, null, null] : [optionA, optionB, optionC, optionD]
     const questionContent = typeof row.question === 'string' ? row.question : ''
 
     questions.push({
       sourceNumber,
+      sourceQtypeRaw,
       subject,
       qtype,
       correctAnswerRaw,
       questionContent,
-      optionContentA: useOptions[0],
-      optionContentB: useOptions[1],
-      optionContentC: useOptions[2],
-      optionContentD: useOptions[3],
+      optionContentA: optionA,
+      optionContentB: optionB,
+      optionContentC: optionC,
+      optionContentD: optionD,
       hasPartial: qtype === 'MAQ',
       correctMarking: marking.correct,
       incorrectMarking: marking.incorrect,

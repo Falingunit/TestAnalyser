@@ -4,6 +4,7 @@ export type ScrapedQuestionType = 'MCQ' | 'MAQ' | 'VMAQ' | 'NAT'
 
 export type ScrapedQuestion = {
   sourceNumber: number
+  sourceQtypeRaw: string | null
   subject: ScrapedSubject
   qtype: ScrapedQuestionType
   correctAnswerRaw: string | null

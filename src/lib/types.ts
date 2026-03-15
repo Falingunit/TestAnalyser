@@ -72,6 +72,8 @@ export type MarkingSchemeEntry = {
   unattempted: number
 }
 
+export type QuestionTypeMapping = Record<string, QuestionType>
+
 export type QuestionRecord = {
   id: string
   subject: Subject
@@ -101,6 +103,7 @@ export type TestRecord = {
   rank: number | null
   calculatedRank?: number | null
   markingScheme?: Record<string, MarkingSchemeEntry> | null
+  questionTypeMapping?: QuestionTypeMapping | null
   answers: Record<string, AnswerValue>
   timings: Record<string, number>
   peerTimings?: Record<string, number>

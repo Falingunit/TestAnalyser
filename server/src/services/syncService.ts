@@ -21,6 +21,7 @@ type ExistingQuestion = {
   optionContentD: string | null
   correctAnswer: string | null
   keyUpdate: string | null
+  markingOverridden?: boolean
 }
 
 const normalizeDate = (value: string) => {
@@ -81,6 +82,91 @@ const parseStoredJson = (value: string | null) => {
 }
 
 const serializeJson = (value: unknown) => JSON.stringify(value ?? null)
+
+const QUESTION_TYPES: ScrapedQuestionType[] = ['MCQ', 'MAQ', 'NAT', 'VMAQ']
+
+const isQuestionType = (value: unknown): value is ScrapedQuestionType =>
+  typeof value === 'string' && QUESTION_TYPES.includes(value as ScrapedQuestionType)
+
+const parseQuestionTypeMapping = (value: unknown) => {
+  if (!value || typeof value !== 'object') {
+    return {} as Record<string, ScrapedQuestionType>
+  }
+
+  const mapping: Record<string, ScrapedQuestionType> = {}
+  Object.entries(value as Record<string, unknown>).forEach(([key, rawValue]) => {
+    const source = key.trim().toUpperCase()
+    if (!source || !isQuestionType(rawValue)) {
+      return
+    }
+    mapping[source] = rawValue
+  })
+  return mapping
+}
+
+const parseMarkingSchemeSettings = (value: unknown) => {
+  if (!value || typeof value !== 'object') {
+    return {
+      questionTypeMapping: {} as Record<string, ScrapedQuestionType>,
+      markingScheme: {} as Record<
+        string,
+        { correct: number; incorrect: number; unattempted: number }
+      >,
+    }
+  }
+
+  const root = value as Record<string, unknown>
+  const hasNestedSettings =
+    (root.markingScheme && typeof root.markingScheme === 'object') ||
+    (root.questionTypeMapping && typeof root.questionTypeMapping === 'object')
+
+  if (!hasNestedSettings) {
+    return {
+      questionTypeMapping: {} as Record<string, ScrapedQuestionType>,
+      markingScheme: root as Record<
+        string,
+        { correct: number; incorrect: number; unattempted: number }
+      >,
+    }
+  }
+
+  return {
+    questionTypeMapping: parseQuestionTypeMapping(root.questionTypeMapping),
+    markingScheme:
+      root.markingScheme && typeof root.markingScheme === 'object'
+        ? (root.markingScheme as Record<
+            string,
+            { correct: number; incorrect: number; unattempted: number }
+          >)
+        : {},
+  }
+}
+
+const getDefaultMarkingForType = (qtype: ScrapedQuestionType) => {
+  switch (qtype) {
+    case 'VMAQ':
+      return { correct: 3, incorrect: -1, unattempted: 0 }
+    case 'MAQ':
+      return { correct: 4, incorrect: -2, unattempted: 0 }
+    case 'NAT':
+      return { correct: 4, incorrect: -1, unattempted: 0 }
+    default:
+      return { correct: 4, incorrect: -1, unattempted: 0 }
+  }
+}
+
+const applyQuestionTypeMapping = (
+  sourceQtypeRaw: string | null | undefined,
+  fallbackQtype: ScrapedQuestionType,
+  mapping: Record<string, ScrapedQuestionType>,
+) => {
+  const normalizedSource =
+    typeof sourceQtypeRaw === 'string' ? sourceQtypeRaw.trim().toUpperCase() : ''
+  if (normalizedSource && mapping[normalizedSource]) {
+    return mapping[normalizedSource]
+  }
+  return fallbackQtype
+}
 
 const parseOptionTokens = (value: string) =>
   value
@@ -217,6 +303,7 @@ const upsertExam = async (report: ScrapedReport) => {
       examDate: normalized.examDate,
     },
   })
+  const examSettings = parseMarkingSchemeSettings(parseStoredJson(exam.markingScheme))
 
   const numberedQuestions = assignQuestionNumbers(normalized.questions)
   const existingQuestions = await prisma.question.findMany({
@@ -255,17 +342,38 @@ const upsertExam = async (report: ScrapedReport) => {
   >()
 
   for (const question of numberedQuestions) {
+    const storedQtype = applyQuestionTypeMapping(
+      question.sourceQtypeRaw,
+      question.qtype,
+      examSettings.questionTypeMapping,
+    )
+    const storedOptions =
+      storedQtype === 'NAT'
+        ? {
+            optionContentA: null,
+            optionContentB: null,
+            optionContentC: null,
+            optionContentD: null,
+          }
+        : {
+            optionContentA: question.optionContentA,
+            optionContentB: question.optionContentB,
+            optionContentC: question.optionContentC,
+            optionContentD: question.optionContentD,
+          }
+    const typeMarking =
+      examSettings.markingScheme[storedQtype] ?? getDefaultMarkingForType(storedQtype)
     const fallbackCorrectAnswer =
       question.correctAnswerRaw ??
       answerKeyBySourceNumber.get(question.sourceNumber) ??
       null
     const parsedCorrectAnswer = parseAnswerValue(
       fallbackCorrectAnswer,
-      question.qtype,
+      storedQtype,
     )
     const ensuredCorrectAnswer = ensureAnswerValue(
       parsedCorrectAnswer,
-      question.qtype,
+      storedQtype,
     )
     let existing = existingByNumber.get(question.questionNumber)
     let matchedBySignature = false
@@ -275,7 +383,7 @@ const upsertExam = async (report: ScrapedReport) => {
     if (!existing) {
       const signature = buildQuestionSignature({
         subject: question.subject,
-        qtype: question.qtype,
+        qtype: storedQtype,
         questionContent: question.questionContent,
         optionContentA: question.optionContentA,
         optionContentB: question.optionContentB,
@@ -297,17 +405,14 @@ const upsertExam = async (report: ScrapedReport) => {
         data: {
           examId: exam.id,
           subject: question.subject,
-          qtype: question.qtype,
+          qtype: storedQtype,
           correctAnswer: storedAnswer,
           questionContent: question.questionContent,
-          optionContentA: question.optionContentA,
-          optionContentB: question.optionContentB,
-          optionContentC: question.optionContentC,
-          optionContentD: question.optionContentD,
-          hasPartial: question.hasPartial,
-          correctMarking: question.correctMarking,
-          incorrectMarking: question.incorrectMarking,
-          unattemptedMarking: question.unattemptedMarking,
+          ...storedOptions,
+          hasPartial: storedQtype === 'MAQ',
+          correctMarking: typeMarking.correct,
+          incorrectMarking: typeMarking.incorrect,
+          unattemptedMarking: typeMarking.unattempted,
           questionNumber: question.questionNumber,
           keyUpdate: storedKeyUpdate,
           lastKeyUpdateTime: null,
@@ -316,12 +421,12 @@ const upsertExam = async (report: ScrapedReport) => {
 
       questionBySourceNumber.set(question.sourceNumber, {
         id: created.id,
-        qtype: question.qtype,
+        qtype: storedQtype,
         keyUpdate: parseStoredJson(created.keyUpdate),
       })
       questionByNumber.set(question.questionNumber, {
         id: created.id,
-        qtype: question.qtype,
+        qtype: storedQtype,
         keyUpdate: parseStoredJson(created.keyUpdate),
       })
       continue
@@ -336,14 +441,18 @@ const upsertExam = async (report: ScrapedReport) => {
       where: { id: existing.id },
       data: {
         subject: question.subject,
-        qtype: question.qtype,
+        qtype: storedQtype,
         correctAnswer: serializeJson(nextCorrectAnswer),
         questionContent: question.questionContent,
-        optionContentA: question.optionContentA,
-        optionContentB: question.optionContentB,
-        optionContentC: question.optionContentC,
-        optionContentD: question.optionContentD,
-        hasPartial: question.hasPartial,
+        ...storedOptions,
+        hasPartial: storedQtype === 'MAQ',
+        ...(!existing.markingOverridden
+          ? {
+              correctMarking: typeMarking.correct,
+              incorrectMarking: typeMarking.incorrect,
+              unattemptedMarking: typeMarking.unattempted,
+            }
+          : {}),
         ...(matchedBySignature ? {} : { questionNumber: question.questionNumber }),
         ...(shouldSetKeyUpdate
           ? { keyUpdate: serializeJson(nextCorrectAnswer) }
@@ -353,12 +462,12 @@ const upsertExam = async (report: ScrapedReport) => {
 
     questionBySourceNumber.set(question.sourceNumber, {
       id: updated.id,
-      qtype: question.qtype,
+      qtype: storedQtype,
       keyUpdate: parseStoredJson(updated.keyUpdate),
     })
     questionByNumber.set(question.questionNumber, {
       id: updated.id,
-      qtype: question.qtype,
+      qtype: storedQtype,
       keyUpdate: parseStoredJson(updated.keyUpdate),
     })
   }

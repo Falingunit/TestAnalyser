@@ -11,7 +11,11 @@ import {
   getTimeForQuestion,
   isBonusKey,
 } from "@/lib/analysis";
-import type { LeaderboardEntry, QuestionType, Subject } from "@/lib/types";
+import type {
+  LeaderboardEntry,
+  QuestionType,
+  Subject,
+} from "@/lib/types";
 import { TestSummaryCard } from "@/components/TestSummaryCard";
 import { SegmentedProgressBar } from "@/components/SegmentedProgressBar";
 import { Badge } from "@/components/ui/badge";
@@ -51,13 +55,6 @@ const formatSeconds = (value: number) => {
 };
 
 const subjects = ["ALL", "PHYSICS", "CHEMISTRY", "MATHEMATICS"] as const;
-const typeOptions = [
-  { value: "ALL", label: "All types" },
-  { value: "MCQ", label: formatQuestionType("MCQ") },
-  { value: "MAQ", label: formatQuestionType("MAQ") },
-  { value: "NAT", label: formatQuestionType("NAT") },
-  { value: "VMAQ", label: formatQuestionType("VMAQ") },
-] as const;
 const questionTypes = ["MCQ", "MAQ", "NAT", "VMAQ"] as const;
 const statuses = [
   "ALL",
@@ -68,12 +65,17 @@ const statuses = [
 ] as const;
 
 type SubjectFilter = (typeof subjects)[number];
-type TypeFilter = (typeof typeOptions)[number]["value"];
+type TypeFilter = "ALL" | QuestionType;
 type StatusFilter = (typeof statuses)[number];
 type MarkingDraft = Record<
   QuestionType,
   { correct: string; incorrect: string; unattempted: string }
 >;
+type QuestionTypeMappingRow = {
+  id: string;
+  source: string;
+  target: QuestionType;
+};
 
 const hasKeyChange = (question: {
   correctAnswer: unknown;
@@ -101,6 +103,18 @@ const buildEmptyMarkingDraft = (): MarkingDraft => ({
   NAT: { correct: "", incorrect: "", unattempted: "" },
   VMAQ: { correct: "", incorrect: "", unattempted: "" },
 });
+
+const createMappingRow = (
+  source: string,
+  target: QuestionType,
+): QuestionTypeMappingRow => ({
+  id: `${source}-${target}-${Math.random().toString(36).slice(2, 8)}`,
+  source,
+  target,
+});
+
+const buildDefaultTypeMappingRows = (): QuestionTypeMappingRow[] =>
+  questionTypes.map((qtype) => createMappingRow(qtype, qtype));
 
 const LEADERBOARD_PREVIEW_TESTS_KEY = "testanalyser-leaderboard-preview-tests";
 
@@ -138,6 +152,9 @@ export const TestDetail = () => {
   const [markingDraft, setMarkingDraft] = useState<MarkingDraft>(() =>
     buildEmptyMarkingDraft(),
   );
+  const [typeMappingRows, setTypeMappingRows] = useState<QuestionTypeMappingRow[]>(
+    () => buildDefaultTypeMappingRows(),
+  );
   const [markingMessage, setMarkingMessage] = useState<string | null>(null);
 
   // NEW: Loading and Edited states
@@ -166,6 +183,7 @@ export const TestDetail = () => {
   useEffect(() => {
     if (!test) {
       setMarkingDraft(buildEmptyMarkingDraft());
+      setTypeMappingRows(buildDefaultTypeMappingRows());
       return;
     }
 
@@ -229,6 +247,31 @@ export const TestDetail = () => {
         };
       });
       setMarkingDraft(nextDraft);
+      const savedMapping = test.questionTypeMapping ?? {};
+      const seen = new Set<string>();
+      const rows: QuestionTypeMappingRow[] = [];
+      questionTypes.forEach((qtype) => {
+        const source =
+          Object.entries(savedMapping).find(([, target]) => target === qtype)?.[0] ??
+          qtype;
+        const normalized = source.trim().toUpperCase();
+        if (normalized && !seen.has(normalized)) {
+          seen.add(normalized);
+          rows.push(createMappingRow(source, qtype));
+        }
+      });
+      Object.entries(savedMapping).forEach(([source, target]) => {
+        const normalized = source.trim().toUpperCase();
+        if (!normalized || seen.has(normalized)) {
+          return;
+        }
+        if (!questionTypes.includes(target as QuestionType)) {
+          return;
+        }
+        seen.add(normalized);
+        rows.push(createMappingRow(source, target as QuestionType));
+      });
+      setTypeMappingRows(rows.length > 0 ? rows : buildDefaultTypeMappingRows());
     }
     // Note: We deliberately removed setMarkingMessage(null) from here
   }, [test, msFormEdited]); // Re-run when test updates
@@ -264,6 +307,17 @@ export const TestDetail = () => {
     });
     return questionTypes.filter((type) => types.has(type));
   }, [test]);
+
+  const typeOptions = useMemo(
+    () => [
+      { value: "ALL", label: "All types" },
+      ...questionTypes.map((value) => ({
+        value,
+        label: formatQuestionType(value),
+      })),
+    ],
+    [],
+  );
 
   const handleMarkingSchemeSave = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -323,14 +377,30 @@ export const TestDetail = () => {
       }
       scheme[qtype] = { correct, incorrect, unattempted };
     }
+    const questionTypeMapping: Record<string, QuestionType> = {};
+    for (const row of typeMappingRows) {
+      const source = row.source.trim().toUpperCase();
+      if (!source) {
+        continue;
+      }
+      if (questionTypeMapping[source]) {
+        setMarkingMessage(`Duplicate source type mapping for ${source}.`);
+        return;
+      }
+      questionTypeMapping[source] = row.target;
+    }
     try {
       setIsSaving(true);
-      const result = await updateMarkingScheme({ testId: test.id, scheme });
+      const result = await updateMarkingScheme({
+        testId: test.id,
+        scheme,
+        questionTypeMapping,
+      });
       if (!result.ok) {
         setMarkingMessage(result.message ?? "Failed to save marking scheme.");
         return;
       }
-      setMarkingMessage("Marking scheme updated.");
+      setMarkingMessage(result.message ?? "Marking scheme updated.");
       setMsFormEdited(false); // Reset edited state so we can accept new updates from DB
 
       // Optional: Auto-clear message after 3 seconds
@@ -356,6 +426,34 @@ export const TestDetail = () => {
         [field]: value,
       },
     }));
+  };
+
+  const handleMappingRowChange = (
+    id: string,
+    field: "source" | "target",
+    value: string,
+  ) => {
+    setMsFormEdited(true);
+    setTypeMappingRows((prev) =>
+      prev.map((row) =>
+        row.id === id
+          ? {
+              ...row,
+              [field]: field === "target" ? (value as QuestionType) : value,
+            }
+          : row,
+      ),
+    );
+  };
+
+  const handleAddMappingRow = () => {
+    setMsFormEdited(true);
+    setTypeMappingRows((prev) => [...prev, createMappingRow("", "MCQ")]);
+  };
+
+  const handleRemoveMappingRow = (id: string) => {
+    setMsFormEdited(true);
+    setTypeMappingRows((prev) => prev.filter((row) => row.id !== id));
   };
 
   const questionSnapshots = useMemo(() => {
@@ -603,7 +701,8 @@ export const TestDetail = () => {
                     Marking scheme
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    Update marks for each question type in this test.
+                    Update marks and remap source question-type tokens to the fixed
+                    internal types used by the app.
                   </p>
                 </div>
                 <Button
@@ -674,6 +773,81 @@ export const TestDetail = () => {
                       </div>
                     ))}
                   </div>
+                </div>
+                <div className="space-y-3 rounded-lg border border-border/60 p-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="space-y-1">
+                      <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                        Source type mapping
+                      </p>
+                      <p className="text-[11px] text-muted-foreground">
+                        Example: map `B` to `MAQ` to rescrape those questions as
+                        multiple correct with partial marking.
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleAddMappingRow}
+                      disabled={!isAdmin}
+                    >
+                      Add mapping
+                    </Button>
+                  </div>
+                  <div className="space-y-2">
+                    {typeMappingRows.map((row) => (
+                      <div
+                        key={row.id}
+                        className="grid grid-cols-[minmax(0,1fr)_minmax(0,180px)_80px] gap-2"
+                      >
+                        <Input
+                          value={row.source}
+                          onChange={(event) =>
+                            handleMappingRowChange(
+                              row.id,
+                              "source",
+                              event.target.value,
+                            )
+                          }
+                          placeholder="Source token, e.g. B"
+                          disabled={!isAdmin}
+                        />
+                        <Select
+                          value={row.target}
+                          onValueChange={(value) =>
+                            handleMappingRowChange(row.id, "target", value)
+                          }
+                          disabled={!isAdmin}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {questionTypes.map((qtype) => (
+                              <SelectItem key={qtype} value={qtype}>
+                                {qtype} - {formatQuestionType(qtype)}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleRemoveMappingRow(row.id)}
+                          disabled={!isAdmin || typeMappingRows.length <= 1}
+                        >
+                          Remove
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-[11px] text-muted-foreground">
+                    Saving a changed mapping will rescrape this exam when the
+                    external account is connected, so old questions are reclassified
+                    from source data.
+                  </p>
                 </div>
                 {markingMessage ? (
                   <p className="text-xs text-muted-foreground">{markingMessage}</p>

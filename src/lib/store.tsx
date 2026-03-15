@@ -78,6 +78,7 @@ type Store = {
       string,
       { correct: number; incorrect: number; unattempted: number }
     >;
+    questionTypeMapping?: Record<string, string>;
   }) => Promise<AuthResult>;
   setTheme: (theme: ThemeName) => void;
   setMode: (mode: ColorMode) => void;
@@ -850,6 +851,7 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
   const updateMarkingScheme: Store["updateMarkingScheme"] = async ({
     testId,
     scheme,
+    questionTypeMapping,
   }) => {
     const token = loadToken();
     if (!token) {
@@ -857,19 +859,19 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
     }
 
     try {
-      const data = await requestJson<{ test: TestRecord }>(
+      const data = await requestJson<{ test: TestRecord; message?: string }>(
         `/api/tests/${testId}/marking-scheme`,
         {
           method: "POST",
           token,
-          body: JSON.stringify({ scheme }),
+          body: JSON.stringify({ scheme, questionTypeMapping }),
         },
       );
       setState((prev) => ({
         ...prev,
         tests: replaceTest(prev.tests, data.test),
       }));
-      return { ok: true };
+      return { ok: true, message: data.message };
     } catch (error) {
       const message =
         error instanceof ApiError
