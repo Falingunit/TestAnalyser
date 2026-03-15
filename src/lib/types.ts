@@ -76,6 +76,7 @@ export type QuestionTypeMapping = Record<string, QuestionType>
 
 export type QuestionRecord = {
   id: string
+  sourceQtypeRaw?: string | null
   subject: Subject
   qtype: QuestionType
   correctAnswer: AnswerValue

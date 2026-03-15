@@ -1300,6 +1300,14 @@ export const QuestionDetail = () => {
                   <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
                     Q{displayNumber} - {question.subject}
                   </p>
+                  <div className="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
+                    <span className="rounded-full border border-border/60 px-2 py-1">
+                      Source type: {question.sourceQtypeRaw?.trim() || "Unknown"}
+                    </span>
+                    <span className="rounded-full border border-border/60 px-2 py-1">
+                      Current type: {formatQuestionType(question.qtype)}
+                    </span>
+                  </div>
                   <div
                     className={cn(
                       "question-html rounded-lg bg-transparent leading-relaxed",

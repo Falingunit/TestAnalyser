@@ -208,6 +208,7 @@ const serializeAttempt = (
       markingScheme: string | null
       questions: Array<{
         id: string
+        sourceQtypeRaw: string | null
         subject: string
         qtype: string
         correctAnswer: string
@@ -269,6 +270,7 @@ const serializeAttempt = (
     bookmarks,
     questions: sortedQuestions.map((question) => ({
       id: question.id,
+      sourceQtypeRaw: question.sourceQtypeRaw,
       subject: question.subject,
       qtype: question.qtype,
       correctAnswer: parseStoredJson(question.correctAnswer),
