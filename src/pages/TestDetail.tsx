@@ -76,6 +76,8 @@ type QuestionTypeMappingRow = {
   source: string;
   target: QuestionType;
 };
+type LeaderboardSortKey = "rank" | "name" | Subject | "total";
+type LeaderboardSortDirection = "asc" | "desc";
 
 const hasKeyChange = (question: {
   correctAnswer: unknown;
@@ -178,6 +180,13 @@ export const TestDetail = () => {
     string | null
   >(null);
   const [isLeaderboardCollapsed, setIsLeaderboardCollapsed] = useState(false);
+  const [leaderboardSort, setLeaderboardSort] = useState<{
+    key: LeaderboardSortKey;
+    direction: LeaderboardSortDirection;
+  }>({
+    key: "rank",
+    direction: "desc",
+  });
   const [collapsedSubjects, setCollapsedSubjects] = useState<
     Record<Subject, boolean>
   >({
@@ -583,7 +592,7 @@ export const TestDetail = () => {
     [selectedLeaderboardEntry],
   );
   const leaderboardRows = useMemo(() => {
-    const sorted = [...leaderboard].sort((a, b) => {
+    const rankedRows = [...leaderboard].sort((a, b) => {
       if (a.score !== b.score) {
         return b.score - a.score;
       }
@@ -591,7 +600,7 @@ export const TestDetail = () => {
     });
     let previousScore: number | null = null;
     let previousRank = 1;
-    return sorted.map((entry, index) => {
+    const rows = rankedRows.map((entry, index) => {
       const rank =
         previousScore !== null && entry.score === previousScore
           ? previousRank
@@ -616,9 +625,70 @@ export const TestDetail = () => {
       });
       previousScore = entry.score;
       previousRank = rank;
-      return { ...entry, computedRank: rank, subjectScores };
+      return {
+        ...entry,
+        computedRank: rank,
+        subjectScores,
+        subjectScoreMap: Object.fromEntries(
+          subjectScores.map((item) => [item.subject, item]),
+        ) as Record<Subject, { subject: Subject; score: number; total: number }>,
+      };
     });
-  }, [leaderboard]);
+    const direction = leaderboardSort.direction === "asc" ? 1 : -1;
+    return [...rows].sort((a, b) => {
+      if (leaderboardSort.key === "name") {
+        const byName =
+          a.displayName.localeCompare(b.displayName, undefined, {
+            sensitivity: "base",
+          }) ||
+          a.externalUsername.localeCompare(b.externalUsername, undefined, {
+            sensitivity: "base",
+          });
+        if (byName !== 0) {
+          return byName * direction;
+        }
+      } else if (leaderboardSort.key === "rank" || leaderboardSort.key === "total") {
+        const scoreDiff = a.score - b.score;
+        if (scoreDiff !== 0) {
+          return scoreDiff * direction;
+        }
+      } else {
+        const scoreDiff =
+          a.subjectScoreMap[leaderboardSort.key].score -
+          b.subjectScoreMap[leaderboardSort.key].score;
+        if (scoreDiff !== 0) {
+          return scoreDiff * direction;
+        }
+      }
+
+      if (a.score !== b.score) {
+        return b.score - a.score;
+      }
+      return a.externalUsername.localeCompare(b.externalUsername);
+    });
+  }, [leaderboard, leaderboardSort]);
+
+  const handleLeaderboardSort = (key: LeaderboardSortKey) => {
+    setLeaderboardSort((current) => {
+      if (current.key === key) {
+        return {
+          key,
+          direction: current.direction === "asc" ? "desc" : "asc",
+        };
+      }
+      return {
+        key,
+        direction: key === "name" ? "asc" : "desc",
+      };
+    });
+  };
+
+  const getLeaderboardSortLabel = (key: LeaderboardSortKey) => {
+    if (leaderboardSort.key !== key) {
+      return "sort";
+    }
+    return leaderboardSort.direction === "asc" ? "asc" : "desc";
+  };
 
   const openLeaderboardQuestions = (entry: LeaderboardEntry) => {
     const first = buildDisplayQuestions(entry.test.questions)[0];
@@ -1003,18 +1073,46 @@ export const TestDetail = () => {
               </p>
             ) : (
               <div className="overflow-hidden rounded-lg border border-border/60">
-                <div className="grid grid-cols-[72px_minmax(0,220px)_minmax(0,220px)_minmax(300px,1fr)_120px] gap-3 bg-muted/50 px-3 py-2 text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-                  <span>Rank</span>
-                  <span>Name</span>
+                <div className="grid grid-cols-[72px_minmax(0,220px)_minmax(0,220px)_minmax(0,160px)_minmax(0,160px)_minmax(0,160px)_minmax(0,180px)_120px] gap-3 bg-muted/50 px-3 py-2 text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+                  <button
+                    type="button"
+                    className="text-left"
+                    onClick={() => handleLeaderboardSort("rank")}
+                  >
+                    Rank ({getLeaderboardSortLabel("rank")})
+                  </button>
+                  <button
+                    type="button"
+                    className="text-left"
+                    onClick={() => handleLeaderboardSort("name")}
+                  >
+                    Name ({getLeaderboardSortLabel("name")})
+                  </button>
                   <span className="text-right">Linked</span>
-                  <span className="text-right">Score</span>
+                  {leaderboardSubjects.map((subject) => (
+                    <button
+                      key={subject}
+                      type="button"
+                      className="text-right"
+                      onClick={() => handleLeaderboardSort(subject)}
+                    >
+                      {subjectLabels[subject]} ({getLeaderboardSortLabel(subject)})
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    className="text-right"
+                    onClick={() => handleLeaderboardSort("total")}
+                  >
+                    Total ({getLeaderboardSortLabel("total")})
+                  </button>
                   <span className="text-right">Summary</span>
                 </div>
                 <div className="divide-y divide-border/60">
                   {leaderboardRows.map((entry) => (
                     <div
                       key={entry.participantKey}
-                      className="grid grid-cols-[72px_minmax(0,220px)_minmax(0,220px)_minmax(300px,1fr)_120px] items-start gap-3 px-3 py-2 text-xs text-muted-foreground"
+                      className="grid grid-cols-[72px_minmax(0,220px)_minmax(0,220px)_minmax(0,160px)_minmax(0,160px)_minmax(0,160px)_minmax(0,180px)_120px] items-start gap-3 px-3 py-2 text-xs text-muted-foreground"
                     >
                       <span className="font-semibold text-foreground">
                         #{entry.computedRank}
@@ -1039,57 +1137,46 @@ export const TestDetail = () => {
                           </p>
                         ) : null}
                       </div>
-                      <div className="justify-self-end w-full max-w-[380px]">
-                        <div className="flex items-start justify-end gap-3">
-                          <div className="w-[108px] space-y-1 pt-[2px]">
-                            {entry.subjectScores.map((item) => (
-                              <div
-                                key={`${entry.participantKey}-${item.subject}`}
-                                className="flex items-center gap-2"
-                              >
-                                <span className="w-8 shrink-0 text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
-                                  {subjectLabels[item.subject]}
-                                </span>
-                                <div className="min-w-0 flex-1">
-                                  <SegmentedProgressBar
-                                    className="h-1.5"
-                                    segments={[
-                                      {
-                                        value: Math.max(0, item.score),
-                                        className: "bg-sky-500",
-                                      },
-                                      {
-                                        value: Math.max(0, item.total - item.score),
-                                        className: "bg-zinc-300 dark:bg-zinc-700",
-                                      },
-                                    ]}
-                                  />
-                                </div>
-                                <span className="shrink-0 text-[10px] text-foreground/80">
-                                  {item.score}/{item.total}
-                                </span>
-                              </div>
-                            ))}
-                          </div>
-                          <div className="w-full max-w-[240px]">
+                      {leaderboardSubjects.map((subject) => {
+                        const item = entry.subjectScoreMap[subject];
+                        return (
+                          <div key={`${entry.participantKey}-${subject}`} className="w-full">
                             <span className="block text-right text-foreground/90">
-                              {entry.score}/{entry.totalScore}
+                              {item.score}/{item.total}
                             </span>
                             <SegmentedProgressBar
-                              className="mt-1 h-2"
+                              className="mt-1 h-1.5"
                               segments={[
                                 {
-                                  value: Math.max(0, entry.score),
-                                  className: "bg-emerald-500",
+                                  value: Math.max(0, item.score),
+                                  className: "bg-sky-500",
                                 },
                                 {
-                                  value: Math.max(0, entry.totalScore - entry.score),
+                                  value: Math.max(0, item.total - item.score),
                                   className: "bg-zinc-300 dark:bg-zinc-700",
                                 },
                               ]}
                             />
                           </div>
-                        </div>
+                        );
+                      })}
+                      <div className="w-full">
+                        <span className="block text-right text-foreground/90">
+                          {entry.score}/{entry.totalScore}
+                        </span>
+                        <SegmentedProgressBar
+                          className="mt-1 h-2"
+                          segments={[
+                            {
+                              value: Math.max(0, entry.score),
+                              className: "bg-emerald-500",
+                            },
+                            {
+                              value: Math.max(0, entry.totalScore - entry.score),
+                              className: "bg-zinc-300 dark:bg-zinc-700",
+                            },
+                          ]}
+                        />
                       </div>
                       <div className="justify-self-end text-right">
                         <Button
