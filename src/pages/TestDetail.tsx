@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { Star } from "lucide-react";
+import { ChevronDown, Star } from "lucide-react";
 import { useAppStore } from "@/lib/store";
 import {
   buildAnalysis,
@@ -39,7 +39,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { formatQuestionType } from "@/lib/utils";
+import { cn, formatQuestionType } from "@/lib/utils";
 import { buildDisplayQuestions } from "@/lib/questionDisplay";
 
 const formatSeconds = (value: number) => {
@@ -117,6 +117,12 @@ const buildDefaultTypeMappingRows = (): QuestionTypeMappingRow[] =>
   questionTypes.map((qtype) => createMappingRow(qtype, qtype));
 
 const LEADERBOARD_PREVIEW_TESTS_KEY = "testanalyser-leaderboard-preview-tests";
+const leaderboardSubjects: Subject[] = ["PHYSICS", "CHEMISTRY", "MATHEMATICS"];
+const subjectLabels: Record<Subject, string> = {
+  PHYSICS: "Phy",
+  CHEMISTRY: "Chem",
+  MATHEMATICS: "Math",
+};
 
 export const TestDetail = () => {
   const { testId } = useParams();
@@ -171,6 +177,7 @@ export const TestDetail = () => {
   const [selectedLeaderboardKey, setSelectedLeaderboardKey] = useState<
     string | null
   >(null);
+  const [isLeaderboardCollapsed, setIsLeaderboardCollapsed] = useState(false);
   const [collapsedSubjects, setCollapsedSubjects] = useState<
     Record<Subject, boolean>
   >({
@@ -589,9 +596,27 @@ export const TestDetail = () => {
         previousScore !== null && entry.score === previousScore
           ? previousRank
           : index + 1;
+      const subjectScores = leaderboardSubjects.map((subject) => {
+        const subjectQuestions = entry.test.questions.filter(
+          (question) => question.subject === subject,
+        );
+        const score = subjectQuestions.reduce(
+          (sum, question) => sum + getQuestionMark(entry.test, question),
+          0,
+        );
+        const total = subjectQuestions.reduce(
+          (sum, question) => sum + question.correctMarking,
+          0,
+        );
+        return {
+          subject,
+          score,
+          total,
+        };
+      });
       previousScore = entry.score;
       previousRank = rank;
-      return { ...entry, computedRank: rank };
+      return { ...entry, computedRank: rank, subjectScores };
     });
   }, [leaderboard]);
 
@@ -932,16 +957,39 @@ export const TestDetail = () => {
       <section>
         <Card className="app-panel">
           <CardContent className="space-y-4 p-6">
-            <div className="space-y-1">
-              <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                Leaderboard
-              </p>
-              <p className="text-sm text-muted-foreground">
-                Ranked by best score per external account for this exam.
-              </p>
+            <div className="flex items-start justify-between gap-3">
+              <div className="space-y-1">
+                <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                  Leaderboard
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Ranked by best score per external account for this exam.
+                </p>
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() =>
+                  setIsLeaderboardCollapsed((current) => !current)
+                }
+                aria-expanded={!isLeaderboardCollapsed}
+              >
+                {isLeaderboardCollapsed ? "Show" : "Hide"}
+                <ChevronDown
+                  className={cn(
+                    "ml-1 h-4 w-4 transition-transform",
+                    isLeaderboardCollapsed ? "-rotate-90" : "rotate-0",
+                  )}
+                />
+              </Button>
             </div>
 
-            {isLoadingLeaderboard ? (
+            {isLeaderboardCollapsed ? (
+              <p className="text-sm text-muted-foreground">
+                {leaderboardRows.length} entries
+              </p>
+            ) : isLoadingLeaderboard ? (
               <p className="text-sm text-muted-foreground">
                 Loading leaderboard...
               </p>
@@ -955,7 +1003,7 @@ export const TestDetail = () => {
               </p>
             ) : (
               <div className="overflow-hidden rounded-lg border border-border/60">
-                <div className="grid grid-cols-[72px_minmax(0,220px)_minmax(0,220px)_minmax(240px,1fr)_120px] gap-3 bg-muted/50 px-3 py-2 text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+                <div className="grid grid-cols-[72px_minmax(0,220px)_minmax(0,220px)_minmax(300px,1fr)_120px] gap-3 bg-muted/50 px-3 py-2 text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
                   <span>Rank</span>
                   <span>Name</span>
                   <span className="text-right">Linked</span>
@@ -966,7 +1014,7 @@ export const TestDetail = () => {
                   {leaderboardRows.map((entry) => (
                     <div
                       key={entry.participantKey}
-                      className="grid grid-cols-[72px_minmax(0,220px)_minmax(0,220px)_minmax(240px,1fr)_120px] items-start gap-3 px-3 py-2 text-xs text-muted-foreground"
+                      className="grid grid-cols-[72px_minmax(0,220px)_minmax(0,220px)_minmax(300px,1fr)_120px] items-start gap-3 px-3 py-2 text-xs text-muted-foreground"
                     >
                       <span className="font-semibold text-foreground">
                         #{entry.computedRank}
@@ -991,23 +1039,57 @@ export const TestDetail = () => {
                           </p>
                         ) : null}
                       </div>
-                      <div className="justify-self-end w-full max-w-[280px]">
-                        <span className="block text-right text-foreground/90">
-                          {entry.score}/{entry.totalScore}
-                        </span>
-                        <SegmentedProgressBar
-                          className="mt-1 h-2"
-                          segments={[
-                            {
-                              value: Math.max(0, entry.score),
-                              className: "bg-emerald-500",
-                            },
-                            {
-                              value: Math.max(0, entry.totalScore - entry.score),
-                              className: "bg-zinc-300 dark:bg-zinc-700",
-                            },
-                          ]}
-                        />
+                      <div className="justify-self-end w-full max-w-[380px]">
+                        <div className="flex items-start justify-end gap-3">
+                          <div className="w-[108px] space-y-1 pt-[2px]">
+                            {entry.subjectScores.map((item) => (
+                              <div
+                                key={`${entry.participantKey}-${item.subject}`}
+                                className="flex items-center gap-2"
+                              >
+                                <span className="w-8 shrink-0 text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+                                  {subjectLabels[item.subject]}
+                                </span>
+                                <div className="min-w-0 flex-1">
+                                  <SegmentedProgressBar
+                                    className="h-1.5"
+                                    segments={[
+                                      {
+                                        value: Math.max(0, item.score),
+                                        className: "bg-sky-500",
+                                      },
+                                      {
+                                        value: Math.max(0, item.total - item.score),
+                                        className: "bg-zinc-300 dark:bg-zinc-700",
+                                      },
+                                    ]}
+                                  />
+                                </div>
+                                <span className="shrink-0 text-[10px] text-foreground/80">
+                                  {item.score}/{item.total}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                          <div className="w-full max-w-[240px]">
+                            <span className="block text-right text-foreground/90">
+                              {entry.score}/{entry.totalScore}
+                            </span>
+                            <SegmentedProgressBar
+                              className="mt-1 h-2"
+                              segments={[
+                                {
+                                  value: Math.max(0, entry.score),
+                                  className: "bg-emerald-500",
+                                },
+                                {
+                                  value: Math.max(0, entry.totalScore - entry.score),
+                                  className: "bg-zinc-300 dark:bg-zinc-700",
+                                },
+                              ]}
+                            />
+                          </div>
+                        </div>
                       </div>
                       <div className="justify-self-end text-right">
                         <Button
