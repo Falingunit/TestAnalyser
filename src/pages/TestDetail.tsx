@@ -683,11 +683,11 @@ export const TestDetail = () => {
     });
   };
 
-  const getLeaderboardSortLabel = (key: LeaderboardSortKey) => {
+  const getLeaderboardSortIndicator = (key: LeaderboardSortKey) => {
     if (leaderboardSort.key !== key) {
-      return "sort";
+      return null;
     }
-    return leaderboardSort.direction === "asc" ? "asc" : "desc";
+    return leaderboardSort.direction === "asc" ? "^" : "v";
   };
 
   const openLeaderboardQuestions = (entry: LeaderboardEntry) => {
@@ -1073,38 +1073,58 @@ export const TestDetail = () => {
               </p>
             ) : (
               <div className="overflow-hidden rounded-lg border border-border/60">
-                <div className="grid grid-cols-[72px_minmax(0,220px)_minmax(0,220px)_minmax(0,160px)_minmax(0,160px)_minmax(0,160px)_minmax(0,180px)_120px] gap-3 bg-muted/50 px-3 py-2 text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+                <div className="grid grid-cols-[72px_minmax(220px,1fr)_minmax(0,220px)_minmax(0,160px)_minmax(0,160px)_minmax(0,160px)_minmax(0,180px)_120px] gap-3 bg-muted/50 px-3 py-2 text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
                   <button
                     type="button"
-                    className="text-left"
+                    className="cursor-pointer text-left transition-colors hover:text-foreground"
                     onClick={() => handleLeaderboardSort("rank")}
                   >
-                    Rank ({getLeaderboardSortLabel("rank")})
+                    <span className="inline-flex items-center gap-1">
+                      Rank
+                      {getLeaderboardSortIndicator("rank") ? (
+                        <span>{getLeaderboardSortIndicator("rank")}</span>
+                      ) : null}
+                    </span>
                   </button>
                   <button
                     type="button"
-                    className="text-left"
+                    className="cursor-pointer text-left transition-colors hover:text-foreground"
                     onClick={() => handleLeaderboardSort("name")}
                   >
-                    Name ({getLeaderboardSortLabel("name")})
+                    <span className="inline-flex items-center gap-1">
+                      Name
+                      {getLeaderboardSortIndicator("name") ? (
+                        <span>{getLeaderboardSortIndicator("name")}</span>
+                      ) : null}
+                    </span>
                   </button>
                   <span className="text-right">Linked</span>
                   {leaderboardSubjects.map((subject) => (
                     <button
                       key={subject}
                       type="button"
-                      className="text-right"
+                      className="cursor-pointer text-right transition-colors hover:text-foreground"
                       onClick={() => handleLeaderboardSort(subject)}
                     >
-                      {subjectLabels[subject]} ({getLeaderboardSortLabel(subject)})
+                      <span className="inline-flex items-center justify-end gap-1">
+                        {subjectLabels[subject]}
+                        {getLeaderboardSortIndicator(subject) ? (
+                          <span>{getLeaderboardSortIndicator(subject)}</span>
+                        ) : null}
+                      </span>
                     </button>
                   ))}
                   <button
                     type="button"
-                    className="text-right"
+                    className="cursor-pointer text-right transition-colors hover:text-foreground"
                     onClick={() => handleLeaderboardSort("total")}
                   >
-                    Total ({getLeaderboardSortLabel("total")})
+                    <span className="inline-flex items-center justify-end gap-1">
+                      Total
+                      {getLeaderboardSortIndicator("total") ? (
+                        <span>{getLeaderboardSortIndicator("total")}</span>
+                      ) : null}
+                    </span>
                   </button>
                   <span className="text-right">Summary</span>
                 </div>
@@ -1112,7 +1132,7 @@ export const TestDetail = () => {
                   {leaderboardRows.map((entry) => (
                     <div
                       key={entry.participantKey}
-                      className="grid grid-cols-[72px_minmax(0,220px)_minmax(0,220px)_minmax(0,160px)_minmax(0,160px)_minmax(0,160px)_minmax(0,180px)_120px] items-start gap-3 px-3 py-2 text-xs text-muted-foreground"
+                      className="grid grid-cols-[72px_minmax(220px,1fr)_minmax(0,220px)_minmax(0,160px)_minmax(0,160px)_minmax(0,160px)_minmax(0,180px)_120px] items-start gap-3 px-3 py-2 text-xs text-muted-foreground"
                     >
                       <span className="font-semibold text-foreground">
                         #{entry.computedRank}
