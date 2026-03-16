@@ -73,6 +73,7 @@ model Question {
   qtype              String
   correctAnswer      String
   questionContent    String
+  solutionContent    String?
   optionContentA     String?
   optionContentB     String?
   optionContentC     String?

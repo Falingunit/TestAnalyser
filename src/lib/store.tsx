@@ -73,6 +73,26 @@ type Store = {
       unattempted: number;
     };
   }) => Promise<AuthResult>;
+  updateQuestionContent: (payload: {
+    testId: string;
+    questionId: string;
+    questionContent: string;
+    optionContentA?: string | null;
+    optionContentB?: string | null;
+    optionContentC?: string | null;
+    optionContentD?: string | null;
+    solutionContent?: string | null;
+  }) => Promise<AuthResult>;
+  uploadTemporaryQuestionImage: (payload: {
+    testId: string;
+    questionId: string;
+    dataUrl: string;
+  }) => Promise<{ ok: boolean; url?: string; message?: string }>;
+  discardTemporaryQuestionImages: (payload: {
+    testId: string;
+    questionId: string;
+    urls: string[];
+  }) => Promise<AuthResult>;
   updateMarkingScheme: (payload: {
     testId: string;
     scheme: Record<
@@ -850,6 +870,109 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const updateQuestionContent: Store["updateQuestionContent"] = async ({
+    testId,
+    questionId,
+    questionContent,
+    optionContentA,
+    optionContentB,
+    optionContentC,
+    optionContentD,
+    solutionContent,
+  }) => {
+    const token = loadToken();
+    if (!token) {
+      return { ok: false, message: "Missing session token." };
+    }
+
+    try {
+      const data = await requestJson<{ test: TestRecord }>(
+        `/api/tests/${testId}/questions/${questionId}/content`,
+        {
+          method: "POST",
+          token,
+          body: JSON.stringify({
+            questionContent,
+            optionContentA,
+            optionContentB,
+            optionContentC,
+            optionContentD,
+            solutionContent,
+          }),
+        },
+      );
+      setState((prev) => ({
+        ...prev,
+        tests: replaceTest(prev.tests, data.test),
+      }));
+      return { ok: true };
+    } catch (error) {
+      const message =
+        error instanceof ApiError
+          ? error.message
+          : error instanceof Error
+            ? error.message
+            : "Unable to update question content.";
+      return { ok: false, message };
+    }
+  };
+
+  const uploadTemporaryQuestionImage: Store["uploadTemporaryQuestionImage"] =
+    async ({ testId, questionId, dataUrl }) => {
+      const token = loadToken();
+      if (!token) {
+        return { ok: false, message: "Missing session token." };
+      }
+
+      try {
+        const data = await requestJson<{ url: string }>(
+          `/api/tests/${testId}/questions/${questionId}/content-images/temp`,
+          {
+            method: "POST",
+            token,
+            body: JSON.stringify({ dataUrl }),
+          },
+        );
+        return { ok: true, url: data.url };
+      } catch (error) {
+        const message =
+          error instanceof ApiError
+            ? error.message
+            : error instanceof Error
+              ? error.message
+              : "Unable to upload image.";
+        return { ok: false, message };
+      }
+    };
+
+  const discardTemporaryQuestionImages: Store["discardTemporaryQuestionImages"] =
+    async ({ testId, questionId, urls }) => {
+      const token = loadToken();
+      if (!token) {
+        return { ok: false, message: "Missing session token." };
+      }
+
+      try {
+        await requestJson<{ ok: true }>(
+          `/api/tests/${testId}/questions/${questionId}/content-images/temp/cleanup`,
+          {
+            method: "POST",
+            token,
+            body: JSON.stringify({ urls }),
+          },
+        );
+        return { ok: true };
+      } catch (error) {
+        const message =
+          error instanceof ApiError
+            ? error.message
+            : error instanceof Error
+              ? error.message
+              : "Unable to discard temporary images.";
+        return { ok: false, message };
+      }
+    };
+
   const updateMarkingScheme: Store["updateMarkingScheme"] = async ({
     testId,
     scheme,
@@ -1035,9 +1158,9 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
     "sbaniruddh1@gmail.com",
     "testing@gmail.com",
   ];
-  const isAdmin = currentUser?.email
-    ? adminEmails.includes(currentUser?.email)
-    : false;
+  const isAdmin =
+    currentUser?.role === "admin" ||
+    (currentUser?.email ? adminEmails.includes(currentUser.email) : false);
   const fontScale = currentUser?.preferences.fontScale ?? state.ui.fontScale;
 
   const value = {
@@ -1060,6 +1183,9 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
     resyncTest,
     toggleQuestionBookmark,
     updateAnswerKey,
+    updateQuestionContent,
+    uploadTemporaryQuestionImage,
+    discardTemporaryQuestionImages,
     updateMarkingScheme,
     setTheme,
     setMode,

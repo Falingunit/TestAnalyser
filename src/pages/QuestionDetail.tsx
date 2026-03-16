@@ -3,12 +3,13 @@ import {
   useMemo,
   useRef,
   useState,
+  type ClipboardEvent,
   type FormEvent,
   type MouseEvent,
   type PointerEvent,
 } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
-import { Copy, Star } from "lucide-react";
+import { ChevronDown, Copy, Pencil, Star } from "lucide-react";
 import { useAppStore } from "@/lib/store";
 import {
   buildAnalysis,
@@ -98,6 +99,48 @@ const toOptionArray = (value: unknown): string[] => {
   return [];
 };
 
+const htmlHasVisibleContent = (value: string | null | undefined) => {
+  if (!value) {
+    return false;
+  }
+  if (/<img\b/i.test(value)) {
+    return true;
+  }
+  return value
+    .replace(/<br\s*\/?>/gi, " ")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/<[^>]+>/g, " ")
+    .trim().length > 0;
+};
+
+const fileToDataUrl = (file: File) =>
+  new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result ?? ""));
+    reader.onerror = () => reject(new Error("Unable to read the pasted image."));
+    reader.readAsDataURL(file);
+  });
+
+const insertTextAtSelection = (
+  value: string,
+  selectionStart: number,
+  selectionEnd: number,
+  text: string,
+) => ({
+  value: `${value.slice(0, selectionStart)}${text}${value.slice(selectionEnd)}`,
+  cursor: selectionStart + text.length,
+});
+
+type ContentDraftField =
+  | "questionContent"
+  | "optionContentA"
+  | "optionContentB"
+  | "optionContentC"
+  | "optionContentD"
+  | "solutionContent";
+
+type QuestionContentDraft = Record<ContentDraftField, string>;
+
 type ChatMessage = {
   id: string;
   author: string;
@@ -145,6 +188,24 @@ const parseNumericGroup = (value: string) => {
   return { min: trimmed, max: "" };
 };
 
+const buildQuestionContentDraft = (
+  question: {
+    questionContent: string;
+    optionContentA: string | null;
+    optionContentB: string | null;
+    optionContentC: string | null;
+    optionContentD: string | null;
+    solutionContent?: string | null;
+  } | null,
+): QuestionContentDraft => ({
+  questionContent: question?.questionContent ?? "",
+  optionContentA: question?.optionContentA ?? "",
+  optionContentB: question?.optionContentB ?? "",
+  optionContentC: question?.optionContentC ?? "",
+  optionContentD: question?.optionContentD ?? "",
+  solutionContent: question?.solutionContent ?? "",
+});
+
 const keyOptionLabels = ["A", "B", "C", "D"] as const;
 const questionTypes: QuestionType[] = ["MCQ", "MAQ", "NAT", "VMAQ"];
 const LEADERBOARD_PREVIEW_TESTS_KEY = "testanalyser-leaderboard-preview-tests";
@@ -169,8 +230,16 @@ const loadLeaderboardPreviewTest = (testId?: string) => {
 export const QuestionDetail = () => {
   const { testId, questionId } = useParams();
   const [searchParams] = useSearchParams();
-  const { state, updateAnswerKey, toggleQuestionBookmark, currentUser } =
-    useAppStore();
+  const {
+    state,
+    updateAnswerKey,
+    updateQuestionContent,
+    uploadTemporaryQuestionImage,
+    discardTemporaryQuestionImages,
+    toggleQuestionBookmark,
+    currentUser,
+    isAdmin,
+  } = useAppStore();
   const isReadonlyView = searchParams.get("readonly") === "1";
   const previewParticipantName = searchParams.get("viewerName")?.trim() ?? "";
   const previewParticipantUsername =
@@ -241,12 +310,24 @@ export const QuestionDetail = () => {
   const [chatKeyLoaded, setChatKeyLoaded] = useState<string | null>(null);
   const [isBookmarking, setIsBookmarking] = useState(false);
   const [isCopying, setIsCopying] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [contentDraft, setContentDraft] = useState<QuestionContentDraft>(
+    buildQuestionContentDraft(null),
+  );
+  const [tempImageUrls, setTempImageUrls] = useState<string[]>([]);
+  const [isUploadingDraftImage, setIsUploadingDraftImage] = useState(false);
+  const [isSavingContent, setIsSavingContent] = useState(false);
+  const [isSolutionOpen, setIsSolutionOpen] = useState(false);
   const [isImageOpen, setIsImageOpen] = useState(false);
   const [imageSrc, setImageSrc] = useState<string | null>(null);
   const [imageZoom, setImageZoom] = useState(1);
   const [zoomLevel, setZoomLevel] = useState(1);
   const [imageOffset, setImageOffset] = useState({ x: 0, y: 0 });
   const questionCopyRef = useRef<HTMLDivElement | null>(null);
+  const draftFieldRefs = useRef<
+    Partial<Record<ContentDraftField, HTMLTextAreaElement | null>>
+  >({});
+  const tempImageUrlsRef = useRef<string[]>([]);
   const dragState = useRef<{
     startX: number;
     startY: number;
@@ -268,6 +349,10 @@ export const QuestionDetail = () => {
     );
   }, [zoomLevel]);
 
+  useEffect(() => {
+    tempImageUrlsRef.current = tempImageUrls;
+  }, [tempImageUrls]);
+
   const analysis = test ? buildAnalysis(test) : null;
   const totalScore = test
     ? test.questions.reduce((sum, question) => sum + question.correctMarking, 0)
@@ -282,6 +367,8 @@ export const QuestionDetail = () => {
   const questionEntry =
     currentIndex >= 0 ? displayQuestions[currentIndex] : null;
   const question = questionEntry?.question ?? null;
+  const hasSolution = htmlHasVisibleContent(question?.solutionContent);
+  const hasAdminPrivileges = isAdmin;
   const timeSpent = question && test ? getTimeForQuestion(test, question) : 0;
   const peerTimeSpent =
     question && test ? test.peerTimings?.[question.id] : undefined;
@@ -318,6 +405,13 @@ export const QuestionDetail = () => {
   );
   const keyOptions = keyOptionLabels;
   const keyOptionOrder: readonly string[] = keyOptionLabels;
+
+  useEffect(() => {
+    setContentDraft(buildQuestionContentDraft(question));
+    setTempImageUrls([]);
+    setIsEditDialogOpen(false);
+    setIsSolutionOpen(false);
+  }, [question]);
 
   const addKeyAnswerGroup = () => {
     setKeyAnswerGroups((prev) => [...prev, buildKeyGroup()]);
@@ -438,7 +532,7 @@ export const QuestionDetail = () => {
   const handleKeyUpdate = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setMessage(null);
-    if (!hasAdminPriviliges) {
+    if (!hasAdminPrivileges) {
       setMessage("Only admins can update answer keys.");
       return;
     }
@@ -502,6 +596,161 @@ export const QuestionDetail = () => {
       setMessage(result.message ?? "Unable to update bookmark.");
     }
     setIsBookmarking(false);
+  };
+
+  const cleanupTemporaryImages = async (urls: string[]) => {
+    if (!test || !question || urls.length === 0) {
+      return;
+    }
+    await discardTemporaryQuestionImages({
+      testId: test.id,
+      questionId: question.id,
+      urls,
+    });
+  };
+
+  useEffect(() => {
+    const currentTestId = test?.id;
+    const currentQuestionId = question?.id;
+
+    return () => {
+      const urls = tempImageUrlsRef.current;
+      if (!currentTestId || !currentQuestionId || urls.length === 0) {
+        return;
+      }
+      void discardTemporaryQuestionImages({
+        testId: currentTestId,
+        questionId: currentQuestionId,
+        urls,
+      });
+    };
+  }, [discardTemporaryQuestionImages, question?.id, test?.id]);
+
+  const handleEditDialogOpenChange = (open: boolean) => {
+    if (open) {
+      setContentDraft(buildQuestionContentDraft(question));
+      setTempImageUrls([]);
+      setIsEditDialogOpen(true);
+      return;
+    }
+
+    const pendingUrls = tempImageUrls;
+    setIsEditDialogOpen(false);
+    setContentDraft(buildQuestionContentDraft(question));
+    setTempImageUrls([]);
+    void cleanupTemporaryImages(pendingUrls);
+  };
+
+  const updateContentDraftField = (
+    field: ContentDraftField,
+    value: string,
+  ) => {
+    setContentDraft((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleDraftImagePaste = (field: ContentDraftField) => {
+    return async (event: ClipboardEvent<HTMLTextAreaElement>) => {
+      const imageFiles = Array.from(event.clipboardData.items)
+        .filter((item) => item.kind === "file" && item.type.startsWith("image/"))
+        .map((item) => item.getAsFile())
+        .filter((item): item is File => Boolean(item));
+
+      if (!test || !question || imageFiles.length === 0) {
+        return;
+      }
+
+      event.preventDefault();
+      setIsUploadingDraftImage(true);
+
+      const textarea = event.currentTarget;
+      let nextValue = textarea.value;
+      let cursor = textarea.selectionStart ?? nextValue.length;
+
+      try {
+        for (const file of imageFiles) {
+          const dataUrl = await fileToDataUrl(file);
+          const result = await uploadTemporaryQuestionImage({
+            testId: test.id,
+            questionId: question.id,
+            dataUrl,
+          });
+
+          const imageUrl = result.url;
+          if (!result.ok || !imageUrl) {
+            setMessage(result.message ?? "Unable to upload pasted image.");
+            return;
+          }
+
+          const insertion = insertTextAtSelection(
+            nextValue,
+            cursor,
+            cursor,
+            `<img src="${imageUrl}" alt="" />`,
+          );
+          nextValue = insertion.value;
+          cursor = insertion.cursor;
+          setTempImageUrls((prev) =>
+            prev.includes(imageUrl) ? prev : [...prev, imageUrl],
+          );
+        }
+
+        setContentDraft((prev) => ({ ...prev, [field]: nextValue }));
+        setMessage(null);
+
+        window.requestAnimationFrame(() => {
+          const target = draftFieldRefs.current[field];
+          if (!target) {
+            return;
+          }
+          target.focus();
+          target.selectionStart = cursor;
+          target.selectionEnd = cursor;
+        });
+      } catch (error) {
+        setMessage(
+          error instanceof Error
+            ? error.message
+            : "Unable to upload pasted image.",
+        );
+      } finally {
+        setIsUploadingDraftImage(false);
+      }
+    };
+  };
+
+  const handleContentSave = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!test || !question) {
+      return;
+    }
+    if (!isAdmin) {
+      setMessage("Only admins can edit question content.");
+      return;
+    }
+
+    setIsSavingContent(true);
+    const result = await updateQuestionContent({
+      testId: test.id,
+      questionId: question.id,
+      questionContent: contentDraft.questionContent,
+      optionContentA: contentDraft.optionContentA || null,
+      optionContentB: contentDraft.optionContentB || null,
+      optionContentC: contentDraft.optionContentC || null,
+      optionContentD: contentDraft.optionContentD || null,
+      solutionContent: contentDraft.solutionContent || null,
+    });
+    setIsSavingContent(false);
+
+    if (!result.ok) {
+      setMessage(result.message ?? "Unable to update question content.");
+      return;
+    }
+
+    setMessage("Question content updated.");
+    const pendingUrls = tempImageUrls;
+    setTempImageUrls([]);
+    setIsEditDialogOpen(false);
+    void cleanupTemporaryImages(pendingUrls);
   };
 
   const prev = currentIndex > 0 ? displayQuestions[currentIndex - 1] : null;
@@ -820,7 +1069,7 @@ export const QuestionDetail = () => {
   };
 
   const togglePin = (id: string) => {
-    if (!hasAdminPriviliges) {
+    if (!hasAdminPrivileges) {
       return;
     }
     setChatMessages((prevMessages) =>
@@ -831,7 +1080,7 @@ export const QuestionDetail = () => {
   };
 
   const deleteMessage = (id: string, author: string) => {
-    if (!hasAdminPriviliges && currentUser?.name !== author) {
+    if (!hasAdminPrivileges && currentUser?.name !== author) {
       return;
     }
     setChatMessages((prevMessages) =>
@@ -1088,15 +1337,6 @@ export const QuestionDetail = () => {
       </Card>
     );
   }
-
-  const allowedUsers = [
-    "testing@gmail.com",
-    "spssabaris@gmail.com",
-    "sbaniruddh1@gmail.com",
-  ];
-
-  const hasAdminPriviliges =
-    currentUser && allowedUsers.includes(currentUser.email);
 
   return (
     <div className="flex h-[calc(100vh-90px)] flex-col gap-1 overflow-hidden">
@@ -1452,6 +1692,46 @@ export const QuestionDetail = () => {
                     </div>
                   ) : null}
                 </div>
+
+                {hasSolution ? (
+                  <div className="space-y-3 rounded-xl border border-border/60 bg-background/70 p-3">
+                    <button
+                      type="button"
+                      className="flex w-full items-center justify-between gap-3 text-left"
+                      onClick={() => setIsSolutionOpen((prev) => !prev)}
+                    >
+                      <div>
+                        <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                          Solution
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {isSolutionOpen ? "Hide worked solution" : "Show worked solution"}
+                        </p>
+                      </div>
+                      <ChevronDown
+                        className={cn(
+                          "h-4 w-4 text-muted-foreground transition-transform",
+                          isSolutionOpen && "rotate-180",
+                        )}
+                      />
+                    </button>
+                    {isSolutionOpen ? (
+                      <div
+                        className={cn(
+                          "question-html rounded-lg bg-transparent leading-relaxed",
+                          mode === "dark"
+                            ? "question-html--blend-dark"
+                            : "question-html--blend-light",
+                        )}
+                        style={{ fontSize: zoomLevel + "rem" }}
+                        dangerouslySetInnerHTML={{
+                          __html: question.solutionContent ?? "",
+                        }}
+                        onClick={handleRichContentClick}
+                      />
+                    ) : null}
+                  </div>
+                ) : null}
               </div>
             </div>
 
@@ -1602,9 +1882,9 @@ export const QuestionDetail = () => {
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => togglePin(chat.id)}
-                                disabled={!hasAdminPriviliges}
+                                disabled={!hasAdminPrivileges}
                                 title={
-                                  hasAdminPriviliges
+                                  hasAdminPrivileges
                                     ? "Toggle pin"
                                     : "Admins only"
                                 }
@@ -1619,11 +1899,11 @@ export const QuestionDetail = () => {
                                   deleteMessage(chat.id, chat.author)
                                 }
                                 disabled={
-                                  !hasAdminPriviliges &&
+                                  !hasAdminPrivileges &&
                                   currentUser?.name !== chat.author
                                 }
                                 title={
-                                  hasAdminPriviliges ||
+                                  hasAdminPrivileges ||
                                   currentUser?.name === chat.author
                                     ? "Delete message"
                                     : "Admins or message author only"
@@ -1650,12 +1930,121 @@ export const QuestionDetail = () => {
                   </form>
                 </div>
               ) : null}
-              {!isReadonlyView && currentUser && allowedUsers.includes(currentUser.email) ? (
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <Button variant="secondary">Update key/marking</Button>
-                  </DialogTrigger>
-                  <DialogContent>
+              {!isReadonlyView && currentUser && hasAdminPrivileges ? (
+                <div className="flex flex-wrap gap-2">
+                  <Dialog
+                    open={isEditDialogOpen}
+                    onOpenChange={handleEditDialogOpenChange}
+                  >
+                    <DialogTrigger asChild>
+                      <Button variant="secondary">
+                        <Pencil className="mr-2 h-4 w-4" />
+                        Edit content
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-4xl">
+                      <DialogHeader>
+                        <DialogTitle>Edit question content</DialogTitle>
+                        <DialogDescription>
+                          Paste HTML for the question, options, and solution. Pasted images upload immediately as temporary assets and are finalized only when you save.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <form className="space-y-4" onSubmit={handleContentSave}>
+                        <div className="space-y-2">
+                          <label className="text-xs text-muted-foreground">
+                            Question HTML
+                          </label>
+                          <Textarea
+                            ref={(node) => {
+                              draftFieldRefs.current.questionContent = node;
+                            }}
+                            value={contentDraft.questionContent}
+                            onChange={(event) =>
+                              updateContentDraftField(
+                                "questionContent",
+                                event.target.value,
+                              )
+                            }
+                            onPaste={handleDraftImagePaste("questionContent")}
+                            className="min-h-36 font-mono text-xs"
+                          />
+                        </div>
+                        <div className="grid gap-4 sm:grid-cols-2">
+                          {(
+                            [
+                              ["optionContentA", "Option A"],
+                              ["optionContentB", "Option B"],
+                              ["optionContentC", "Option C"],
+                              ["optionContentD", "Option D"],
+                            ] as const
+                          ).map(([field, label]) => (
+                            <div key={field} className="space-y-2">
+                              <label className="text-xs text-muted-foreground">
+                                {label}
+                              </label>
+                              <Textarea
+                                ref={(node) => {
+                                  draftFieldRefs.current[field] = node;
+                                }}
+                                value={contentDraft[field]}
+                                onChange={(event) =>
+                                  updateContentDraftField(
+                                    field,
+                                    event.target.value,
+                                  )
+                                }
+                                onPaste={handleDraftImagePaste(field)}
+                                className="min-h-28 font-mono text-xs"
+                              />
+                            </div>
+                          ))}
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-xs text-muted-foreground">
+                            Solution HTML
+                          </label>
+                          <Textarea
+                            ref={(node) => {
+                              draftFieldRefs.current.solutionContent = node;
+                            }}
+                            value={contentDraft.solutionContent}
+                            onChange={(event) =>
+                              updateContentDraftField(
+                                "solutionContent",
+                                event.target.value,
+                              )
+                            }
+                            onPaste={handleDraftImagePaste("solutionContent")}
+                            className="min-h-32 font-mono text-xs"
+                            placeholder="Leave empty to hide the solution section."
+                          />
+                        </div>
+                        {isUploadingDraftImage ? (
+                          <p className="text-xs text-muted-foreground">
+                            Uploading pasted image...
+                          </p>
+                        ) : null}
+                        <DialogFooter>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => handleEditDialogOpenChange(false)}
+                            disabled={isSavingContent}
+                          >
+                            Cancel
+                          </Button>
+                          <Button type="submit" disabled={isSavingContent}>
+                            {isSavingContent ? "Saving..." : "Save content"}
+                          </Button>
+                        </DialogFooter>
+                      </form>
+                    </DialogContent>
+                  </Dialog>
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button variant="secondary">Update key/marking</Button>
+                    </DialogTrigger>
+                    <DialogContent>
                     <DialogHeader>
                       <DialogTitle>Update answer key and marking</DialogTitle>
                       <DialogDescription>
@@ -1943,9 +2332,10 @@ export const QuestionDetail = () => {
                     </form>
                   </DialogContent>
                 </Dialog>
+                </div>
               ) : !isReadonlyView ? (
                 <p className="text-xs text-muted-foreground">
-                  Only admins can update answer keys.
+                  Only admins can edit question content or answer keys.
                 </p>
               ) : null}
 

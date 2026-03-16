@@ -16,6 +16,7 @@ type ExistingQuestion = {
   subject: string
   qtype: string
   questionContent: string
+  solutionContent?: string | null
   optionContentA: string | null
   optionContentB: string | null
   optionContentC: string | null

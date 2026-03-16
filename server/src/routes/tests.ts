@@ -4,6 +4,12 @@ import { requireAuth, type AuthRequest } from '../middleware/auth.js'
 import type { ScrapeProgress } from '../scraper/types.js'
 import { syncExternalAccount } from '../services/syncService.js'
 import { decryptSecret } from '../utils/crypto.js'
+import {
+  deleteTemporaryQuestionImages,
+  finalizeQuestionContentAssets,
+  hasVisibleHtmlContent,
+  saveTemporaryQuestionImage,
+} from '../utils/questionAssets.js'
 
 const router = Router()
 
@@ -214,6 +220,7 @@ const serializeAttempt = (
         correctAnswer: string
         keyUpdate: string | null
         questionContent: string
+        solutionContent?: string | null
         optionContentA: string | null
         optionContentB: string | null
         optionContentC: string | null
@@ -276,6 +283,7 @@ const serializeAttempt = (
       correctAnswer: parseStoredJson(question.correctAnswer),
       keyUpdate: parseStoredJson(question.keyUpdate),
       questionContent: question.questionContent,
+      solutionContent: question.solutionContent ?? null,
       optionContentA: question.optionContentA,
       optionContentB: question.optionContentB,
       optionContentC: question.optionContentC,
@@ -704,8 +712,48 @@ const fetchCalculatedRankForAttempt = async (
 const isNonEmptyString = (value: unknown): value is string =>
   typeof value === 'string' && value.trim().length > 0
 
+const ADMIN_EMAILS = new Set([
+  'spssabaris@gmail.com',
+  'sbaniruddh1@gmail.com',
+  'testing@gmail.com',
+])
+
 const toSingleParam = (value: string | string[] | undefined) =>
   Array.isArray(value) ? value[0] : value
+
+const isAdminRole = (role: unknown) =>
+  typeof role === 'string' && role.trim().toLowerCase() === 'admin'
+
+const getRequestBaseUrl = (req: AuthRequest) =>
+  `${req.protocol}://${req.get('host')}`
+
+const requireAdminUser = async (req: AuthRequest) => {
+  if (!req.user) {
+    return { ok: false as const, status: 401, error: 'Unauthorized.' }
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: req.user.userId },
+    select: { email: true, role: true },
+  })
+  if (!user) {
+    return { ok: false as const, status: 404, error: 'User not found.' }
+  }
+
+  if (isAdminRole(user.role) || ADMIN_EMAILS.has(user.email.toLowerCase())) {
+    return { ok: true as const, user }
+  }
+
+  return { ok: false as const, status: 403, error: 'Admin access required.' }
+}
+
+const normalizeHtmlField = (value: unknown) => {
+  if (typeof value !== 'string') {
+    return null
+  }
+  const trimmed = value.trim()
+  return trimmed.length > 0 ? trimmed : null
+}
 
 const toFiniteNumber = (value: unknown) => {
   if (typeof value === 'number' && Number.isFinite(value)) {
@@ -1195,11 +1243,239 @@ router.get('/:id/leaderboard', requireAuth, async (req: AuthRequest, res, next) 
   }
 })
 
+router.post(
+  '/:id/questions/:questionId/content-images/temp',
+  requireAuth,
+  async (req: AuthRequest, res, next) => {
+    try {
+      const adminCheck = await requireAdminUser(req)
+      if (!adminCheck.ok) {
+        return res.status(adminCheck.status).json({ error: adminCheck.error })
+      }
+
+      const attemptId = toSingleParam(req.params.id)
+      const questionId = toSingleParam(req.params.questionId)
+      const dataUrl = req.body?.dataUrl
+
+      if (!isNonEmptyString(attemptId)) {
+        return res.status(400).json({ error: 'Invalid test id.' })
+      }
+      if (!isNonEmptyString(questionId)) {
+        return res.status(400).json({ error: 'questionId is required.' })
+      }
+      if (!isNonEmptyString(dataUrl)) {
+        return res.status(400).json({ error: 'dataUrl is required.' })
+      }
+
+      const attempt = await prisma.attempt.findFirst({
+        where: { id: attemptId, userId: req.user?.userId },
+        include: { exam: { select: { questions: { select: { id: true } } } } },
+      })
+      if (!attempt) {
+        return res.status(404).json({ error: 'Test not found.' })
+      }
+
+      const hasQuestion = attempt.exam.questions.some((question) => question.id === questionId)
+      if (!hasQuestion) {
+        return res.status(404).json({ error: 'Question not found.' })
+      }
+
+      const image = await saveTemporaryQuestionImage({
+        userId: req.user!.userId,
+        dataUrl,
+        baseUrl: getRequestBaseUrl(req),
+      })
+
+      return res.json({ url: image.url })
+    } catch (error) {
+      return next(error)
+    }
+  },
+)
+
+router.post(
+  '/:id/questions/:questionId/content-images/temp/cleanup',
+  requireAuth,
+  async (req: AuthRequest, res, next) => {
+    try {
+      const adminCheck = await requireAdminUser(req)
+      if (!adminCheck.ok) {
+        return res.status(adminCheck.status).json({ error: adminCheck.error })
+      }
+
+      const attemptId = toSingleParam(req.params.id)
+      const questionId = toSingleParam(req.params.questionId)
+      const urls = Array.isArray(req.body?.urls) ? req.body.urls.filter(isNonEmptyString) : []
+
+      if (!isNonEmptyString(attemptId)) {
+        return res.status(400).json({ error: 'Invalid test id.' })
+      }
+      if (!isNonEmptyString(questionId)) {
+        return res.status(400).json({ error: 'questionId is required.' })
+      }
+
+      const attempt = await prisma.attempt.findFirst({
+        where: { id: attemptId, userId: req.user?.userId },
+        include: { exam: { select: { questions: { select: { id: true } } } } },
+      })
+      if (!attempt) {
+        return res.status(404).json({ error: 'Test not found.' })
+      }
+
+      const hasQuestion = attempt.exam.questions.some((question) => question.id === questionId)
+      if (!hasQuestion) {
+        return res.status(404).json({ error: 'Question not found.' })
+      }
+
+      await deleteTemporaryQuestionImages({
+        userId: req.user!.userId,
+        urls,
+      })
+
+      return res.json({ ok: true })
+    } catch (error) {
+      return next(error)
+    }
+  },
+)
+
+router.post(
+  '/:id/questions/:questionId/content',
+  requireAuth,
+  async (req: AuthRequest, res, next) => {
+    try {
+      const adminCheck = await requireAdminUser(req)
+      if (!adminCheck.ok) {
+        return res.status(adminCheck.status).json({ error: adminCheck.error })
+      }
+
+      const attemptId = toSingleParam(req.params.id)
+      const questionId = toSingleParam(req.params.questionId)
+
+      if (!isNonEmptyString(attemptId)) {
+        return res.status(400).json({ error: 'Invalid test id.' })
+      }
+      if (!isNonEmptyString(questionId)) {
+        return res.status(400).json({ error: 'questionId is required.' })
+      }
+
+      const attempt = await prisma.attempt.findFirst({
+        where: { id: attemptId, userId: req.user?.userId },
+        include: {
+          exam: { include: { questions: true } },
+        },
+      })
+
+      if (!attempt) {
+        return res.status(404).json({ error: 'Test not found.' })
+      }
+
+      const examQuestion = attempt.exam.questions.find(
+        (item: { id: string }) => item.id === questionId,
+      )
+      if (!examQuestion) {
+        return res.status(404).json({ error: 'Question not found.' })
+      }
+
+      const nextQuestionContent = normalizeHtmlField(req.body?.questionContent)
+      if (!nextQuestionContent) {
+        return res.status(400).json({ error: 'questionContent is required.' })
+      }
+
+      const finalized = await finalizeQuestionContentAssets({
+        userId: req.user!.userId,
+        questionId: examQuestion.id,
+        baseUrl: getRequestBaseUrl(req),
+        questionContent: nextQuestionContent,
+        optionContentA: normalizeHtmlField(req.body?.optionContentA),
+        optionContentB: normalizeHtmlField(req.body?.optionContentB),
+        optionContentC: normalizeHtmlField(req.body?.optionContentC),
+        optionContentD: normalizeHtmlField(req.body?.optionContentD),
+        solutionContent: normalizeHtmlField(req.body?.solutionContent),
+        previousHtmlValues: [
+          examQuestion.questionContent,
+          examQuestion.optionContentA,
+          examQuestion.optionContentB,
+          examQuestion.optionContentC,
+          examQuestion.optionContentD,
+          (examQuestion as { solutionContent?: string | null }).solutionContent ??
+            null,
+        ],
+      })
+      const nextSolutionContent = hasVisibleHtmlContent(finalized.solutionContent)
+        ? finalized.solutionContent
+        : null
+      const currentSolutionContent =
+        (examQuestion as { solutionContent?: string | null }).solutionContent ?? null
+
+      const hasContentChanges =
+        examQuestion.questionContent !== finalized.questionContent ||
+        examQuestion.optionContentA !== finalized.optionContentA ||
+        examQuestion.optionContentB !== finalized.optionContentB ||
+        examQuestion.optionContentC !== finalized.optionContentC ||
+        examQuestion.optionContentD !== finalized.optionContentD ||
+        nextSolutionContent !== currentSolutionContent
+
+      if (hasContentChanges) {
+        await prisma.$executeRaw`
+          UPDATE "Question"
+          SET
+            "questionContent" = ${finalized.questionContent},
+            "optionContentA" = ${finalized.optionContentA},
+            "optionContentB" = ${finalized.optionContentB},
+            "optionContentC" = ${finalized.optionContentC},
+            "optionContentD" = ${finalized.optionContentD},
+            "solutionContent" = ${nextSolutionContent}
+          WHERE "id" = ${examQuestion.id}
+        `
+      }
+
+      const updated = await prisma.attempt.findFirst({
+        where: { id: attempt.id },
+        include: {
+          exam: { include: { questions: true } },
+        },
+      })
+
+      if (!updated) {
+        return res.status(404).json({ error: 'Test not found.' })
+      }
+
+      const peerTimings = await fetchPeerTimingsForExam(updated.examId, req.user!.userId)
+      const peerAnswerStats = await fetchPeerAnswerStatsForExam(
+        updated.examId,
+        req.user!.userId,
+        updated.exam.questions.map((question) => ({
+          id: question.id,
+          qtype: question.qtype,
+          key: resolveQuestionKey(question),
+          correctMarking: question.correctMarking,
+          incorrectMarking: question.incorrectMarking,
+          unattemptedMarking: question.unattemptedMarking,
+        })),
+      )
+      const calculatedRank = await fetchCalculatedRankForAttempt({
+        attemptId: updated.id,
+        examId: updated.examId,
+        questions: updated.exam.questions,
+      })
+
+      return res.json({
+        test: serializeAttempt(updated, calculatedRank, peerTimings, peerAnswerStats),
+      })
+    } catch (error) {
+      return next(error)
+    }
+  },
+)
+
 router.post('/:id/answer-key', requireAuth, async (req: AuthRequest, res, next) => {
   try {
-    if (!req.user) {
-      return res.status(401).json({ error: 'Unauthorized.' })
+    const adminCheck = await requireAdminUser(req)
+    if (!adminCheck.ok) {
+      return res.status(adminCheck.status).json({ error: adminCheck.error })
     }
+    const authUser = req.user!
     const attemptId = toSingleParam(req.params.id)
     if (!isNonEmptyString(attemptId)) {
       return res.status(400).json({ error: 'Invalid test id.' })
@@ -1221,7 +1497,7 @@ router.post('/:id/answer-key', requireAuth, async (req: AuthRequest, res, next) 
     }
 
     const attempt = await prisma.attempt.findFirst({
-      where: { id: attemptId, userId: req.user.userId },
+      where: { id: attemptId, userId: authUser.userId },
       include: {
         exam: { include: { questions: true } },
       },
@@ -1259,11 +1535,11 @@ router.post('/:id/answer-key', requireAuth, async (req: AuthRequest, res, next) 
 
     const peerTimings = await fetchPeerTimingsForExam(
       attempt.examId,
-      req.user.userId,
+      authUser.userId,
     )
     const peerAnswerStats = await fetchPeerAnswerStatsForExam(
       attempt.examId,
-      req.user.userId,
+      authUser.userId,
       attempt.exam.questions.map((question) => ({
         id: question.id,
         qtype: question.qtype,
@@ -1334,11 +1610,11 @@ router.post('/:id/answer-key', requireAuth, async (req: AuthRequest, res, next) 
 
     const updatedPeerTimings = await fetchPeerTimingsForExam(
       updated.examId,
-      req.user.userId,
+      authUser.userId,
     )
     const updatedPeerAnswerStats = await fetchPeerAnswerStatsForExam(
       updated.examId,
-      req.user.userId,
+      authUser.userId,
       updated.exam.questions.map((question) => ({
         id: question.id,
         qtype: question.qtype,

@@ -1,5 +1,6 @@
 import express from 'express'
 import cors from 'cors'
+import { getUploadsRoot } from './utils/questionAssets.js'
 import { env } from './config.js'
 import authRouter from './routes/auth.js'
 import externalRouter from './routes/external.js'
@@ -22,7 +23,8 @@ app.use(
     credentials: true,
   }),
 )
-app.use(express.json({ limit: '2mb' }))
+app.use(express.json({ limit: '15mb' }))
+app.use('/uploads', express.static(getUploadsRoot()))
 
 app.get('/health', (_req, res) => {
   res.json({ ok: true })

@@ -22,6 +22,7 @@ export type Question = {
   correctAnswer: AnswerValue
   keyUpdate: AnswerValue
   questionContent: string
+  solutionContent: string | null
   optionContentA: string | null
   optionContentB: string | null
   optionContentC: string | null
