@@ -8,7 +8,7 @@ import {
   type MouseEvent,
   type PointerEvent,
 } from "react";
-import { Link, useParams, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { ChevronDown, Copy, Pencil, Star } from "lucide-react";
 import { useAppStore } from "@/lib/store";
 import {
@@ -229,6 +229,7 @@ const loadLeaderboardPreviewTest = (testId?: string) => {
 
 export const QuestionDetail = () => {
   const { testId, questionId } = useParams();
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const {
     state,
@@ -793,6 +794,12 @@ export const QuestionDetail = () => {
   const resolvedTestId = test?.id ?? testId ?? "";
   const questionLink = (targetQuestionId: string) =>
     `/app/questions/${resolvedTestId}/${targetQuestionId}${readonlySearch}`;
+  const navigateToQuestion = (targetQuestionId: string | undefined) => {
+    if (!targetQuestionId) {
+      return;
+    }
+    navigate(questionLink(targetQuestionId));
+  };
   const orderedMessages = useMemo(() => {
     return [...chatMessages].sort((a, b) => {
       const pinDelta = Number(Boolean(b.pinned)) - Number(Boolean(a.pinned));
@@ -1324,6 +1331,84 @@ export const QuestionDetail = () => {
       setIsCopying(false);
     }
   };
+
+  useEffect(() => {
+    const isEditableTarget = (target: EventTarget | null) => {
+      if (!(target instanceof HTMLElement)) {
+        return false;
+      }
+      if (target.isContentEditable) {
+        return true;
+      }
+      return Boolean(
+        target.closest(
+          'input, textarea, select, [contenteditable="true"], [role="textbox"]',
+        ),
+      );
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey) {
+        return;
+      }
+      if (isEditableTarget(event.target)) {
+        return;
+      }
+      if (
+        event.target instanceof HTMLElement &&
+        event.target.closest('[role="dialog"]')
+      ) {
+        return;
+      }
+
+      if (event.key === "ArrowLeft") {
+        if (!prev) {
+          return;
+        }
+        event.preventDefault();
+        navigateToQuestion(prev.question.id);
+        return;
+      }
+
+      if (event.key === "ArrowRight") {
+        if (!next) {
+          return;
+        }
+        event.preventDefault();
+        navigateToQuestion(next.question.id);
+        return;
+      }
+
+      if (event.key === "s" || event.key === "S") {
+        if (isReadonlyView || isBookmarking) {
+          return;
+        }
+        event.preventDefault();
+        void handleBookmarkToggle();
+        return;
+      }
+
+      if (event.key === "c" || event.key === "C") {
+        if (isCopying) {
+          return;
+        }
+        event.preventDefault();
+        void handleCopyQuestionImage();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [
+    isBookmarking,
+    isCopying,
+    isReadonlyView,
+    next,
+    prev,
+    navigate,
+    readonlySearch,
+    resolvedTestId,
+  ]);
 
   if (!test || !question) {
     return (
