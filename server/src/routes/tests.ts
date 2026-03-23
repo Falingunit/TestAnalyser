@@ -198,6 +198,48 @@ const buildCalculatedRankByAttemptId = (
 
 const serializeJson = (value: unknown) => JSON.stringify(value ?? null)
 
+const normalizeTag = (value: string) =>
+  value
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+
+const parseTagList = (value: unknown) => {
+  const raw = Array.isArray(value)
+    ? value
+    : typeof value === 'string'
+      ? value.split(/\s+/)
+      : []
+  const deduped = new Set<string>()
+  raw.forEach((item) => {
+    if (typeof item !== 'string') {
+      return
+    }
+    const normalized = normalizeTag(item)
+    if (!normalized) {
+      return
+    }
+    deduped.add(normalized)
+  })
+  return Array.from(deduped)
+}
+
+const parseAttemptQuestionTags = (value: unknown) => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return {} as Record<string, string[]>
+  }
+
+  const result: Record<string, string[]> = {}
+  Object.entries(value as Record<string, unknown>).forEach(([questionId, tags]) => {
+    const normalized = parseTagList(tags)
+    if (normalized.length > 0) {
+      result[questionId] = normalized
+    }
+  })
+  return result
+}
+
 const serializeAttempt = (
   attempt: {
     id: string
@@ -205,6 +247,7 @@ const serializeAttempt = (
     answers: string
     timings: string
     bookmarks: string
+    questionTags: string
     rank: number | null
     exam: {
       id: string
@@ -216,6 +259,7 @@ const serializeAttempt = (
         id: string
         sourceQtypeRaw: string | null
         subject: string
+        globalTags: string
         qtype: string
         correctAnswer: string
         keyUpdate: string | null
@@ -258,6 +302,7 @@ const serializeAttempt = (
     rawBookmarks && typeof rawBookmarks === 'object'
       ? (rawBookmarks as Record<string, boolean>)
       : {}
+  const questionTags = parseAttemptQuestionTags(parseStoredJson(attempt.questionTags))
   const settings = parseExamSettings(parseStoredJson(attempt.exam.markingScheme))
 
   return {
@@ -279,6 +324,8 @@ const serializeAttempt = (
       id: question.id,
       sourceQtypeRaw: question.sourceQtypeRaw,
       subject: question.subject,
+      tags: questionTags[question.id] ?? [],
+      lockedTags: parseTagList(parseStoredJson(question.globalTags)),
       qtype: question.qtype,
       correctAnswer: parseStoredJson(question.correctAnswer),
       keyUpdate: parseStoredJson(question.keyUpdate),
@@ -1641,6 +1688,182 @@ router.post('/:id/answer-key', requireAuth, async (req: AuthRequest, res, next) 
     return next(error)
   }
 })
+
+router.patch(
+  '/:id/questions/:questionId/tags',
+  requireAuth,
+  async (req: AuthRequest, res, next) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: 'Unauthorized.' })
+      }
+
+      const attemptId = toSingleParam(req.params.id)
+      const questionId = toSingleParam(req.params.questionId)
+      const tags = parseTagList(req.body?.tags)
+
+      if (!isNonEmptyString(attemptId)) {
+        return res.status(400).json({ error: 'Invalid test id.' })
+      }
+      if (!isNonEmptyString(questionId)) {
+        return res.status(400).json({ error: 'questionId is required.' })
+      }
+
+      const attempt = await prisma.attempt.findFirst({
+        where: { id: attemptId, userId: req.user.userId },
+        include: {
+          exam: { include: { questions: true } },
+        },
+      })
+
+      if (!attempt) {
+        return res.status(404).json({ error: 'Test not found.' })
+      }
+
+      const examQuestion = attempt.exam.questions.find(
+        (item: { id: string }) => item.id === questionId,
+      )
+      if (!examQuestion) {
+        return res.status(404).json({ error: 'Question not found.' })
+      }
+
+      const questionTagMap = parseAttemptQuestionTags(parseStoredJson(attempt.questionTags))
+      if (tags.length > 0) {
+        questionTagMap[questionId] = tags
+      } else {
+        delete questionTagMap[questionId]
+      }
+
+      await prisma.attempt.update({
+        where: { id: attempt.id },
+        data: { questionTags: serializeJson(questionTagMap) },
+      })
+
+      const refreshed = await prisma.attempt.findFirst({
+        where: { id: attempt.id, userId: req.user.userId },
+        include: {
+          exam: { include: { questions: true } },
+        },
+      })
+
+      if (!refreshed) {
+        return res.status(404).json({ error: 'Test not found.' })
+      }
+
+      const peerTimings = await fetchPeerTimingsForExam(
+        refreshed.examId,
+        req.user.userId,
+      )
+      const peerAnswerStats = await fetchPeerAnswerStatsForExam(
+        refreshed.examId,
+        req.user.userId,
+        refreshed.exam.questions.map((question) => ({
+          id: question.id,
+          qtype: question.qtype,
+          key: resolveQuestionKey(question),
+          correctMarking: question.correctMarking,
+          incorrectMarking: question.incorrectMarking,
+          unattemptedMarking: question.unattemptedMarking,
+        })),
+      )
+      const calculatedRank = await fetchCalculatedRankForAttempt({
+        attemptId: refreshed.id,
+        examId: refreshed.examId,
+        questions: refreshed.exam.questions,
+      })
+      return res.json({
+        test: serializeAttempt(refreshed, calculatedRank, peerTimings, peerAnswerStats),
+      })
+    } catch (error) {
+      return next(error)
+    }
+  },
+)
+
+router.patch(
+  '/:id/questions/:questionId/global-tags',
+  requireAuth,
+  async (req: AuthRequest, res, next) => {
+    try {
+      const adminCheck = await requireAdminUser(req)
+      if (!adminCheck.ok) {
+        return res.status(adminCheck.status).json({ error: adminCheck.error })
+      }
+
+      const attemptId = toSingleParam(req.params.id)
+      const questionId = toSingleParam(req.params.questionId)
+      const tags = parseTagList(req.body?.tags)
+
+      if (!isNonEmptyString(attemptId)) {
+        return res.status(400).json({ error: 'Invalid test id.' })
+      }
+      if (!isNonEmptyString(questionId)) {
+        return res.status(400).json({ error: 'questionId is required.' })
+      }
+
+      const attempt = await prisma.attempt.findFirst({
+        where: { id: attemptId, userId: req.user?.userId },
+        include: {
+          exam: { include: { questions: true } },
+        },
+      })
+
+      if (!attempt) {
+        return res.status(404).json({ error: 'Test not found.' })
+      }
+
+      const examQuestion = attempt.exam.questions.find(
+        (item: { id: string }) => item.id === questionId,
+      )
+      if (!examQuestion) {
+        return res.status(404).json({ error: 'Question not found.' })
+      }
+
+      await prisma.question.update({
+        where: { id: examQuestion.id },
+        data: { globalTags: serializeJson(tags) },
+      })
+
+      const refreshed = await prisma.attempt.findFirst({
+        where: { id: attempt.id, userId: req.user?.userId },
+        include: {
+          exam: { include: { questions: true } },
+        },
+      })
+
+      if (!refreshed) {
+        return res.status(404).json({ error: 'Test not found.' })
+      }
+
+      const peerTimings = await fetchPeerTimingsForExam(
+        refreshed.examId,
+        req.user!.userId,
+      )
+      const peerAnswerStats = await fetchPeerAnswerStatsForExam(
+        refreshed.examId,
+        req.user!.userId,
+        refreshed.exam.questions.map((question) => ({
+          id: question.id,
+          qtype: question.qtype,
+          key: resolveQuestionKey(question),
+          correctMarking: question.correctMarking,
+          incorrectMarking: question.incorrectMarking,
+          unattemptedMarking: question.unattemptedMarking,
+        })),
+      )
+      const calculatedRank = await fetchCalculatedRankForAttempt({
+        attemptId: refreshed.id,
+        examId: refreshed.examId,
+        questions: refreshed.exam.questions,
+      })
+      return res.json({
+        test: serializeAttempt(refreshed, calculatedRank, peerTimings, peerAnswerStats),
+      })
+    } catch (error) {
+      return next(error)
+    }
+  },
+)
 
 router.patch(
   '/:id/questions/:questionId/bookmarks',

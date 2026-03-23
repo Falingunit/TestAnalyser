@@ -554,6 +554,7 @@ const upsertAttempt = async (payload: {
       answers: serializeJson(answerByQuestionId),
       timings: serializeJson(timingByQuestionId),
       bookmarks: serializeJson({}),
+      questionTags: serializeJson({}),
       ...overview,
     },
   })

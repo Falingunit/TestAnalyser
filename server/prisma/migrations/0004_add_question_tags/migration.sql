@@ -1,0 +1,5 @@
+ALTER TABLE "Question"
+ADD COLUMN "globalTags" TEXT NOT NULL DEFAULT '[]';
+
+ALTER TABLE "Attempt"
+ADD COLUMN "questionTags" TEXT NOT NULL DEFAULT '{}';

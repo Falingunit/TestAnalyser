@@ -49,6 +49,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn, formatQuestionType } from "@/lib/utils";
+import { TagInput } from "@/components/TagInput";
+import { collectPersistedTags } from "@/lib/tags";
 
 const formatSeconds = (value: number) => {
   if (!Number.isFinite(value)) {
@@ -238,6 +240,8 @@ export const QuestionDetail = () => {
     uploadTemporaryQuestionImage,
     discardTemporaryQuestionImages,
     toggleQuestionBookmark,
+    updateQuestionTags,
+    updateGlobalQuestionTags,
     currentUser,
     isAdmin,
   } = useAppStore();
@@ -309,6 +313,8 @@ export const QuestionDetail = () => {
     buildKeyGroup(),
   ]);
   const [notes, setNotes] = useState("");
+  const [isSavingTags, setIsSavingTags] = useState(false);
+  const [isSavingGlobalTags, setIsSavingGlobalTags] = useState(false);
   const [chatInput, setChatInput] = useState("");
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatKeyLoaded, setChatKeyLoaded] = useState<string | null>(null);
@@ -328,6 +334,10 @@ export const QuestionDetail = () => {
   const [zoomLevel, setZoomLevel] = useState(1);
   const [imageOffset, setImageOffset] = useState({ x: 0, y: 0 });
   const questionCopyRef = useRef<HTMLDivElement | null>(null);
+  const availableTags = useMemo(
+    () => collectPersistedTags(state.tests),
+    [state.tests],
+  );
   const draftFieldRefs = useRef<
     Partial<Record<ContentDraftField, HTMLTextAreaElement | null>>
   >({});
@@ -407,6 +417,8 @@ export const QuestionDetail = () => {
   const isBookmarked = Boolean(
     test && question ? test.bookmarks?.[question.id] : false,
   );
+  const editableTags = question?.tags ?? [];
+  const lockedTags = question?.lockedTags ?? [];
   const keyOptions = keyOptionLabels;
   const keyOptionOrder: readonly string[] = keyOptionLabels;
 
@@ -600,6 +612,38 @@ export const QuestionDetail = () => {
       setMessage(result.message ?? "Unable to update bookmark.");
     }
     setIsBookmarking(false);
+  };
+
+  const handleQuestionTagsChange = async (nextTags: string[]) => {
+    if (!test || !question || isReadonlyView) {
+      return;
+    }
+    setIsSavingTags(true);
+    const result = await updateQuestionTags({
+      testId: test.id,
+      questionId: question.id,
+      tags: nextTags,
+    });
+    if (!result.ok) {
+      setMessage(result.message ?? "Unable to update tags.");
+    }
+    setIsSavingTags(false);
+  };
+
+  const handleGlobalTagsChange = async (nextTags: string[]) => {
+    if (!test || !question || !hasAdminPrivileges) {
+      return;
+    }
+    setIsSavingGlobalTags(true);
+    const result = await updateGlobalQuestionTags({
+      testId: test.id,
+      questionId: question.id,
+      tags: nextTags,
+    });
+    if (!result.ok) {
+      setMessage(result.message ?? "Unable to update admin tags.");
+    }
+    setIsSavingGlobalTags(false);
   };
 
   const cleanupTemporaryImages = async (urls: string[]) => {
@@ -1393,7 +1437,12 @@ export const QuestionDetail = () => {
         return;
       }
 
-      if (event.key === "s" || event.key === "S") {
+      if (
+        event.key === "s" ||
+        event.key === "S" ||
+        event.key === "b" ||
+        event.key === "B"
+      ) {
         if (isReadonlyView || isBookmarking) {
           return;
         }
@@ -1866,94 +1915,126 @@ export const QuestionDetail = () => {
               Answer review
             </p>
             <div className="min-h-0 flex-1 space-y-4 overflow-y-auto pr-2">
-              <div className="space-y-2 text-base">
-                <div className="p-2 py-0">
-                  <div className="grid grid-cols-2 gap-y-2">
-                    <div className="flex flex-col">
-                      <span className="text-xs font-normal text-neutral-800 dark:text-neutral-300 uppercase tracking-tight">
-                        Your Answer
-                      </span>
-                      <div className="flex items-center gap-1.5 mt-0.5">
-                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
-                        <span className="text-sm font-black text-neutral-700 dark:text-neutral-300">
-                          {formatAnswerValue(answer)}
+              <div className="space-y-3">
+                <div className="space-y-1">
+                  <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                    Summary
+                  </p>
+                </div>
+                <div className="space-y-2 text-base">
+                  <div className="p-2 py-0">
+                    <div className="grid grid-cols-2 gap-y-2">
+                      <div className="flex flex-col">
+                        <span className="text-xs font-normal text-neutral-800 dark:text-neutral-300 uppercase tracking-tight">
+                          Your Answer
                         </span>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          <div className="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
+                          <span className="text-sm font-black text-neutral-700 dark:text-neutral-300">
+                            {formatAnswerValue(answer)}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-xs font-normal text-neutral-800 dark:text-neutral-300 uppercase tracking-tight">
+                          Correct Answer
+                        </span>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          <div className="w-1.5 h-1.5 rounded-full bg-amber-400"></div>
+                          <span className="text-sm font-black text-neutral-700 dark:text-neutral-300">
+                            {formatAnswerValue(question.keyUpdate)}
+                          </span>
+                        </div>
                       </div>
                     </div>
-                    <div className="flex flex-col">
-                      <span className="text-xs font-normal text-neutral-800 dark:text-neutral-300 uppercase tracking-tight">
-                        Correct Answer
-                      </span>
-                      <div className="flex items-center gap-1.5 mt-0.5">
-                        <div className="w-1.5 h-1.5 rounded-full bg-amber-400"></div>
-                        <span className="text-sm font-black text-neutral-700 dark:text-neutral-300">
-                          {formatAnswerValue(question.keyUpdate)}
+                    <div className="grid grid-cols-2 gap-y-2">
+                      <div className="flex flex-col">
+                        <span className="text-xs font-normal text-neutral-800 dark:text-neutral-300 uppercase tracking-tight">
+                          Original Answer
                         </span>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          <div className="w-1.5 h-1.5 rounded-full bg-orange-500"></div>
+                          <span className="text-sm font-black text-neutral-700 dark:text-neutral-300">
+                            {formatAnswerValue(question.correctAnswer)}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-xs font-normal text-neutral-800 dark:text-neutral-300 uppercase tracking-tight">
+                          Marks
+                        </span>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          <div className="w-1.5 h-1.5 rounded-full bg-neutral-300"></div>
+                          <span className="text-sm font-black text-neutral-700 dark:text-neutral-300">
+                            {score}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-y-2">
-                    <div className="flex flex-col">
-                      <span className="text-xs font-normal text-neutral-800 dark:text-neutral-300 uppercase tracking-tight">
-                        Original Answer
-                      </span>
-                      <div className="flex items-center gap-1.5 mt-0.5">
-                        <div className="w-1.5 h-1.5 rounded-full bg-orange-500"></div>
-                        <span className="text-sm font-black text-neutral-700 dark:text-neutral-300">
-                          {formatAnswerValue(question.correctAnswer)}
-                        </span>
-                      </div>
+                  <div className="flex items-center justify-between transition-colors">
+                    <span className="text-xs font-normal text-neutral-800 dark:text-neutral-300 uppercase tracking-widest">
+                      Time Spent
+                    </span>
+                    <div className="px-2.5 py-1 rounded-lg text-xs font-black bg-emerald-50 dark:bg-emerald-900/30 text-blue-600 dark:text-blue-400">
+                      {formatSeconds(timeSpent)}
                     </div>
-                    <div className="flex flex-col">
-                      <span className="text-xs font-normal text-neutral-800 dark:text-neutral-300 uppercase tracking-tight">
-                        Marks
-                      </span>
-                      <div className="flex items-center gap-1.5 mt-0.5">
-                        <div className="w-1.5 h-1.5 rounded-full bg-neutral-300"></div>
-                        <span className="text-sm font-black text-neutral-700 dark:text-neutral-300">
-                          {score}
-                        </span>
-                      </div>
+                  </div>
+                  <div className="flex items-center justify-between transition-colors">
+                    <span className="text-xs font-normal text-neutral-800 dark:text-neutral-300 uppercase tracking-widest">
+                      Avg Time (Others)
+                    </span>
+                    <div className="px-2.5 py-1 rounded-lg text-xs font-black bg-emerald-50 dark:bg-emerald-900/30 text-blue-600 dark:text-blue-400">
+                      {peerTimeLabel}
                     </div>
                   </div>
                 </div>
-                <Separator className="mt-3" />
-                <div className="flex items-center justify-between transition-colors">
-                  <span className="text-xs font-normal text-neutral-800 dark:text-neutral-300 uppercase tracking-widest">
-                    Time Spent
-                  </span>
-                  <div className="px-2.5 py-1 rounded-lg text-xs font-black bg-emerald-50 dark:bg-emerald-900/30 text-blue-600 dark:text-blue-400">
-                    {formatSeconds(timeSpent)}
-                  </div>
-                </div>
-                <div className="flex items-center justify-between transition-colors">
-                  <span className="text-xs font-normal text-neutral-800 dark:text-neutral-300 uppercase tracking-widest">
-                    Avg Time (Others)
-                  </span>
-                  <div className="px-2.5 py-1 rounded-lg text-xs font-black bg-emerald-50 dark:bg-emerald-900/30 text-blue-600 dark:text-blue-400">
-                    {peerTimeLabel}
-                  </div>
-                </div>
+                <Separator />
               </div>
 
               {!isReadonlyView ? (
-                <div className="space-y-2">
-                  <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                    Notes
-                  </p>
-                  <Textarea
-                    value={notes}
-                    onChange={(event) => setNotes(event.target.value)}
-                    placeholder="Add your notes for this question"
-                  />
+                <div className="space-y-3">
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                        Tags
+                      </p>
+                      {isSavingTags ? (
+                        <span className="text-xs text-muted-foreground">
+                          Saving...
+                        </span>
+                      ) : null}
+                    </div>
+                    <TagInput
+                      value={editableTags}
+                      lockedTags={lockedTags}
+                      suggestions={availableTags}
+                      onChange={handleQuestionTagsChange}
+                      placeholder="Type tags and press space"
+                      emptyMessage="No matching existing tags"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                      Notes
+                    </p>
+                    <Textarea
+                      value={notes}
+                      onChange={(event) => setNotes(event.target.value)}
+                      placeholder="Add your notes for this question"
+                    />
+                  </div>
+                  <Separator />
                 </div>
               ) : null}
 
               {!isReadonlyView ? (
                 <div className="space-y-3">
-                  <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                    Key discussion
-                  </p>
+                  <div className="space-y-1">
+                    <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                      Key discussion
+                    </p>
+                  </div>
                   <div className="space-y-2">
                     {activeMessages.length === 0 ? (
                       <p className="text-xs text-muted-foreground">
@@ -2029,21 +2110,28 @@ export const QuestionDetail = () => {
                     />
                     <Button type="submit">Send</Button>
                   </form>
+                  <Separator />
                 </div>
               ) : null}
               {!isReadonlyView && currentUser && hasAdminPrivileges ? (
-                <div className="flex flex-wrap gap-2">
-                  <Dialog
-                    open={isEditDialogOpen}
-                    onOpenChange={handleEditDialogOpenChange}
-                  >
-                    <DialogTrigger asChild>
-                      <Button variant="secondary">
-                        <Pencil className="mr-2 h-4 w-4" />
-                        Edit content
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-4xl">
+                <div className="space-y-3">
+                  <div className="space-y-1">
+                    <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                      Admin tools
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <Dialog
+                      open={isEditDialogOpen}
+                      onOpenChange={handleEditDialogOpenChange}
+                    >
+                      <DialogTrigger asChild>
+                        <Button variant="secondary">
+                          <Pencil className="mr-2 h-4 w-4" />
+                          Edit content
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-4xl">
                       <DialogHeader>
                         <DialogTitle>Edit question content</DialogTitle>
                         <DialogDescription>
@@ -2139,21 +2227,21 @@ export const QuestionDetail = () => {
                           </Button>
                         </DialogFooter>
                       </form>
-                    </DialogContent>
-                  </Dialog>
-                  <Dialog>
-                    <DialogTrigger asChild>
-                      <Button variant="secondary">Update key/marking</Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Update answer key and marking</DialogTitle>
-                      <DialogDescription>
-                        Add one or more valid answers and set question-level
-                        marking values.
-                      </DialogDescription>
-                    </DialogHeader>
-                    <form className="space-y-4" onSubmit={handleKeyUpdate}>
+                      </DialogContent>
+                    </Dialog>
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button variant="secondary">Update key/marking</Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Update answer key and marking</DialogTitle>
+                        <DialogDescription>
+                          Add one or more valid answers and set question-level
+                          marking values.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <form className="space-y-4" onSubmit={handleKeyUpdate}>
                       <div className="space-y-3">
                         <div className="space-y-1">
                           <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
@@ -2425,14 +2513,40 @@ export const QuestionDetail = () => {
                           </div>
                         </div>
                       </div>
-                      <DialogFooter>
-                        <DialogClose>
-                          <Button type="submit">Save update</Button>
-                        </DialogClose>
-                      </DialogFooter>
-                    </form>
-                  </DialogContent>
-                </Dialog>
+                        <DialogFooter>
+                          <DialogClose>
+                            <Button type="submit">Save update</Button>
+                          </DialogClose>
+                        </DialogFooter>
+                      </form>
+                    </DialogContent>
+                  </Dialog>
+                  </div>
+                  <div className="space-y-2">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="space-y-1">
+                      <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                        Admin tags
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        These tags are shared with every user and cannot be
+                        removed from personal tag fields.
+                      </p>
+                    </div>
+                    {isSavingGlobalTags ? (
+                      <span className="text-xs text-muted-foreground">
+                        Saving...
+                      </span>
+                    ) : null}
+                  </div>
+                  <TagInput
+                    value={lockedTags}
+                    suggestions={availableTags}
+                    onChange={handleGlobalTagsChange}
+                    placeholder="Add global tags"
+                    emptyMessage="No matching existing tags"
+                  />
+                  </div>
                 </div>
               ) : !isReadonlyView ? (
                 <p className="text-xs text-muted-foreground">

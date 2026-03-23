@@ -78,6 +78,8 @@ export type QuestionRecord = {
   id: string
   sourceQtypeRaw?: string | null
   subject: Subject
+  tags: string[]
+  lockedTags: string[]
   qtype: QuestionType
   correctAnswer: AnswerValue
   keyUpdate: AnswerValue

@@ -70,6 +70,7 @@ model Question {
   examId             String
   sourceQtypeRaw     String?
   subject            String
+  globalTags         String    @default("[]")
   qtype              String
   correctAnswer      String
   questionContent    String
@@ -100,6 +101,7 @@ model Attempt {
   timings   String
   rank      Int?
   bookmarks String @default("{}")
+  questionTags String @default("{}")
   user      User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   exam      Exam   @relation(fields: [examId], references: [id], onDelete: Cascade)
 

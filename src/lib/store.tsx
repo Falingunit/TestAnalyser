@@ -62,6 +62,16 @@ type Store = {
     questionId: string;
     bookmarked?: boolean;
   }) => Promise<AuthResult>;
+  updateQuestionTags: (payload: {
+    testId: string;
+    questionId: string;
+    tags: string[];
+  }) => Promise<AuthResult>;
+  updateGlobalQuestionTags: (payload: {
+    testId: string;
+    questionId: string;
+    tags: string[];
+  }) => Promise<AuthResult>;
   updateAnswerKey: (payload: {
     testId: string;
     questionId: string;
@@ -308,6 +318,23 @@ const normalizeAccount = (account: {
 
 const replaceTest = (tests: TestRecord[], updated: TestRecord) =>
   tests.map((test) => (test.id === updated.id ? updated : test));
+
+const updateQuestionInTests = (
+  tests: TestRecord[],
+  testId: string,
+  questionId: string,
+  updater: (question: TestRecord["questions"][number]) => TestRecord["questions"][number],
+) =>
+  tests.map((test) =>
+    test.id !== testId
+      ? test
+      : {
+          ...test,
+          questions: test.questions.map((question) =>
+            question.id === questionId ? updater(question) : question,
+          ),
+        },
+  );
 
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -870,6 +897,108 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const updateQuestionTags: Store["updateQuestionTags"] = async ({
+    testId,
+    questionId,
+    tags,
+  }) => {
+    const token = loadToken();
+    if (!token) {
+      return { ok: false, message: "Missing session token." };
+    }
+
+    let previousTestsSnapshot: TestRecord[] = [];
+    setState((prev) => {
+      previousTestsSnapshot = prev.tests;
+      return {
+        ...prev,
+        tests: updateQuestionInTests(prev.tests, testId, questionId, (question) => ({
+          ...question,
+          tags: [...tags],
+        })),
+      };
+    });
+
+    try {
+      const data = await requestJson<{ test: TestRecord }>(
+        `/api/tests/${testId}/questions/${questionId}/tags`,
+        {
+          method: "PATCH",
+          token,
+          body: JSON.stringify({ tags }),
+        },
+      );
+      setState((prev) => ({
+        ...prev,
+        tests: replaceTest(prev.tests, data.test),
+      }));
+      return { ok: true };
+    } catch (error) {
+      setState((prev) => ({
+        ...prev,
+        tests: previousTestsSnapshot,
+      }));
+      const message =
+        error instanceof ApiError
+          ? error.message
+          : error instanceof Error
+            ? error.message
+            : "Unable to update tags.";
+      return { ok: false, message };
+    }
+  };
+
+  const updateGlobalQuestionTags: Store["updateGlobalQuestionTags"] = async ({
+    testId,
+    questionId,
+    tags,
+  }) => {
+    const token = loadToken();
+    if (!token) {
+      return { ok: false, message: "Missing session token." };
+    }
+
+    let previousTestsSnapshot: TestRecord[] = [];
+    setState((prev) => {
+      previousTestsSnapshot = prev.tests;
+      return {
+        ...prev,
+        tests: updateQuestionInTests(prev.tests, testId, questionId, (question) => ({
+          ...question,
+          lockedTags: [...tags],
+        })),
+      };
+    });
+
+    try {
+      const data = await requestJson<{ test: TestRecord }>(
+        `/api/tests/${testId}/questions/${questionId}/global-tags`,
+        {
+          method: "PATCH",
+          token,
+          body: JSON.stringify({ tags }),
+        },
+      );
+      setState((prev) => ({
+        ...prev,
+        tests: replaceTest(prev.tests, data.test),
+      }));
+      return { ok: true };
+    } catch (error) {
+      setState((prev) => ({
+        ...prev,
+        tests: previousTestsSnapshot,
+      }));
+      const message =
+        error instanceof ApiError
+          ? error.message
+          : error instanceof Error
+            ? error.message
+            : "Unable to update global tags.";
+      return { ok: false, message };
+    }
+  };
+
   const updateQuestionContent: Store["updateQuestionContent"] = async ({
     testId,
     questionId,
@@ -1182,6 +1311,8 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
     resyncAllTests,
     resyncTest,
     toggleQuestionBookmark,
+    updateQuestionTags,
+    updateGlobalQuestionTags,
     updateAnswerKey,
     updateQuestionContent,
     uploadTemporaryQuestionImage,

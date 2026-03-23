@@ -41,6 +41,8 @@ import {
 } from "@/components/ui/dialog";
 import { cn, formatQuestionType } from "@/lib/utils";
 import { buildDisplayQuestions } from "@/lib/questionDisplay";
+import { TagInput } from "@/components/TagInput";
+import { collectKnownTags, matchesTagFilter } from "@/lib/tags";
 
 const formatSeconds = (value: number) => {
   if (!Number.isFinite(value)) {
@@ -157,6 +159,7 @@ export const TestDetail = () => {
   const [subject, setSubject] = useState<SubjectFilter>("ALL");
   const [type, setType] = useState<TypeFilter>("ALL");
   const [status, setStatus] = useState<StatusFilter>("ALL");
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [onlyKeyUpdates, setOnlyKeyUpdates] = useState(false);
   const [onlyBookmarked, setOnlyBookmarked] = useState(bookmarkViewRequested);
 
@@ -330,6 +333,7 @@ export const TestDetail = () => {
     });
     return questionTypes.filter((type) => types.has(type));
   }, [test]);
+  const availableTags = useMemo(() => collectKnownTags(state.tests), [state.tests]);
 
   const typeOptions = useMemo(
     () => [
@@ -521,6 +525,11 @@ export const TestDetail = () => {
         const matchesType =
           type === "ALL" || question.qtype === (type as QuestionType);
         const matchesStatus = status === "ALL" || statusLabel === status;
+        const matchesTags = matchesTagFilter(
+          question,
+          test?.title ?? "",
+          selectedTags,
+        );
         const matchesKey = !onlyKeyUpdates || keyChanged;
         const matchesBookmark = !onlyBookmarked || bookmarked;
         return (
@@ -528,12 +537,13 @@ export const TestDetail = () => {
           matchesSubject &&
           matchesType &&
           matchesStatus &&
+          matchesTags &&
           matchesKey &&
           matchesBookmark
         );
       },
     );
-  }, [onlyBookmarked, onlyKeyUpdates, query, questionSnapshots, status, subject, type]);
+  }, [onlyBookmarked, onlyKeyUpdates, query, questionSnapshots, selectedTags, status, subject, test?.title, type]);
 
   const groupedQuestions = useMemo(() => {
     const map = new Map<Subject, typeof filteredQuestions>();
@@ -1324,6 +1334,17 @@ export const TestDetail = () => {
                   </Select>
                 </div>
               </div>
+              <div className="space-y-2 md:col-span-2">
+                <label className="text-xs text-muted-foreground">Tags</label>
+                <TagInput
+                  value={selectedTags}
+                  suggestions={availableTags}
+                  onChange={setSelectedTags}
+                  allowCustom={false}
+                  placeholder="Filter by existing tags"
+                  emptyMessage="No matching tags"
+                />
+              </div>
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
                 <Switch
                   checked={onlyKeyUpdates}
@@ -1428,6 +1449,20 @@ export const TestDetail = () => {
                                 Correct {formatAnswerValue(question.keyUpdate)}
                               </span>
                             </div>
+                            {question.tags.length > 0 ||
+                            question.lockedTags.length > 0 ? (
+                              <div className="flex flex-wrap gap-2">
+                                {[...question.lockedTags, ...question.tags].map((tag) => (
+                                  <Badge
+                                    key={`${question.id}-${tag}`}
+                                    variant="outline"
+                                    className="text-[10px] uppercase tracking-[0.14em]"
+                                  >
+                                    {tag}
+                                  </Badge>
+                                ))}
+                              </div>
+                            ) : null}
                           </Link>
                         ),
                       )}
