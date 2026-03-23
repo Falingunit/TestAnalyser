@@ -2,6 +2,7 @@ import { Navigate, Outlet, Route, Routes } from 'react-router-dom'
 import { AppShell } from '@/components/AppShell'
 import { useAppStore } from '@/lib/store'
 import { Auth } from '@/pages/Auth'
+import { Bookmarks } from '@/pages/Bookmarks'
 import { Dashboard } from '@/pages/Dashboard'
 import { NotFound } from '@/pages/NotFound'
 import { Profile } from '@/pages/Profile'
@@ -40,6 +41,7 @@ export const App = () => {
       <Route path="/app" element={<ProtectedLayout />}>
         <Route index element={<Dashboard />} />
         <Route path="tests" element={<Tests />} />
+        <Route path="bookmarks" element={<Bookmarks />} />
         <Route path="tests/:testId" element={<TestDetail />} />
         <Route
           path="questions/:testId/:questionId"

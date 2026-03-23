@@ -9,7 +9,7 @@ import {
   type PointerEvent,
 } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { ChevronDown, Copy, Pencil, Star } from "lucide-react";
+import { Bookmark, ChevronDown, Copy, Pencil } from "lucide-react";
 import { useAppStore } from "@/lib/store";
 import {
   buildAnalysis,
@@ -242,6 +242,7 @@ export const QuestionDetail = () => {
     isAdmin,
   } = useAppStore();
   const isReadonlyView = searchParams.get("readonly") === "1";
+  const isBookmarkView = searchParams.get("bookmarks") === "1";
   const previewParticipantName = searchParams.get("viewerName")?.trim() ?? "";
   const previewParticipantUsername =
     searchParams.get("viewerUsername")?.trim() ?? "";
@@ -256,8 +257,10 @@ export const QuestionDetail = () => {
     if (!test) {
       return [];
     }
-    return buildDisplayQuestions(test.questions);
-  }, [test]);
+    return buildDisplayQuestions(test.questions).filter(
+      ({ question }) => !isBookmarkView || Boolean(test.bookmarks?.[question.id]),
+    );
+  }, [isBookmarkView, test]);
 
   const paletteSections = useMemo(() => {
     if (!test) {
@@ -771,10 +774,14 @@ export const QuestionDetail = () => {
       ? `testanalyser-question-chat-${test.id}-${question.id}`
       : null;
   const readonlySearch = useMemo(() => {
-    if (!isReadonlyView) {
-      return "";
+    const params = new URLSearchParams();
+    if (isBookmarkView) {
+      params.set("bookmarks", "1");
     }
-    const params = new URLSearchParams({ readonly: "1" });
+    if (!isReadonlyView) {
+      return params.size > 0 ? `?${params.toString()}` : "";
+    }
+    params.set("readonly", "1");
     if (previewParticipantKey) {
       params.set("participantKey", previewParticipantKey);
     }
@@ -786,6 +793,7 @@ export const QuestionDetail = () => {
     }
     return `?${params.toString()}`;
   }, [
+    isBookmarkView,
     isReadonlyView,
     previewParticipantKey,
     previewParticipantName,
@@ -810,6 +818,12 @@ export const QuestionDetail = () => {
     });
   }, [chatMessages]);
   const activeMessages = chatKeyLoaded === chatKey ? orderedMessages : [];
+
+  useEffect(() => {
+    if (!question && isBookmarkView && displayQuestions.length > 0) {
+      navigate(questionLink(displayQuestions[0].question.id), { replace: true });
+    }
+  }, [displayQuestions, isBookmarkView, navigate, question, questionLink]);
 
   useEffect(() => {
     if (!notesKey) {
@@ -1428,7 +1442,9 @@ export const QuestionDetail = () => {
       {/* Question Detail Helper Buttons */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Button asChild variant="ghost" size="sm">
-          <Link to={`/app/tests/${test.id}`}>Back to test</Link>
+          <Link to={isBookmarkView ? "/app/bookmarks" : `/app/tests/${test.id}`}>
+            {isBookmarkView ? "Back to bookmarks" : "Back to test"}
+          </Link>
         </Button>
         <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
           {!isReadonlyView ? (
@@ -1439,13 +1455,13 @@ export const QuestionDetail = () => {
               onClick={handleBookmarkToggle}
               disabled={isBookmarking}
               aria-pressed={isBookmarked}
-              title={isBookmarked ? "Remove star" : "Star question"}
+              title={isBookmarked ? "Remove bookmark" : "Bookmark question"}
               className="h-8 w-8"
             >
-              <Star
+              <Bookmark
                 className={cn(
                   "h-4 w-4",
-                  isBookmarked ? "text-amber-400" : "text-muted-foreground",
+                  isBookmarked ? "text-sky-500" : "text-muted-foreground",
                 )}
                 fill={isBookmarked ? "currentColor" : "none"}
               />
@@ -1541,8 +1557,8 @@ export const QuestionDetail = () => {
                         >
                           <span>{item.number}</span>
                           {!isReadonlyView && item.bookmarked ? (
-                            <Star
-                              className="absolute right-0 top-0 h-3 w-3 text-amber-400"
+                            <Bookmark
+                              className="absolute right-0 top-0 h-3 w-3 text-sky-500"
                               fill="currentColor"
                             />
                           ) : null}

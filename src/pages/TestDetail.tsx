@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
-import { ChevronDown, Star } from "lucide-react";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { Bookmark, ChevronDown } from "lucide-react";
 import { useAppStore } from "@/lib/store";
 import {
   buildAnalysis,
@@ -129,6 +129,8 @@ const subjectLabels: Record<Subject, string> = {
 export const TestDetail = () => {
   const { testId } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const bookmarkViewRequested = searchParams.get("bookmarks") === "1";
   const {
     state,
     currentUser,
@@ -156,6 +158,7 @@ export const TestDetail = () => {
   const [type, setType] = useState<TypeFilter>("ALL");
   const [status, setStatus] = useState<StatusFilter>("ALL");
   const [onlyKeyUpdates, setOnlyKeyUpdates] = useState(false);
+  const [onlyBookmarked, setOnlyBookmarked] = useState(bookmarkViewRequested);
 
   const [markingDraft, setMarkingDraft] = useState<MarkingDraft>(() =>
     buildEmptyMarkingDraft(),
@@ -194,6 +197,10 @@ export const TestDetail = () => {
     CHEMISTRY: false,
     MATHEMATICS: false,
   });
+
+  useEffect(() => {
+    setOnlyBookmarked(bookmarkViewRequested);
+  }, [bookmarkViewRequested]);
 
   // FIXED: useEffect logic to prevent race conditions and overwrites
   useEffect(() => {
@@ -498,7 +505,13 @@ export const TestDetail = () => {
   const filteredQuestions = useMemo(() => {
     const queryValue = query.trim().toLowerCase();
     return questionSnapshots.filter(
-      ({ question, status: statusLabel, keyChanged, displayNumber }) => {
+      ({
+        question,
+        status: statusLabel,
+        keyChanged,
+        displayNumber,
+        bookmarked,
+      }) => {
         const matchesQuery =
           queryValue.length === 0 ||
           String(displayNumber).includes(queryValue) ||
@@ -509,16 +522,18 @@ export const TestDetail = () => {
           type === "ALL" || question.qtype === (type as QuestionType);
         const matchesStatus = status === "ALL" || statusLabel === status;
         const matchesKey = !onlyKeyUpdates || keyChanged;
+        const matchesBookmark = !onlyBookmarked || bookmarked;
         return (
           matchesQuery &&
           matchesSubject &&
           matchesType &&
           matchesStatus &&
-          matchesKey
+          matchesKey &&
+          matchesBookmark
         );
       },
     );
-  }, [onlyKeyUpdates, query, questionSnapshots, status, subject, type]);
+  }, [onlyBookmarked, onlyKeyUpdates, query, questionSnapshots, status, subject, type]);
 
   const groupedQuestions = useMemo(() => {
     const map = new Map<Subject, typeof filteredQuestions>();
@@ -1316,6 +1331,13 @@ export const TestDetail = () => {
                 />
                 <span>Show key updates only</span>
               </div>
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Switch
+                  checked={onlyBookmarked}
+                  onCheckedChange={setOnlyBookmarked}
+                />
+                <span>Show bookmarked only</span>
+              </div>
             </div>
 
             <Separator />
@@ -1369,8 +1391,8 @@ export const TestDetail = () => {
                               <div>
                                 <div className="flex items-center gap-2">
                                   {bookmarked ? (
-                                    <Star
-                                      className="h-4 w-4 text-amber-400"
+                                    <Bookmark
+                                      className="h-4 w-4 text-sky-500"
                                       fill="currentColor"
                                     />
                                   ) : null}

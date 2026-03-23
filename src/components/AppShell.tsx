@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Link, NavLink } from "react-router-dom";
-import { LayoutDashboard, ListChecks, Settings } from "lucide-react";
+import { Bookmark, LayoutDashboard, ListChecks, Settings } from "lucide-react";
 import { useAppStore } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -23,6 +23,11 @@ const navItems = [
     to: "/app/tests",
     label: "Tests",
     icon: ListChecks,
+  },
+  {
+    to: "/app/bookmarks",
+    label: "Bookmarks",
+    icon: Bookmark,
   },
   {
     to: "/app/profile",
