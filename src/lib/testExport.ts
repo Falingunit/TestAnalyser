@@ -1,6 +1,12 @@
 import { buildDisplayQuestions } from "@/lib/questionDisplay";
 import type { QuestionRecord, TestRecord } from "@/lib/types";
-import { formatAnswerValue } from "@/lib/analysis";
+import {
+  formatAnswerValue,
+  getAnswerForQuestion,
+  getQuestionMark,
+  getQuestionStatus,
+  getTimeForQuestion,
+} from "@/lib/analysis";
 import { formatQuestionType } from "@/lib/utils";
 
 const dateFormatter = new Intl.DateTimeFormat(undefined, {
@@ -48,6 +54,31 @@ const getQuestionOptions = (question: QuestionRecord) =>
     { label: "D", html: question.optionContentD },
   ].filter((item) => htmlHasVisibleContent(item.html));
 
+const toOptionLabels = (value: unknown): string[] => {
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => String(item).trim().toUpperCase())
+      .filter(Boolean);
+  }
+  if (typeof value !== "string") {
+    return [];
+  }
+  const normalized = value.trim().toUpperCase();
+  if (!normalized) {
+    return [];
+  }
+  if (normalized.includes(",")) {
+    return normalized
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
+  if (/^[A-D]+$/.test(normalized)) {
+    return normalized.split("");
+  }
+  return [normalized];
+};
+
 const escapeHtml = (value: string) =>
   value
     .replace(/&/g, "&amp;")
@@ -56,27 +87,46 @@ const escapeHtml = (value: string) =>
     .replace(/"/g, "&quot;");
 
 const buildExportQuestions = (test: TestRecord) =>
-  buildDisplayQuestions(test.questions).map(({ question, displayNumber }) => ({
-    id: question.id,
-    number: displayNumber,
-    sourceNumber: question.questionNumber,
-    subject: question.subject,
-    type: question.qtype,
-    typeLabel: formatQuestionType(question.qtype),
-    marks: {
-      correct: question.correctMarking,
-      incorrect: question.incorrectMarking,
-      unattempted: question.unattemptedMarking,
-      hasPartial: question.hasPartial,
-    },
-    correctAnswer: question.keyUpdate,
-    correctAnswerLabel: formatAnswerValue(question.keyUpdate),
-    questionHtml: question.questionContent,
-    options: getQuestionOptions(question).map((option) => ({
-      label: option.label,
-      html: option.html ?? "",
-    })),
-  }));
+  buildDisplayQuestions(test.questions).map(({ question, displayNumber }) => {
+    const selectedAnswer = getAnswerForQuestion(test, question);
+    const status = getQuestionStatus(test, question);
+    const marksAwarded = getQuestionMark(test, question);
+    const timeSpentSeconds = getTimeForQuestion(test, question);
+    const selectedOptionLabels = new Set(toOptionLabels(selectedAnswer));
+    const correctOptionLabels = new Set(toOptionLabels(question.keyUpdate));
+
+    return {
+      id: question.id,
+      number: displayNumber,
+      sourceNumber: question.questionNumber,
+      subject: question.subject,
+      type: question.qtype,
+      typeLabel: formatQuestionType(question.qtype),
+      marks: {
+        correct: question.correctMarking,
+        incorrect: question.incorrectMarking,
+        unattempted: question.unattemptedMarking,
+        hasPartial: question.hasPartial,
+        awarded: marksAwarded,
+      },
+      result: {
+        status,
+        selectedAnswer,
+        selectedAnswerLabel: formatAnswerValue(selectedAnswer),
+        correctAnswer: question.keyUpdate,
+        correctAnswerLabel: formatAnswerValue(question.keyUpdate),
+        timeSpentSeconds,
+        bookmarked: Boolean(test.bookmarks[question.id]),
+      },
+      questionHtml: question.questionContent,
+      options: getQuestionOptions(question).map((option) => ({
+        label: option.label,
+        html: option.html ?? "",
+        picked: selectedOptionLabels.has(option.label),
+        correct: correctOptionLabels.has(option.label),
+      })),
+    };
+  });
 
 const buildQuestionPaperHtml = (test: TestRecord) => {
   const questions = buildDisplayQuestions(test.questions);
