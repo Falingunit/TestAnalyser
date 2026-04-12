@@ -27,6 +27,7 @@ import {
 } from "@/lib/questionDisplay";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { MathHtml } from "@/components/MathHtml";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -1698,7 +1699,7 @@ export const QuestionDetail = () => {
                       Current type: {formatQuestionType(question.qtype)}
                     </span>
                   </div>
-                  <div
+                  <MathHtml
                     className={cn(
                       "question-html rounded-lg bg-transparent leading-relaxed",
                       mode === "dark"
@@ -1706,9 +1707,7 @@ export const QuestionDetail = () => {
                         : "question-html--blend-light",
                     )}
                     style={{ fontSize: zoomLevel + "rem" }}
-                    dangerouslySetInnerHTML={{
-                      __html: question.questionContent,
-                    }}
+                    html={question.questionContent}
                     onClick={handleRichContentClick}
                   />
                 </div>
@@ -1794,7 +1793,7 @@ export const QuestionDetail = () => {
                                 {item.label}
                               </span>
                               <div className="flex min-w-0 flex-1 items-end justify-between gap-3">
-                                <div
+                                <MathHtml
                                   className={cn(
                                     "question-html min-w-0 flex-1 leading-relaxed",
                                     mode === "dark"
@@ -1802,9 +1801,7 @@ export const QuestionDetail = () => {
                                       : "question-html--blend-light",
                                   )}
                                   style={{ fontSize: zoomLevel * 1.15 + "rem" }}
-                                  dangerouslySetInnerHTML={{
-                                    __html: item.value ?? "",
-                                  }}
+                                  html={item.value ?? ""}
                                   onClick={handleRichContentClick}
                                 />
                                 {optionCount !== null ? (
@@ -1866,7 +1863,7 @@ export const QuestionDetail = () => {
                       />
                     </button>
                     {isSolutionOpen ? (
-                      <div
+                      <MathHtml
                         className={cn(
                           "question-html rounded-lg bg-transparent leading-relaxed",
                           mode === "dark"
@@ -1874,9 +1871,7 @@ export const QuestionDetail = () => {
                             : "question-html--blend-light",
                         )}
                         style={{ fontSize: zoomLevel + "rem" }}
-                        dangerouslySetInnerHTML={{
-                          __html: question.solutionContent ?? "",
-                        }}
+                        html={question.solutionContent ?? ""}
                         onClick={handleRichContentClick}
                       />
                     ) : null}

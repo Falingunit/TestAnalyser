@@ -140,6 +140,17 @@
     font-size: calc(1rem * var(--reader-font-scale));
   }
 
+  .question-html mjx-container[jax="SVG"] {
+    display: inline-block;
+    margin: 0;
+    vertical-align: middle;
+  }
+
+  .question-html mjx-container[jax="SVG"][display="true"] {
+    display: block;
+    margin: 1em 0;
+  }
+
   .question-html--blend-dark img {
     filter: invert(1);
     mix-blend-mode: screen;
