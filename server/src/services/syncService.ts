@@ -85,6 +85,29 @@ const parseStoredJson = (value: string | null) => {
 
 const serializeJson = (value: unknown) => JSON.stringify(value ?? null)
 
+const isUnattemptedAnswer = (value: unknown, qtype: string) => {
+  if (value === null || value === undefined) {
+    return true
+  }
+  if (qtype === 'MAQ' && Array.isArray(value) && value.length === 0) {
+    return true
+  }
+  return false
+}
+
+const hasAttemptedQuestion = (
+  answersJson: string,
+  questions: Array<{ id: string; qtype: string }>,
+) => {
+  const parsed = parseStoredJson(answersJson)
+  const answers =
+    parsed && typeof parsed === 'object'
+      ? (parsed as Record<string, unknown>)
+      : {}
+
+  return questions.some((question) => !isUnattemptedAnswer(answers[question.id], question.qtype))
+}
+
 const QUESTION_TYPES: ScrapedQuestionType[] = ['MCQ', 'MAQ', 'NAT', 'VMAQ']
 
 const isQuestionType = (value: unknown): value is ScrapedQuestionType =>
@@ -579,10 +602,28 @@ export const syncExternalAccount = async (payload: {
 
   const existingAttempts = await prisma.attempt.findMany({
     where: { userId: payload.userId },
-    select: { exam: { select: { externalExamId: true } } },
+    select: {
+      answers: true,
+      exam: {
+        select: {
+          externalExamId: true,
+          questions: { select: { id: true, qtype: true } },
+        },
+      },
+    },
   })
   const attemptedExamIds = new Set(
     existingAttempts
+      .filter(
+        (attempt: {
+          answers: string
+          exam: {
+            externalExamId: string | null
+            questions: Array<{ id: string; qtype: string }>
+          }
+        }) =>
+          hasAttemptedQuestion(attempt.answers, attempt.exam.questions),
+      )
       .map((attempt: { exam: { externalExamId: string | null } }) =>
         attempt.exam.externalExamId,
       )

@@ -499,6 +499,19 @@ const isUnattemptedAnswer = (value: unknown, qtype: string) => {
   return false
 }
 
+const hasAttemptedQuestion = (
+  answersJson: string,
+  questions: Array<{ id: string; qtype: string }>,
+) => {
+  const parsed = parseStoredJson(answersJson)
+  const answers =
+    parsed && typeof parsed === 'object'
+      ? (parsed as Record<string, unknown>)
+      : {}
+
+  return questions.some((question) => !isUnattemptedAnswer(answers[question.id], question.qtype))
+}
+
 const buildPeerAnswerStatsByExam = (
   attempts: Array<{ examId: string; answers: string }>,
   questionsByExam: Map<
@@ -973,6 +986,16 @@ router.get('/', requireAuth, async (req: AuthRequest, res, next) => {
       questionsByExam,
       participantKeyByUserId,
     )
+    const visibleExamIds = new Set(
+      attemptsForRank
+        .filter((attempt) =>
+          hasAttemptedQuestion(
+            attempt.answers,
+            questionsByExam.get(attempt.examId) ?? [],
+          ),
+        )
+        .map((attempt) => attempt.examId),
+    )
     const otherAttempts =
       examIds.length === 0
         ? []
@@ -1017,14 +1040,16 @@ router.get('/', requireAuth, async (req: AuthRequest, res, next) => {
     )
 
     return res.json({
-      tests: attempts.map((attempt) =>
-        serializeAttempt(
-          attempt,
-          calculatedRankByAttemptId.get(attempt.id) ?? null,
-          peerTimingsByExam.get(attempt.examId) ?? {},
-          peerAnswerStatsByExam.get(attempt.examId) ?? {},
+      tests: attempts
+        .filter((attempt) => visibleExamIds.has(attempt.examId))
+        .map((attempt) =>
+          serializeAttempt(
+            attempt,
+            calculatedRankByAttemptId.get(attempt.id) ?? null,
+            peerTimingsByExam.get(attempt.examId) ?? {},
+            peerAnswerStatsByExam.get(attempt.examId) ?? {},
+          ),
         ),
-      ),
     })
   } catch (error) {
     return next(error)
