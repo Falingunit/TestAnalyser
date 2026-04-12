@@ -39,10 +39,20 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { cn, formatQuestionType } from "@/lib/utils";
 import { buildDisplayQuestions } from "@/lib/questionDisplay";
 import { TagInput } from "@/components/TagInput";
 import { collectKnownTags, matchesTagFilter } from "@/lib/tags";
+import {
+  downloadQuestionPaperJson,
+  exportQuestionPaperPdf,
+} from "@/lib/testExport";
 
 const formatSeconds = (value: number) => {
   if (!Number.isFinite(value)) {
@@ -170,6 +180,7 @@ export const TestDetail = () => {
     () => buildDefaultTypeMappingRows(),
   );
   const [markingMessage, setMarkingMessage] = useState<string | null>(null);
+  const [exportMessage, setExportMessage] = useState<string | null>(null);
 
   // NEW: Loading and Edited states
   const [isSaving, setIsSaving] = useState(false);
@@ -483,6 +494,26 @@ export const TestDetail = () => {
     setTypeMappingRows((prev) => prev.filter((row) => row.id !== id));
   };
 
+  const handleJsonExport = () => {
+    if (!test) {
+      return;
+    }
+    downloadQuestionPaperJson(test);
+    setExportMessage("Question paper JSON downloaded.");
+  };
+
+  const handlePdfExport = async () => {
+    if (!test) {
+      return;
+    }
+    const result = await exportQuestionPaperPdf(test);
+    setExportMessage(
+      result.ok
+        ? "Print dialog opened for PDF export."
+        : result.message,
+    );
+  };
+
   const questionSnapshots = useMemo(() => {
     if (!test) {
       return [];
@@ -760,10 +791,31 @@ export const TestDetail = () => {
           <h1 className="text-xl font-semibold text-foreground">
             {test.title}
           </h1>
+          {exportMessage ? (
+            <p className="text-xs text-muted-foreground">{exportMessage}</p>
+          ) : null}
         </div>
-        <Button asChild variant="ghost" size="sm">
-          <Link to="/app/tests">Back to tests</Link>
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm">
+                Export paper
+                <ChevronDown className="ml-2 h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onSelect={handleJsonExport}>
+                Export as JSON
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => void handlePdfExport()}>
+                Export as PDF
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <Button asChild variant="ghost" size="sm">
+            <Link to="/app/tests">Back to tests</Link>
+          </Button>
+        </div>
       </div>
       <section className="grid grid-cols-6 gap-2">
         <TestSummaryCard
