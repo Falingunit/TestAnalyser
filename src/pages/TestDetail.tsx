@@ -168,6 +168,18 @@ export const TestDetail = () => {
   const ownedTest = state.tests.find((item) => item.id === testId);
   const test = isReadonlyView ? previewTest : ownedTest;
 
+  // We find our own test ID for this exam to pass it to the question view
+  // so the 'Back to test' button can return to our own summary.
+  const ownedTestId = useMemo(() => {
+    if (ownedTest) return ownedTest.id;
+    if (isReadonlyView && previewTest?.externalExamId) {
+      return state.tests.find(
+        (item) => item.externalExamId === previewTest.externalExamId,
+      )?.id;
+    }
+    return undefined;
+  }, [ownedTest, isReadonlyView, previewTest, state.tests]);
+
   // NEW: Ref to track previous test ID for navigation detection
   const prevTestIdRef = useRef(test?.id);
 
@@ -779,6 +791,9 @@ export const TestDetail = () => {
       viewerName: entry.displayName,
       viewerUsername: entry.externalUsername,
     });
+    if (ownedTestId) {
+      params.set("ownedTestId", ownedTestId);
+    }
     navigate(`/app/questions/${entry.test.id}/${firstQuestionId}?${params.toString()}`);
   };
 

@@ -239,10 +239,11 @@ export const QuestionDetail = () => {
   const previewParticipantUsername =
     searchParams.get("viewerUsername")?.trim() ?? "";
   const previewParticipantKey = searchParams.get("participantKey")?.trim() ?? "";
+  const ownedTestId = searchParams.get("ownedTestId")?.trim() || "";
   const previewTest = useMemo(() => loadLeaderboardPreviewTest(testId), [testId]);
   const ownedTest = useMemo(() => {
     // 1. If we have a direct match by ID, use it
-    const direct = state.tests.find((item) => item.id === testId);
+    const direct = state.tests.find((item) => item.id === (ownedTestId || testId));
     if (direct) return direct;
 
     // 2. If we're previewing another user's test, find OUR test for the same exam
@@ -252,7 +253,7 @@ export const QuestionDetail = () => {
       );
     }
     return null;
-  }, [state.tests, testId, isReadonlyView, previewTest]);
+  }, [state.tests, testId, ownedTestId, isReadonlyView, previewTest]);
 
   const test = isReadonlyView
     ? (previewTest ?? ownedTest)
@@ -1349,7 +1350,13 @@ export const QuestionDetail = () => {
       {/* Question Detail Helper Buttons */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Button asChild variant="ghost" size="sm">
-          <Link to={isBookmarkView ? "/app/bookmarks" : `/app/tests/${test.id}`}>
+          <Link
+            to={
+              isBookmarkView
+                ? "/app/bookmarks"
+                : `/app/tests/${ownedTest?.id ?? test.id}`
+            }
+          >
             {isBookmarkView ? "Back to bookmarks" : "Back to test"}
           </Link>
         </Button>
