@@ -45,7 +45,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { cn, formatQuestionType } from "@/lib/utils";
+import {
+  cn,
+  formatQuestionType,
+  loadLeaderboardPreviewTest,
+  LEADERBOARD_PREVIEW_TESTS_KEY,
+} from "@/lib/utils";
 import { buildDisplayQuestions } from "@/lib/questionDisplay";
 import { TagInput } from "@/components/TagInput";
 import { collectKnownTags, matchesTagFilter } from "@/lib/tags";
@@ -130,7 +135,6 @@ const createMappingRow = (
 const buildDefaultTypeMappingRows = (): QuestionTypeMappingRow[] =>
   questionTypes.map((qtype) => createMappingRow(qtype, qtype));
 
-const LEADERBOARD_PREVIEW_TESTS_KEY = "testanalyser-leaderboard-preview-tests";
 const leaderboardSubjects: Subject[] = ["PHYSICS", "CHEMISTRY", "MATHEMATICS"];
 const subjectLabels: Record<Subject, string> = {
   PHYSICS: "Phy",
@@ -153,7 +157,6 @@ export const TestDetail = () => {
     fetchTestLeaderboard,
   } = useAppStore();
   const isReadonlyView = searchParams.get("readonly") === "1";
-  const previewParticipantKey = searchParams.get("participantKey")?.trim() ?? "";
   const previewParticipantName = searchParams.get("viewerName")?.trim() ?? "";
   const previewParticipantUsername =
     searchParams.get("viewerUsername")?.trim() ?? "";
@@ -794,6 +797,18 @@ export const TestDetail = () => {
 
   return (
     <div className="space-y-6">
+      {isReadonlyView ? (
+        <div className="rounded-md border border-border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
+          Viewing leaderboard attempt:
+          <span className="ml-1 font-semibold text-foreground">
+            {previewParticipantName || "Participant"}
+          </span>
+          {previewParticipantUsername ? (
+            <span className="ml-1">@{previewParticipantUsername}</span>
+          ) : null}
+          <span className="ml-2">Read-only mode.</span>
+        </div>
+      ) : null}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="space-y-1">
           <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">

@@ -21,7 +21,7 @@ import {
   getTimeForQuestion,
   isBonusKey,
 } from "@/lib/analysis";
-import type { QuestionType, Subject, TestRecord } from "@/lib/types";
+import type { QuestionType, Subject } from "@/lib/types";
 import {
   buildDisplayQuestions,
   subjectDisplayOrder,
@@ -50,7 +50,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { cn, formatQuestionType } from "@/lib/utils";
+import {
+  cn,
+  formatQuestionType,
+  loadLeaderboardPreviewTest,
+} from "@/lib/utils";
 import { TagInput } from "@/components/TagInput";
 import { collectPersistedTags } from "@/lib/tags";
 
@@ -212,24 +216,6 @@ const buildQuestionContentDraft = (
 
 const keyOptionLabels = ["A", "B", "C", "D"] as const;
 const questionTypes: QuestionType[] = ["MCQ", "MAQ", "NAT", "VMAQ"];
-const LEADERBOARD_PREVIEW_TESTS_KEY = "testanalyser-leaderboard-preview-tests";
-
-const loadLeaderboardPreviewTest = (testId?: string) => {
-  if (!testId) {
-    return null;
-  }
-  try {
-    const raw = sessionStorage.getItem(LEADERBOARD_PREVIEW_TESTS_KEY);
-    if (!raw) {
-      return null;
-    }
-    const parsed = JSON.parse(raw) as Record<string, TestRecord>;
-    const candidate = parsed[testId];
-    return candidate ?? null;
-  } catch {
-    return null;
-  }
-};
 
 export const QuestionDetail = () => {
   const { testId, questionId } = useParams();
