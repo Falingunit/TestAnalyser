@@ -10,6 +10,7 @@ import {
 } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Bookmark, ChevronDown, Copy, Pencil } from "lucide-react";
+import { toBlob } from "html-to-image";
 import { useAppStore } from "@/lib/store";
 import {
   buildAnalysis,
@@ -1153,240 +1154,97 @@ export const QuestionDetail = () => {
       prevMessages.filter((message) => message.id !== id),
     );
   };
-  // 1. New Helper: Converts images in the clone to Base64
-  const embedImages = async (clonedRoot: HTMLElement) => {
-    const images = Array.from(clonedRoot.querySelectorAll("img"));
+  const handleCopyQuestionImage = async () => {
+    const node = questionCopyRef.current;
+    if (!node) return;
 
-    await Promise.all(
-      images.map(async (img) => {
-        const src = img.src;
-        // Skip if empty or data URL (already embedded)
-        if (!src || src.startsWith("data:")) return;
+    setIsCopying(true);
+    setMessage(null);
 
-        try {
-          // Fetch the image data as a Blob
-          // 'cors' mode attempts to request permission from the server
-          const response = await fetch(src, { mode: "cors" });
-          const blob = await response.blob();
-
-          // Convert the Blob to a Base64 Data URL
-          const base64 = await new Promise<string>((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onloadend = () => resolve(reader.result as string);
-            reader.onerror = reject;
-            reader.readAsDataURL(blob);
-          });
-
-          // Replace the image source with the Base64 data
-          img.src = base64;
-          img.srcset = ""; // Clear srcset to prevent browser reverting to original
-        } catch (error) {
-          console.warn("Could not embed image (CORS or Network Error):", src);
-          console.error("Error embedding image: ", error);
-          // If this fails, the original URL remains.
-          // If the server strictly blocks CORS, the image will still appear broken.
-        }
-      }),
-    );
-  };
-
-  // Keep your existing waitForImages (it ensures source images are ready)
-  const waitForImages = async (root: HTMLElement) => {
-    const images = Array.from(root.querySelectorAll("img"));
-    if (images.length === 0) return;
-
-    await Promise.all(
-      images.map(
-        (img) =>
-          new Promise<void>((resolve) => {
-            if (img.complete && img.naturalWidth > 0) {
-              resolve();
-              return;
-            }
-            const handleDone = () => {
-              img.removeEventListener("load", handleDone);
-              img.removeEventListener("error", handleDone);
-              resolve();
-            };
-            img.addEventListener("load", handleDone);
-            img.addEventListener("error", handleDone);
-          }),
-      ),
-    );
-  };
-
-  // Keep your existing cloneWithInlineStyles
-  const cloneWithInlineStyles = (root: HTMLElement) => {
-    const clonedRoot = root.cloneNode(true) as HTMLElement;
-    const sourceElements = [root, ...Array.from(root.querySelectorAll("*"))];
-    const targetElements = [
-      clonedRoot,
-      ...Array.from(clonedRoot.querySelectorAll("*")),
-    ];
-
-    sourceElements.forEach((sourceElement, index) => {
-      const targetElement = targetElements[index];
-      if (!targetElement) return;
-
-      if (
-        !(
-          targetElement instanceof HTMLElement ||
-          targetElement instanceof SVGElement
-        )
-      ) {
-        return;
-      }
-
-      const computed = window.getComputedStyle(sourceElement);
-      // Iterating by index is safer for performance
-      for (let i = 0; i < computed.length; i++) {
-        const prop = computed[i];
-        targetElement.style.setProperty(
-          prop,
-          computed.getPropertyValue(prop),
-          computed.getPropertyPriority(prop),
-        );
-      }
-    });
-    return clonedRoot;
-  };
-  const renderQuestionImageBlob = async (root: HTMLElement) => {
-    if (document.fonts?.ready) {
-      await document.fonts.ready;
-    }
-    await waitForImages(root);
-
-    const clonedRoot = cloneWithInlineStyles(root);
-    // Convert all images in the clone to Base64 to prevent tainted canvas error
-    await embedImages(clonedRoot);
-
-    const rect = root.getBoundingClientRect();
-    const contentWidth = Math.ceil(rect.width);
-    const contentHeight = Math.ceil(Math.max(rect.height, root.scrollHeight));
-    const padding = 16;
-
-    const panel = root.closest(".app-panel") as HTMLElement | null;
-    const panelStyles = panel
-      ? window.getComputedStyle(panel)
-      : window.getComputedStyle(root);
-    const background = panelStyles.backgroundColor || "#ffffff";
-    const foreground = panelStyles.color || "#111111";
-    const fontFamily = panelStyles.fontFamily || "sans-serif";
-
-    clonedRoot.style.margin = "0";
-    clonedRoot.style.width = `${contentWidth}px`;
-    clonedRoot.style.height = `${contentHeight}px`;
-    clonedRoot.style.boxSizing = "border-box";
-
-    const wrapper = document.createElement("div");
-    wrapper.setAttribute("xmlns", "http://www.w3.org/1999/xhtml");
-    wrapper.style.width = `${contentWidth + padding * 2}px`;
-    wrapper.style.height = `${contentHeight + padding * 2}px`;
-    wrapper.style.padding = `${padding}px`;
-    wrapper.style.boxSizing = "border-box";
-    wrapper.style.background = background;
-    wrapper.style.color = foreground;
-    wrapper.style.fontFamily = fontFamily;
-    wrapper.style.display = "block";
-    wrapper.appendChild(clonedRoot);
-
-    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-    svg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
-    svg.setAttribute("width", `${contentWidth + padding * 2}`);
-    svg.setAttribute("height", `${contentHeight + padding * 2}`);
-    svg.setAttribute(
-      "viewBox",
-      `0 0 ${contentWidth + padding * 2} ${contentHeight + padding * 2}`,
-    );
-
-    const foreignObject = document.createElementNS(
-      "http://www.w3.org/2000/svg",
-      "foreignObject",
-    );
-    foreignObject.setAttribute("x", "0");
-    foreignObject.setAttribute("y", "0");
-    foreignObject.setAttribute("width", "100%");
-    foreignObject.setAttribute("height", "100%");
-    foreignObject.appendChild(wrapper);
-    svg.appendChild(foreignObject);
-
-    const svgString = new XMLSerializer().serializeToString(svg);
-    const svgBlob = new Blob([svgString], {
-      type: "image/svg+xml;charset=utf-8",
-    });
-    const url = URL.createObjectURL(svgBlob);
+    // Identify elements to hide
+    const unwanted = node.querySelectorAll(
+      ".hide-in-copy",
+    ) as NodeListOf<HTMLElement>;
+    // Create a temporary style tag to force MathJax colors in the clone
+    const styleTag = document.createElement("style");
 
     try {
-      const image = await new Promise<HTMLImageElement>((resolve, reject) => {
-        const img = new Image();
-        img.onload = () => resolve(img);
-        img.onerror = () =>
-          reject(new Error("Unable to render question image"));
-        img.src = url;
-      });
-      const dpr = window.devicePixelRatio || 1;
-      const canvas = document.createElement("canvas");
-      canvas.width = Math.ceil((contentWidth + padding * 2) * dpr);
-      canvas.height = Math.ceil((contentHeight + padding * 2) * dpr);
-      const ctx = canvas.getContext("2d");
-      if (!ctx) {
-        throw new Error("Canvas unavailable");
+      // 1. Ensure MathJax is finished
+      if (window.MathJax && window.MathJax.typesetPromise) {
+        await window.MathJax.typesetPromise([node]);
       }
-      ctx.scale(dpr, dpr);
-      ctx.drawImage(image, 0, 0);
-      const blob = await new Promise<Blob | null>((resolve) =>
-        canvas.toBlob(resolve, "image/png"),
-      );
-      if (!blob) {
-        throw new Error("Unable to create image blob");
-      }
-      return blob;
-    } finally {
-      URL.revokeObjectURL(url);
-    }
-  };
 
-  const handleCopyQuestionImage = async () => {
-    const root = questionCopyRef.current;
-    if (!root) {
-      return;
-    }
-    const fallbackText = root.innerText?.trim() ?? "";
-    const ClipboardItemCtor = window.ClipboardItem;
-    if (!navigator.clipboard || !ClipboardItemCtor) {
+      // 2. Prepare node: Hide unwanted UI elements
+      unwanted.forEach((el) => {
+        (el as any)._prevDisplay = el.style.display;
+        el.style.display = "none";
+      });
+
+      // 2b. Force colors for MathJax and text via injected style
+      const textColor = mode === "dark" ? "#f3f4f6" : "#111827";
+      const bgColor = mode === "dark" ? "#0a0a0a" : "#ffffff";
+      styleTag.innerHTML = `
+        mjx-container { color: ${textColor} !important; }
+        .question-html, .question-html * { color: ${textColor} !important; }
+        svg { fill: currentColor !important; }
+      `;
+      node.appendChild(styleTag);
+
+      // 3. Measure content precisely for the canvas
+      // Adding padding here ensures the canvas is sized to include the margins
+      const paddingX = 32;
+      const paddingY = 32;
+
+      // Use scrollHeight to capture the full content even if clipped by a scroll container
+      const contentWidth = node.clientWidth;
+      const contentHeight = node.scrollHeight;
+
+      const width = contentWidth + paddingX * 2;
+      const height = contentHeight + paddingY * 2;
+
+      // 4. Generate the Image
+      const blob = await toBlob(node, {
+        backgroundColor: bgColor,
+        pixelRatio: 2,
+        width,
+        height,
+        style: {
+          zoom: "1",
+          padding: `${paddingY}px ${paddingX}px`,
+          margin: "0",
+          color: textColor,
+          backgroundColor: bgColor,
+        },
+        fontEmbedCSS: "",
+      });
+
+      // 5. Write to Clipboard
+      if (blob) {
+        const data = [new window.ClipboardItem({ "image/png": blob })];
+        await navigator.clipboard.write(data);
+        setMessage("Question image copied to clipboard.");
+      }
+    } catch (error) {
+      console.error("Copy failed", error);
+      const fallbackText = node.innerText?.trim() ?? "";
       if (navigator.clipboard && fallbackText) {
         try {
           await navigator.clipboard.writeText(fallbackText);
-          setMessage("Image copy unsupported. Question text copied instead.");
-          return;
-        } catch {
-          setMessage("Clipboard is not supported in this browser.");
-          return;
-        }
-      }
-      setMessage("Clipboard is not supported in this browser.");
-      return;
-    }
-    setIsCopying(true);
-    setMessage(null);
-    try {
-      const blob = await renderQuestionImageBlob(root);
-      await navigator.clipboard.write([
-        new ClipboardItemCtor({ "image/png": blob }),
-      ]);
-      setMessage("Question image copied to clipboard.");
-    } catch {
-      if (fallbackText) {
-        try {
-          await navigator.clipboard.writeText(fallbackText);
           setMessage("Image copy failed. Question text copied instead.");
-          return;
         } catch {
-          // fall through to generic message
+          setMessage("Unable to copy question.");
         }
+      } else {
+        setMessage("Unable to copy question.");
       }
-      setMessage("Unable to copy question. Try again.");
     } finally {
+      // Cleanup: Remove style tag and restore hidden elements
+      if (styleTag.parentNode) {
+        node.removeChild(styleTag);
+      }
+      unwanted.forEach((el) => {
+        el.style.display = (el as any)._prevDisplay || "";
+      });
       setIsCopying(false);
     }
   };
@@ -1844,7 +1702,7 @@ export const QuestionDetail = () => {
                   <div className="space-y-3 rounded-xl border border-border/60 bg-background/70 p-3">
                     <button
                       type="button"
-                      className="flex w-full items-center justify-between gap-3 text-left"
+                      className="flex w-full items-center justify-between gap-3 text-left hide-in-copy"
                       onClick={() => setIsSolutionOpen((prev) => !prev)}
                     >
                       <div>
