@@ -64,7 +64,7 @@ export const AppShell = ({ children }: { children: ReactNode }) => {
       <header className="sticky top-0 z-40 border-b border-border/50 bg-background/80 backdrop-blur-xl shadow-sm supports-[backdrop-filter]:bg-background/60">
         <div className="flex flex-wrap items-center justify-between gap-4 px-6 py-3">
           <div className="flex flex-wrap items-center gap-4">
-            <nav className="flex flex-wrap items-center gap-2 text-sm">
+            <nav className="flex flex-wrap items-center gap-2 text-sm max-lg:hidden">
               {navItems.map((item) => (
                 <NavLink
                   key={item.to}
