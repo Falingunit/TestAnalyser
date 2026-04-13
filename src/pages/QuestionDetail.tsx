@@ -240,7 +240,20 @@ export const QuestionDetail = () => {
     searchParams.get("viewerUsername")?.trim() ?? "";
   const previewParticipantKey = searchParams.get("participantKey")?.trim() ?? "";
   const previewTest = useMemo(() => loadLeaderboardPreviewTest(testId), [testId]);
-  const ownedTest = state.tests.find((item) => item.id === testId);
+  const ownedTest = useMemo(() => {
+    // 1. If we have a direct match by ID, use it
+    const direct = state.tests.find((item) => item.id === testId);
+    if (direct) return direct;
+
+    // 2. If we're previewing another user's test, find OUR test for the same exam
+    if (isReadonlyView && previewTest?.externalExamId) {
+      return state.tests.find(
+        (item) => item.externalExamId === previewTest.externalExamId,
+      );
+    }
+    return null;
+  }, [state.tests, testId, isReadonlyView, previewTest]);
+
   const test = isReadonlyView
     ? (previewTest ?? ownedTest)
     : (ownedTest ?? previewTest);
