@@ -152,7 +152,18 @@ export const TestDetail = () => {
     resyncTest,
     fetchTestLeaderboard,
   } = useAppStore();
-  const test = state.tests.find((item) => item.id === testId);
+  const isReadonlyView = searchParams.get("readonly") === "1";
+  const previewParticipantKey = searchParams.get("participantKey")?.trim() ?? "";
+  const previewParticipantName = searchParams.get("viewerName")?.trim() ?? "";
+  const previewParticipantUsername =
+    searchParams.get("viewerUsername")?.trim() ?? "";
+
+  const previewTest = useMemo(
+    () => (isReadonlyView ? loadLeaderboardPreviewTest(testId) : null),
+    [isReadonlyView, testId],
+  );
+  const ownedTest = state.tests.find((item) => item.id === testId);
+  const test = isReadonlyView ? previewTest : ownedTest;
 
   // NEW: Ref to track previous test ID for navigation detection
   const prevTestIdRef = useRef(test?.id);
