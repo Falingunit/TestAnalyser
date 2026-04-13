@@ -9,7 +9,7 @@ import {
   type PointerEvent,
 } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { Bookmark, ChevronDown, Copy, Pencil } from "lucide-react";
+import { Bookmark, ChevronDown, Copy, Menu, Pencil, X } from "lucide-react";
 import { toBlob } from "html-to-image";
 import { useAppStore } from "@/lib/store";
 import {
@@ -303,6 +303,8 @@ export const QuestionDetail = () => {
       .filter((section) => section.items.length > 0);
   }, [displayQuestions, test]);
 
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isReviewOpen, setIsReviewOpen] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [keyUpdateBonus, setKeyUpdateBonus] = useState(false);
   const [questionTypeDraft, setQuestionTypeDraft] = useState<QuestionType>("MCQ");
@@ -1349,17 +1351,29 @@ export const QuestionDetail = () => {
     <div className="flex h-[calc(100vh-90px)] flex-col gap-1 overflow-hidden">
       {/* Question Detail Helper Buttons */}
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <Button asChild variant="ghost" size="sm">
-          <Link
-            to={
-              isBookmarkView
-                ? "/app/bookmarks"
-                : `/app/tests/${ownedTest?.id ?? test.id}`
-            }
+        <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            className="h-8 w-8 lg:hidden"
+            onClick={() => setIsSidebarOpen(true)}
+            title="Show questions"
           >
-            {isBookmarkView ? "Back to bookmarks" : "Back to test"}
-          </Link>
-        </Button>
+            <Menu className="h-4 w-4" />
+          </Button>
+          <Button asChild variant="ghost" size="sm">
+            <Link
+              to={
+                isBookmarkView
+                  ? "/app/bookmarks"
+                  : `/app/tests/${ownedTest?.id ?? test.id}`
+              }
+            >
+              {isBookmarkView ? "Back to bookmarks" : "Back to test"}
+            </Link>
+          </Button>
+        </div>
         <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
           {!isReadonlyView ? (
             <Button
@@ -1437,9 +1451,29 @@ export const QuestionDetail = () => {
 
       <section className="grid min-h-0 flex-1 gap-1 lg:grid-cols-[220px_minmax(0,1fr)_minmax(0,320px)]">
         {/* Question Side Panel */}
-        <Card className="app-panel h-full min-h-0 border-none max-sm:hidden">
+        <Card
+          className={cn(
+            "app-panel h-full min-h-0 border-none transition-transform duration-300",
+            "max-lg:fixed max-lg:inset-y-0 max-lg:left-0 max-lg:z-50 max-lg:w-3/4 max-lg:max-w-xs max-lg:shadow-2xl",
+            !isSidebarOpen && "max-lg:-translate-x-full",
+          )}
+        >
           <CardContent className="flex h-full min-h-0 flex-col gap-4 p-2 py-5">
-            <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+            <div className="flex items-center justify-between lg:hidden">
+              <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                Questions
+              </p>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => setIsSidebarOpen(false)}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground max-lg:hidden">
               Questions
             </p>
             <div className="min-h-0 flex-1 overflow-y-auto pr-1">
@@ -1454,6 +1488,7 @@ export const QuestionDetail = () => {
                         <Link
                           key={item.id}
                           to={questionLink(item.id)}
+                          onClick={() => setIsSidebarOpen(false)}
                           className={cn(
                             "relative flex aspect-square w-full items-center justify-center rounded-md border text-xs font-medium",
                             item.id === question.id
@@ -1548,7 +1583,7 @@ export const QuestionDetail = () => {
 
         {/* Question detailed view */}
         <Card className="app-panel h-full min-h-0 border-0">
-          <CardContent className="flex h-full min-h-0 flex-col gap-5 p-3 py-5">
+          <CardContent className="flex h-full min-h-0 flex-col gap-5 p-3 py-5 max-lg:pb-20">
             <div className="min-h-0 flex-1 overflow-y-auto pr-2">
               <div ref={questionCopyRef} className="space-y-5">
                 <div className="space-y-3">
@@ -1768,9 +1803,29 @@ export const QuestionDetail = () => {
         </Card>
 
         {/* Answer review */}
-        <Card className="app-panel h-full min-h-0 border-none">
+        <Card
+          className={cn(
+            "app-panel h-full min-h-0 border-none transition-transform duration-300",
+            "max-lg:fixed max-lg:inset-x-0 max-lg:bottom-0 max-lg:z-40 max-lg:h-[80vh] max-lg:rounded-t-2xl max-lg:shadow-2xl",
+            !isReviewOpen && "max-lg:translate-y-full",
+          )}
+        >
           <CardContent className="flex h-full min-h-0 flex-col gap-4 p-2 py-5">
-            <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+            <div className="flex items-center justify-between lg:hidden">
+              <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                Answer review
+              </p>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => setIsReviewOpen(false)}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground max-lg:hidden">
               Answer review
             </p>
             <div className="min-h-0 flex-1 space-y-4 overflow-y-auto pr-2">
@@ -2422,6 +2477,54 @@ export const QuestionDetail = () => {
           </CardContent>
         </Card>
       </section>
+
+      {/* Mobile Bottom Bar */}
+      <div className="fixed bottom-0 left-0 right-0 z-30 flex items-center justify-between border-t bg-background/90 px-4 py-2 backdrop-blur-xl lg:hidden">
+        <div className="flex items-center gap-3 overflow-hidden">
+          <div
+            className={cn(
+              "flex flex-col items-start rounded-md border px-2 py-1",
+              answerBorderClass,
+            )}
+          >
+            <span className="text-[10px] uppercase font-bold leading-none text-muted-foreground">
+              Your Answer
+            </span>
+            <span className={cn("text-xs font-black", answerTextClass)}>
+              {userAnswerValue || "N/A"}
+            </span>
+          </div>
+          <div className="flex flex-col items-start rounded-md border border-amber-500/50 bg-amber-500/5 px-2 py-1">
+            <span className="text-[10px] uppercase font-bold leading-none text-amber-600 dark:text-amber-400">
+              Correct
+            </span>
+            <span className="text-xs font-black text-amber-600 dark:text-amber-400">
+              {formatAnswerValue(question.keyUpdate)}
+            </span>
+          </div>
+        </div>
+        <Button
+          size="sm"
+          onClick={() => setIsReviewOpen(true)}
+          className="flex-shrink-0"
+        >
+          Review & Tags
+        </Button>
+      </div>
+
+      {/* Backdrops */}
+      {isSidebarOpen && (
+        <div
+          className="fixed inset-0 z-[45] bg-black/20 backdrop-blur-sm lg:hidden"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+      {isReviewOpen && (
+        <div
+          className="fixed inset-0 z-[35] bg-black/20 backdrop-blur-sm lg:hidden"
+          onClick={() => setIsReviewOpen(false)}
+        />
+      )}
 
       <Dialog
         open={isImageOpen}
