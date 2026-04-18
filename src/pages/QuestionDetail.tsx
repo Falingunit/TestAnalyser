@@ -9,7 +9,7 @@ import {
   type PointerEvent,
 } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { Bookmark, ChevronDown, Copy, Menu, Pencil, X } from "lucide-react";
+import { Bookmark, ChevronDown, Copy, CopyX, Menu, Pencil, X } from "lucide-react";
 import { toBlob } from "html-to-image";
 import { useAppStore } from "@/lib/store";
 import {
@@ -1156,7 +1156,7 @@ export const QuestionDetail = () => {
       prevMessages.filter((message) => message.id !== id),
     );
   };
-  const handleCopyQuestionImage = async () => {
+  const handleCopyQuestionImage = async (withoutAnswers = false) => {
     const node = questionCopyRef.current;
     if (!node) return;
 
@@ -1165,12 +1165,17 @@ export const QuestionDetail = () => {
 
     // Identify elements to hide
     const unwanted = node.querySelectorAll(
-      ".hide-in-copy",
+      withoutAnswers
+        ? ".hide-in-copy, .hide-in-no-answer-copy"
+        : ".hide-in-copy",
     ) as NodeListOf<HTMLElement>;
     // Create a temporary style tag to force MathJax colors in the clone
     const styleTag = document.createElement("style");
 
     try {
+      if (withoutAnswers) {
+        node.classList.add("no-answer-copy-mode");
+      }
       // 1. Ensure MathJax is finished
       if (window.MathJax && window.MathJax.typesetPromise) {
         await window.MathJax.typesetPromise([node]);
@@ -1185,10 +1190,31 @@ export const QuestionDetail = () => {
       // 2b. Force colors for MathJax and text via injected style
       const textColor = mode === "dark" ? "#f3f4f6" : "#111827";
       const bgColor = mode === "dark" ? "#0a0a0a" : "#ffffff";
+      const borderColor = mode === "dark" ? "#262626" : "#e5e7eb";
+      const mutedTextColor = mode === "dark" ? "#a3a3a3" : "#6b7280";
+
+      let extraStyles = "";
+      if (withoutAnswers) {
+        extraStyles = `
+          .no-answer-copy-mode .option-container {
+            border-color: ${borderColor} !important;
+            background-color: ${bgColor} !important;
+            color: ${textColor} !important;
+            border-style: solid !important;
+          }
+          .no-answer-copy-mode .option-label {
+            border-color: ${borderColor} !important;
+            background-color: transparent !important;
+            color: ${mutedTextColor} !important;
+          }
+        `;
+      }
+
       styleTag.innerHTML = `
         mjx-container { color: ${textColor} !important; }
         .question-html, .question-html * { color: ${textColor} !important; }
         svg { fill: currentColor !important; }
+        ${extraStyles}
       `;
       node.appendChild(styleTag);
 
@@ -1319,6 +1345,14 @@ export const QuestionDetail = () => {
         event.preventDefault();
         void handleCopyQuestionImage();
       }
+
+      if (event.key === "x" || event.key === "X") {
+        if (isCopying) {
+          return;
+        }
+        event.preventDefault();
+        void handleCopyQuestionImage(true);
+      }
     };
 
     window.addEventListener("keydown", handleKeyDown);
@@ -1399,15 +1433,31 @@ export const QuestionDetail = () => {
             type="button"
             variant="ghost"
             size="icon"
-            onClick={handleCopyQuestionImage}
+            onClick={() => handleCopyQuestionImage()}
             disabled={isCopying}
             title={
-              isCopying ? "Copying question image" : "Copy question as image"
+              isCopying ? "Copying question image" : "Copy question as image (c)"
             }
             aria-label="Copy question as image"
             className="h-8 w-8"
           >
             <Copy className="h-4 w-4 text-muted-foreground" />
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={() => handleCopyQuestionImage(true)}
+            disabled={isCopying}
+            title={
+              isCopying
+                ? "Copying question image"
+                : "Copy question without answers (x)"
+            }
+            aria-label="Copy question without answers"
+            className="h-8 w-8"
+          >
+            <CopyX className="h-4 w-4 text-muted-foreground" />
           </Button>
 
           {/* Image, Text size zoom */}
@@ -1612,11 +1662,11 @@ export const QuestionDetail = () => {
                 </div>
 
                 <div className="space-y-3">
-                  <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                  <p className={cn("text-xs uppercase tracking-[0.2em] text-muted-foreground", question.qtype === "NAT" && "hide-in-no-answer-copy")}>
                     {question.qtype === "NAT" ? "Answer" : "Options"}
                   </p>
                   {question.qtype === "NAT" ? (
-                    <div className="relative">
+                    <div className="relative hide-in-no-answer-copy">
                       <Input
                         readOnly
                         value={userAnswerValue}
@@ -1659,7 +1709,7 @@ export const QuestionDetail = () => {
                             <div
                               key={item.label}
                               className={cn(
-                                "flex gap-3 rounded-lg border p-2 text-sm",
+                                "option-container flex gap-3 rounded-lg border p-2 text-sm",
                                 isSelectedCorrect &&
                                   "border-emerald-500/70 bg-emerald-500/20 text-foreground",
                                 isSelectedIncorrect &&
@@ -1674,7 +1724,7 @@ export const QuestionDetail = () => {
                             >
                               <span
                                 className={cn(
-                                  "flex h-7 w-7 flex-shrink-0 items-center justify-center border text-xs font-semibold",
+                                  "option-label flex h-7 w-7 flex-shrink-0 items-center justify-center border text-xs font-semibold",
                                   isMultiSelect ? "rounded-md" : "rounded-full",
                                   isSelectedCorrect &&
                                     "border-emerald-500 bg-emerald-500 text-emerald-950",
@@ -1704,7 +1754,7 @@ export const QuestionDetail = () => {
                                   onClick={handleRichContentClick}
                                 />
                                 {optionCount !== null ? (
-                                  <div className="flex flex-col items-end text-[10px] uppercase tracking-wide text-muted-foreground">
+                                  <div className="hide-in-no-answer-copy flex flex-col items-end text-[10px] uppercase tracking-wide text-muted-foreground">
                                     <span>Others picked</span>
                                     <span className="text-xs font-black text-foreground">
                                       {optionCount}
@@ -1718,7 +1768,7 @@ export const QuestionDetail = () => {
                     </div>
                   )}
                   {hasPeerAnswerStats ? (
-                    <div className="flex items-center justify-end text-[10px] uppercase tracking-wide text-muted-foreground">
+                    <div className="hide-in-no-answer-copy flex items-center justify-end text-[10px] uppercase tracking-wide text-muted-foreground">
                       <span>Unattempted (Others)</span>
                       <span className="ml-2 text-xs font-black text-foreground">
                         {peerAnswerStats?.unattempted ?? 0}
@@ -1726,7 +1776,7 @@ export const QuestionDetail = () => {
                     </div>
                   ) : null}
                   {hasPeerAnswerStats && question.qtype === "NAT" ? (
-                    <div className="flex items-center justify-end gap-4 text-[10px] uppercase tracking-wide text-muted-foreground">
+                    <div className="hide-in-no-answer-copy flex items-center justify-end gap-4 text-[10px] uppercase tracking-wide text-muted-foreground">
                       <span>Correct</span>
                       <span className="text-xs font-black text-foreground">
                         {peerAnswerStats?.correct ?? 0}
@@ -1740,7 +1790,7 @@ export const QuestionDetail = () => {
                 </div>
 
                 {hasSolution ? (
-                  <div className="space-y-3 rounded-xl border border-border/60 bg-background/70 p-3">
+                  <div className="hide-in-no-answer-copy space-y-3 rounded-xl border border-border/60 bg-background/70 p-3">
                     <button
                       type="button"
                       className="flex w-full items-center justify-between gap-3 text-left hide-in-copy"
