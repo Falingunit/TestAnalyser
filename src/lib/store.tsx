@@ -86,6 +86,7 @@ type Store = {
   updateQuestionContent: (payload: {
     testId: string;
     questionId: string;
+    sharedPassageContent?: string | null;
     questionContent: string;
     optionContentA?: string | null;
     optionContentB?: string | null;
@@ -1002,6 +1003,7 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
   const updateQuestionContent: Store["updateQuestionContent"] = async ({
     testId,
     questionId,
+    sharedPassageContent,
     questionContent,
     optionContentA,
     optionContentB,
@@ -1021,6 +1023,7 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
           method: "POST",
           token,
           body: JSON.stringify({
+            sharedPassageContent,
             questionContent,
             optionContentA,
             optionContentB,

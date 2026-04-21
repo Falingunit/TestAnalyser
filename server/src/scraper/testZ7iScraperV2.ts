@@ -247,6 +247,27 @@ const getMarkingForType = (qtype: ScrapedQuestionType) => {
   }
 }
 
+const extractSharedPassageContent = (value: unknown) => {
+  if (!Array.isArray(value)) {
+    return null
+  }
+
+  const passages = value
+    .map((entry) => {
+      if (!entry || typeof entry !== 'object') {
+        return null
+      }
+      const passage =
+        typeof (entry as { passage?: unknown }).passage === 'string'
+          ? (entry as { passage: string }).passage.trim()
+          : ''
+      return passage || null
+    })
+    .filter((item): item is string => Boolean(item))
+
+  return passages.length > 0 ? passages.join('\n\n') : null
+}
+
 const parseQuestionwisePayload = (
   payload: unknown,
   includeCorrectAnswer: boolean,
@@ -348,6 +369,7 @@ const parseQuestionwisePayload = (
       })
 
     const marking = getMarkingForType(qtype)
+    const sharedPassageContent = extractSharedPassageContent(row.passage_desc)
     const questionContent = typeof row.question === 'string' ? row.question : ''
 
     questions.push({
@@ -356,6 +378,7 @@ const parseQuestionwisePayload = (
       subject,
       qtype,
       correctAnswerRaw,
+      sharedPassageContent,
       questionContent,
       optionContentA: optionA,
       optionContentB: optionB,

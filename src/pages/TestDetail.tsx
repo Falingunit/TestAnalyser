@@ -576,7 +576,8 @@ export const TestDetail = () => {
         const matchesQuery =
           queryValue.length === 0 ||
           String(displayNumber).includes(queryValue) ||
-          question.questionContent.toLowerCase().includes(queryValue);
+          question.questionContent.toLowerCase().includes(queryValue) ||
+          (question.sharedPassageContent ?? "").toLowerCase().includes(queryValue);
         const matchesSubject =
           subject === "ALL" || question.subject === (subject as Subject);
         const matchesType =

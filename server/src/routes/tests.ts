@@ -263,6 +263,9 @@ const serializeAttempt = (
         qtype: string
         correctAnswer: string
         keyUpdate: string | null
+        sharedPassageContent?: string | null
+        sharedPassageSourceContent?: string | null
+        sharedPassageOverridden?: boolean
         questionContent: string
         solutionContent?: string | null
         optionContentA: string | null
@@ -329,6 +332,7 @@ const serializeAttempt = (
       qtype: question.qtype,
       correctAnswer: parseStoredJson(question.correctAnswer),
       keyUpdate: parseStoredJson(question.keyUpdate),
+      sharedPassageContent: question.sharedPassageContent ?? null,
       questionContent: question.questionContent,
       solutionContent: question.solutionContent ?? null,
       optionContentA: question.optionContentA,
@@ -1458,6 +1462,7 @@ router.post(
         userId: req.user!.userId,
         questionId: examQuestion.id,
         baseUrl: getRequestBaseUrl(req),
+        sharedPassageContent: normalizeHtmlField(req.body?.sharedPassageContent),
         questionContent: nextQuestionContent,
         optionContentA: normalizeHtmlField(req.body?.optionContentA),
         optionContentB: normalizeHtmlField(req.body?.optionContentB),
@@ -1465,6 +1470,8 @@ router.post(
         optionContentD: normalizeHtmlField(req.body?.optionContentD),
         solutionContent: normalizeHtmlField(req.body?.solutionContent),
         previousHtmlValues: [
+          (examQuestion as { sharedPassageContent?: string | null }).sharedPassageContent ??
+            null,
           examQuestion.questionContent,
           examQuestion.optionContentA,
           examQuestion.optionContentB,
@@ -1474,24 +1481,41 @@ router.post(
             null,
         ],
       })
+      const nextSharedPassageContent = hasVisibleHtmlContent(finalized.sharedPassageContent)
+        ? finalized.sharedPassageContent
+        : null
+      const currentSharedPassageContent =
+        (examQuestion as { sharedPassageContent?: string | null }).sharedPassageContent ??
+        null
+      const currentSharedPassageSourceContent =
+        (examQuestion as { sharedPassageSourceContent?: string | null })
+          .sharedPassageSourceContent ?? null
       const nextSolutionContent = hasVisibleHtmlContent(finalized.solutionContent)
         ? finalized.solutionContent
         : null
       const currentSolutionContent =
         (examQuestion as { solutionContent?: string | null }).solutionContent ?? null
+      const nextSharedPassageOverridden =
+        nextSharedPassageContent !== currentSharedPassageSourceContent
 
       const hasContentChanges =
+        nextSharedPassageContent !== currentSharedPassageContent ||
         examQuestion.questionContent !== finalized.questionContent ||
         examQuestion.optionContentA !== finalized.optionContentA ||
         examQuestion.optionContentB !== finalized.optionContentB ||
         examQuestion.optionContentC !== finalized.optionContentC ||
         examQuestion.optionContentD !== finalized.optionContentD ||
-        nextSolutionContent !== currentSolutionContent
+        nextSolutionContent !== currentSolutionContent ||
+        nextSharedPassageOverridden !==
+          ((examQuestion as { sharedPassageOverridden?: boolean }).sharedPassageOverridden ??
+            false)
 
       if (hasContentChanges) {
         await prisma.$executeRaw`
           UPDATE "Question"
           SET
+            "sharedPassageContent" = ${nextSharedPassageContent},
+            "sharedPassageOverridden" = ${nextSharedPassageOverridden},
             "questionContent" = ${finalized.questionContent},
             "optionContentA" = ${finalized.optionContentA},
             "optionContentB" = ${finalized.optionContentB},

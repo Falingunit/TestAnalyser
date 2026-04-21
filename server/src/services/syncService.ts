@@ -15,6 +15,9 @@ type ExistingQuestion = {
   sourceQtypeRaw?: string | null
   subject: string
   qtype: string
+  sharedPassageContent?: string | null
+  sharedPassageSourceContent?: string | null
+  sharedPassageOverridden?: boolean
   questionContent: string
   solutionContent?: string | null
   optionContentA: string | null
@@ -288,6 +291,7 @@ const normalizeSignatureText = (value: string | null | undefined) =>
 const buildQuestionSignature = (payload: {
   subject: string
   qtype: string
+  sharedPassageContent?: string | null
   questionContent: string
   optionContentA?: string | null
   optionContentB?: string | null
@@ -297,12 +301,18 @@ const buildQuestionSignature = (payload: {
   [
     payload.subject,
     payload.qtype,
+    normalizeSignatureText(payload.sharedPassageContent),
     normalizeSignatureText(payload.questionContent),
     normalizeSignatureText(payload.optionContentA),
     normalizeSignatureText(payload.optionContentB),
     normalizeSignatureText(payload.optionContentC),
     normalizeSignatureText(payload.optionContentD),
   ].join('|')
+
+const getSignatureSharedPassageContent = (question: {
+  sharedPassageSourceContent?: string | null
+  sharedPassageContent?: string | null
+}) => question.sharedPassageSourceContent ?? question.sharedPassageContent ?? null
 
 const upsertExam = async (report: ScrapedReport) => {
   const normalized = normalizeReport(report)
@@ -345,6 +355,7 @@ const upsertExam = async (report: ScrapedReport) => {
     const signature = buildQuestionSignature({
       subject: question.subject,
       qtype: question.qtype,
+      sharedPassageContent: getSignatureSharedPassageContent(question),
       questionContent: question.questionContent,
       optionContentA: question.optionContentA,
       optionContentB: question.optionContentB,
@@ -409,6 +420,7 @@ const upsertExam = async (report: ScrapedReport) => {
       const signature = buildQuestionSignature({
         subject: question.subject,
         qtype: storedQtype,
+        sharedPassageContent: question.sharedPassageContent,
         questionContent: question.questionContent,
         optionContentA: question.optionContentA,
         optionContentB: question.optionContentB,
@@ -433,6 +445,9 @@ const upsertExam = async (report: ScrapedReport) => {
           subject: question.subject,
           qtype: storedQtype,
           correctAnswer: storedAnswer,
+          sharedPassageContent: question.sharedPassageContent,
+          sharedPassageSourceContent: question.sharedPassageContent,
+          sharedPassageOverridden: false,
           questionContent: question.questionContent,
           ...storedOptions,
           hasPartial: storedQtype === 'MAQ',
@@ -462,6 +477,10 @@ const upsertExam = async (report: ScrapedReport) => {
     const existingCorrectAnswer = parseStoredJson(existing.correctAnswer)
     const shouldSetKeyUpdate = existing.keyUpdate === null
     const nextCorrectAnswer = existingCorrectAnswer ?? ensuredCorrectAnswer
+    const nextSharedPassageSourceContent = question.sharedPassageContent
+    const nextSharedPassageContent = existing.sharedPassageOverridden
+      ? existing.sharedPassageContent ?? null
+      : question.sharedPassageContent
 
     const updated = await prisma.question.update({
       where: { id: existing.id },
@@ -470,6 +489,8 @@ const upsertExam = async (report: ScrapedReport) => {
         sourceQtypeRaw: question.sourceQtypeRaw ?? question.qtype,
         qtype: storedQtype,
         correctAnswer: serializeJson(nextCorrectAnswer),
+        sharedPassageContent: nextSharedPassageContent,
+        sharedPassageSourceContent: nextSharedPassageSourceContent,
         questionContent: question.questionContent,
         ...storedOptions,
         hasPartial: storedQtype === 'MAQ',

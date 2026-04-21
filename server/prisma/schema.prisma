@@ -73,6 +73,9 @@ model Question {
   globalTags         String    @default("[]")
   qtype              String
   correctAnswer      String
+  sharedPassageContent String?
+  sharedPassageSourceContent String?
+  sharedPassageOverridden Boolean @default(false)
   questionContent    String
   solutionContent    String?
   optionContentA     String?

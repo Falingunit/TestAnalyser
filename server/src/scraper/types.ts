@@ -8,6 +8,7 @@ export type ScrapedQuestion = {
   subject: ScrapedSubject
   qtype: ScrapedQuestionType
   correctAnswerRaw: string | null
+  sharedPassageContent: string | null
   questionContent: string
   optionContentA: string | null
   optionContentB: string | null

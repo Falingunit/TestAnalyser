@@ -164,6 +164,7 @@ export const finalizeQuestionContentAssets = async (payload: {
   userId: string
   questionId: string
   baseUrl: string
+  sharedPassageContent: string | null
   questionContent: string
   optionContentA: string | null
   optionContentB: string | null
@@ -173,6 +174,7 @@ export const finalizeQuestionContentAssets = async (payload: {
   previousHtmlValues: Array<string | null | undefined>
 }) => {
   const fields = {
+    sharedPassageContent: payload.sharedPassageContent,
     questionContent: payload.questionContent,
     optionContentA: payload.optionContentA,
     optionContentB: payload.optionContentB,
@@ -220,6 +222,7 @@ export const finalizeQuestionContentAssets = async (payload: {
     payload.previousHtmlValues,
   )
   const nextAssets = collectPermanentQuestionAssets(payload.questionId, [
+    fields.sharedPassageContent,
     fields.questionContent,
     fields.optionContentA,
     fields.optionContentB,

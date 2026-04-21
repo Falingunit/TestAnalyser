@@ -140,6 +140,7 @@ const insertTextAtSelection = (
 });
 
 type ContentDraftField =
+  | "sharedPassageContent"
   | "questionContent"
   | "optionContentA"
   | "optionContentB"
@@ -198,6 +199,7 @@ const parseNumericGroup = (value: string) => {
 
 const buildQuestionContentDraft = (
   question: {
+    sharedPassageContent?: string | null;
     questionContent: string;
     optionContentA: string | null;
     optionContentB: string | null;
@@ -206,6 +208,7 @@ const buildQuestionContentDraft = (
     solutionContent?: string | null;
   } | null,
 ): QuestionContentDraft => ({
+  sharedPassageContent: question?.sharedPassageContent ?? "",
   questionContent: question?.questionContent ?? "",
   optionContentA: question?.optionContentA ?? "",
   optionContentB: question?.optionContentB ?? "",
@@ -385,6 +388,7 @@ export const QuestionDetail = () => {
   const questionEntry =
     currentIndex >= 0 ? displayQuestions[currentIndex] : null;
   const question = questionEntry?.question ?? null;
+  const hasSharedPassage = htmlHasVisibleContent(question?.sharedPassageContent);
   const hasSolution = htmlHasVisibleContent(question?.solutionContent);
   const hasAdminPrivileges = isAdmin;
   const timeSpent = question && test ? getTimeForQuestion(test, question) : 0;
@@ -784,6 +788,7 @@ export const QuestionDetail = () => {
     const result = await updateQuestionContent({
       testId: test.id,
       questionId: question.id,
+      sharedPassageContent: contentDraft.sharedPassageContent || null,
       questionContent: contentDraft.questionContent,
       optionContentA: contentDraft.optionContentA || null,
       optionContentB: contentDraft.optionContentB || null,
@@ -1648,6 +1653,24 @@ export const QuestionDetail = () => {
                       Current type: {formatQuestionType(question.qtype)}
                     </span>
                   </div>
+                  {hasSharedPassage ? (
+                    <div className="space-y-2 rounded-xl border border-border/60 bg-muted/20 p-3">
+                      <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                        Shared passage
+                      </p>
+                      <MathHtml
+                        className={cn(
+                          "question-html rounded-lg bg-transparent leading-relaxed",
+                          mode === "dark"
+                            ? "question-html--blend-dark"
+                            : "question-html--blend-light",
+                        )}
+                        style={{ fontSize: zoomLevel + "rem" }}
+                        html={question.sharedPassageContent ?? ""}
+                        onClick={handleRichContentClick}
+                      />
+                    </div>
+                  ) : null}
                   <MathHtml
                     className={cn(
                       "question-html rounded-lg bg-transparent leading-relaxed",
@@ -2099,10 +2122,30 @@ export const QuestionDetail = () => {
                       <DialogHeader>
                         <DialogTitle>Edit question content</DialogTitle>
                         <DialogDescription>
-                          Paste HTML for the question, options, and solution. Pasted images upload immediately as temporary assets and are finalized only when you save.
+                          Paste HTML for the shared passage, question, options, and solution. Pasted images upload immediately as temporary assets and are finalized only when you save.
                         </DialogDescription>
                       </DialogHeader>
                       <form className="space-y-4" onSubmit={handleContentSave}>
+                        <div className="space-y-2">
+                          <label className="text-xs text-muted-foreground">
+                            Shared passage HTML
+                          </label>
+                          <Textarea
+                            ref={(node) => {
+                              draftFieldRefs.current.sharedPassageContent = node;
+                            }}
+                            value={contentDraft.sharedPassageContent}
+                            onChange={(event) =>
+                              updateContentDraftField(
+                                "sharedPassageContent",
+                                event.target.value,
+                              )
+                            }
+                            onPaste={handleDraftImagePaste("sharedPassageContent")}
+                            className="min-h-32 font-mono text-xs"
+                            placeholder="Leave empty when this question has no shared passage."
+                          />
+                        </div>
                         <div className="space-y-2">
                           <label className="text-xs text-muted-foreground">
                             Question HTML

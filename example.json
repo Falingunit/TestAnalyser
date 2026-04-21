@@ -1,0 +1,2144 @@
+{
+  "data": [
+    {
+      "_id": {
+        "$oid": "69e5f19b4f987902750920a9"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "6936807a52cb2b62180ddd55"
+      },
+      "marks_positive": "3",
+      "marks_negative": "1",
+      "question_type": "MCQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1776677275,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1776677275,
+      "q_lang": "EN",
+      "question": "<p><img height=\"172\" src=\"https://client-media.onlinetestpanel.com/media/questions/user_6932cc9c62a7e2e82303b9cb/2026/04/20/69e5f191aa517\" width=\"1173\" /></p>",
+      "language": "EN",
+      "opt1": "<p>A</p>",
+      "opt2": "<p>B</p>",
+      "opt3": "<p>C</p>",
+      "opt4": "<p>D</p>",
+      "ans": "b",
+      "__order": 0,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 3,
+      "n_score": 0,
+      "time_taken": 164,
+      "std_ans": "b",
+      "ans_status": "correct"
+    },
+    {
+      "_id": {
+        "$oid": "69e5f2114831681e590b85bc"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "6936807a52cb2b62180ddd55"
+      },
+      "marks_positive": "3",
+      "marks_negative": "1",
+      "question_type": "MCQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1776677393,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1776677393,
+      "q_lang": "EN",
+      "question": "<p><img height=\"917\" src=\"https://client-media.onlinetestpanel.com/media/questions/user_6932cc9c62a7e2e82303b9cb/2026/04/20/69e5f20573aea\" width=\"1184\" /></p>",
+      "language": "EN",
+      "opt1": "<p>A</p>",
+      "opt2": "<p>B</p>",
+      "opt3": "<p>C</p>",
+      "opt4": "<p>D</p>",
+      "ans": "b",
+      "__order": 1,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 3,
+      "n_score": 0,
+      "time_taken": 102,
+      "std_ans": "b",
+      "ans_status": "correct"
+    },
+    {
+      "_id": {
+        "$oid": "69e5f231e954fd85a90c92c7"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "6936807a52cb2b62180ddd55"
+      },
+      "marks_positive": "3",
+      "marks_negative": "1",
+      "question_type": "MCQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1776677425,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1776677425,
+      "q_lang": "EN",
+      "question": "<p><img height=\"628\" src=\"https://client-media.onlinetestpanel.com/media/questions/user_6932cc9c62a7e2e82303b9cb/2026/04/20/69e5f2213f7a7\" width=\"1182\" /></p>",
+      "language": "EN",
+      "opt1": "<p>A</p>",
+      "opt2": "<p>B</p>",
+      "opt3": "<p>C</p>",
+      "opt4": "<p>D</p>",
+      "ans": "d",
+      "__order": 2,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 0,
+      "n_score": -1,
+      "time_taken": 475,
+      "std_ans": "c",
+      "ans_status": "incorrect"
+    },
+    {
+      "_id": {
+        "$oid": "69e5f26c4f987902750920c5"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "6936807a52cb2b62180ddd55"
+      },
+      "marks_positive": "3",
+      "marks_negative": "1",
+      "question_type": "MCQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1776677484,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1776677484,
+      "q_lang": "EN",
+      "question": "<p><img height=\"227\" src=\"https://client-media.onlinetestpanel.com/media/questions/user_6932cc9c62a7e2e82303b9cb/2026/04/20/69e5f25ee1722\" width=\"1175\" /></p>",
+      "language": "EN",
+      "opt1": "<p>A</p>",
+      "opt2": "<p>B</p>",
+      "opt3": "<p>C</p>",
+      "opt4": "<p>D</p>",
+      "ans": "c",
+      "__order": 3,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 3,
+      "n_score": 0,
+      "time_taken": 96,
+      "std_ans": "c",
+      "ans_status": "correct"
+    },
+    {
+      "_id": {
+        "$oid": "69e5f8270185c5f6090249a4"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "6936807a52cb2b62180ddd55"
+      },
+      "marks_positive": "3",
+      "marks_negative": "1",
+      "question_type": "MCQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1776678951,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1776678951,
+      "q_lang": "EN",
+      "question": "<p><img height=\"243\" src=\"https://client-media.onlinetestpanel.com/media/questions/user_6932cc9c62a7e2e82303b9cb/2026/04/20/69e5f81baf1e1\" width=\"1181\" /></p>",
+      "language": "EN",
+      "opt1": "<p>A</p>",
+      "opt2": "<p>B</p>",
+      "opt3": "<p>C</p>",
+      "opt4": "<p>D</p>",
+      "ans": "d",
+      "__order": 4,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 0,
+      "n_score": 0,
+      "time_taken": 109,
+      "std_ans": null,
+      "ans_status": "Unattempted"
+    },
+    {
+      "_id": {
+        "$oid": "69e5f88966b83ff38b0dd7b6"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "6936807a52cb2b62180ddd55"
+      },
+      "marks_positive": "3",
+      "marks_negative": "1",
+      "question_type": "MCQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1776679049,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1776679049,
+      "q_lang": "EN",
+      "question": "<p><img height=\"420\" src=\"https://client-media.onlinetestpanel.com/media/questions/user_6932cc9c62a7e2e82303b9cb/2026/04/20/69e5f87ed53de\" width=\"1174\" /></p>",
+      "language": "EN",
+      "opt1": "<p>A</p>",
+      "opt2": "<p>B</p>",
+      "opt3": "<p>C</p>",
+      "opt4": "<p>D</p>",
+      "ans": "c",
+      "__order": 5,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 3,
+      "n_score": 0,
+      "time_taken": 193,
+      "std_ans": "c",
+      "ans_status": "correct"
+    },
+    {
+      "_id": {
+        "$oid": "69e5f8b1d94b98f8880c3a93"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "6936807a52cb2b62180ddd55"
+      },
+      "marks_positive": "4",
+      "marks_negative": "2",
+      "question_type": "VMAQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1776679089,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1776679089,
+      "q_lang": "EN",
+      "question": "<p><img height=\"275\" src=\"https://client-media.onlinetestpanel.com/media/questions/user_6932cc9c62a7e2e82303b9cb/2026/04/20/69e5f8a4b0248\" width=\"1154\" /></p>",
+      "language": "EN",
+      "opt1": "<p>A</p>",
+      "opt2": "<p>B</p>",
+      "opt3": "<p>C</p>",
+      "opt4": "<p>D</p>",
+      "ans": "a,b,d",
+      "__order": 6,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 4,
+      "n_score": 0,
+      "time_taken": 203,
+      "std_ans": "b,a,d",
+      "ans_status": "correct"
+    },
+    {
+      "_id": {
+        "$oid": "69e5f8ce140113ebf400ed0e"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "6936807a52cb2b62180ddd55"
+      },
+      "marks_positive": "4",
+      "marks_negative": "2",
+      "question_type": "VMAQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1776679118,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1776679118,
+      "q_lang": "EN",
+      "question": "<p><img height=\"419\" src=\"https://client-media.onlinetestpanel.com/media/questions/user_6932cc9c62a7e2e82303b9cb/2026/04/20/69e5f8bfb0db8\" width=\"1141\" /></p>",
+      "language": "EN",
+      "opt1": "<p>A</p>",
+      "opt2": "<p>B</p>",
+      "opt3": "<p>C</p>",
+      "opt4": "<p>D</p>",
+      "ans": "a,c,d",
+      "__order": 7,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 2,
+      "n_score": 0,
+      "time_taken": 209,
+      "std_ans": "a,d",
+      "ans_status": "correct"
+    },
+    {
+      "_id": {
+        "$oid": "69e5f8f8c7a7e9f03b0f530a"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "6936807a52cb2b62180ddd55"
+      },
+      "marks_positive": "4",
+      "marks_negative": "2",
+      "question_type": "VMAQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1776679160,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1776679160,
+      "q_lang": "EN",
+      "question": "<p><img height=\"262\" src=\"https://client-media.onlinetestpanel.com/media/questions/user_6932cc9c62a7e2e82303b9cb/2026/04/20/69e5f8dca7417\" width=\"1166\" /></p>\r\n\r\n<p><img height=\"175\" src=\"https://client-media.onlinetestpanel.com/media/questions/user_6932cc9c62a7e2e82303b9cb/2026/04/20/69e5f8e9a7f06\" width=\"1164\" /></p>",
+      "language": "EN",
+      "opt1": "<p>A</p>",
+      "opt2": "<p>B</p>",
+      "opt3": "<p>C</p>",
+      "opt4": "<p>D</p>",
+      "ans": "c,d",
+      "__order": 8,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 4,
+      "n_score": 0,
+      "time_taken": 249,
+      "std_ans": "c,d",
+      "ans_status": "correct"
+    },
+    {
+      "_id": {
+        "$oid": "69e5f917e68d7e992200ef88"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "6936807a52cb2b62180ddd55"
+      },
+      "marks_positive": "4",
+      "marks_negative": "2",
+      "question_type": "VMAQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1776679191,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1776679191,
+      "q_lang": "EN",
+      "question": "<p><img height=\"802\" src=\"https://client-media.onlinetestpanel.com/media/questions/user_6932cc9c62a7e2e82303b9cb/2026/04/20/69e5f94380f89\" width=\"1178\" /></p>",
+      "language": "EN",
+      "opt1": "<p>A</p>",
+      "opt2": "<p>B</p>",
+      "opt3": "<p>C</p>",
+      "opt4": "<p>D</p>",
+      "ans": "c,d",
+      "have_passage": 0,
+      "passage_id": null,
+      "__order": 9,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 4,
+      "n_score": 0,
+      "time_taken": 541,
+      "std_ans": "d,c",
+      "ans_status": "correct"
+    },
+    {
+      "_id": {
+        "$oid": "69e5fc9fd6cc0f91370298c5"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "6936807a52cb2b62180ddd55"
+      },
+      "marks_positive": "4",
+      "marks_negative": "2",
+      "question_type": "MAQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1776680095,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1776680095,
+      "q_lang": "EN",
+      "question": "<p><img height=\"762\" src=\"https://client-media.onlinetestpanel.com/media/questions/user_6932cc9c62a7e2e82303b9cb/2026/04/20/69e5f97b7e001\" width=\"1171\" /></p>",
+      "language": "EN",
+      "opt1": "<p>A</p>",
+      "opt2": "<p>B</p>",
+      "opt3": "<p>C</p>",
+      "opt4": "<p>D</p>",
+      "ans": "a,b,c,d",
+      "__order": 10,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 4,
+      "n_score": 0,
+      "time_taken": 146,
+      "std_ans": "b,c,d,a",
+      "ans_status": "correct"
+    },
+    {
+      "_id": {
+        "$oid": "69e5fcd28b42ec55a90686db"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "6936807a52cb2b62180ddd55"
+      },
+      "marks_positive": "4",
+      "marks_negative": "2",
+      "question_type": "MAQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1776680146,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1776680146,
+      "q_lang": "EN",
+      "question": "<p><img height=\"105\" src=\"https://client-media.onlinetestpanel.com/media/questions/user_6932cc9c62a7e2e82303b9cb/2026/04/20/69e5fca8c3e40\" width=\"1167\" /></p>\r\n\r\n<p><img height=\"487\" src=\"https://client-media.onlinetestpanel.com/media/questions/user_6932cc9c62a7e2e82303b9cb/2026/04/20/69e5fcbd6e16f\" width=\"1175\" /></p>",
+      "language": "EN",
+      "opt1": "<p>A</p>",
+      "opt2": "<p>B</p>",
+      "opt3": "<p>C</p>",
+      "opt4": "<p>D</p>",
+      "ans": "b,d",
+      "__order": 11,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 4,
+      "n_score": 0,
+      "time_taken": 213,
+      "std_ans": "d,b",
+      "ans_status": "correct"
+    },
+    {
+      "_id": {
+        "$oid": "69e5fcfe30b7cf8cba070d99"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "6936807a52cb2b62180ddd55"
+      },
+      "marks_positive": "4",
+      "marks_negative": "2",
+      "question_type": "MAQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1776680190,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1776680190,
+      "q_lang": "EN",
+      "question": "<p><img height=\"871\" src=\"https://client-media.onlinetestpanel.com/media/questions/user_6932cc9c62a7e2e82303b9cb/2026/04/20/69e5fcf3604b8\" width=\"1174\" /></p>",
+      "language": "EN",
+      "opt1": "<p>A</p>",
+      "opt2": "<p>B</p>",
+      "opt3": "<p>C</p>",
+      "opt4": "<p>D</p>",
+      "ans": "a,c",
+      "__order": 12,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 4,
+      "n_score": 0,
+      "time_taken": 143,
+      "std_ans": "a,c",
+      "ans_status": "correct"
+    },
+    {
+      "_id": {
+        "$oid": "69e5fd300e2288eb60098576"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "6936807a52cb2b62180ddd55"
+      },
+      "marks_positive": "4",
+      "marks_negative": "2",
+      "question_type": "MAQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1776680240,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1776680240,
+      "q_lang": "EN",
+      "question": "<p><img height=\"493\" src=\"https://client-media.onlinetestpanel.com/media/questions/user_6932cc9c62a7e2e82303b9cb/2026/04/20/69e5fd0b75e20\" width=\"1179\" /></p>\r\n\r\n<p><img height=\"326\" src=\"https://client-media.onlinetestpanel.com/media/questions/user_6932cc9c62a7e2e82303b9cb/2026/04/20/69e5fd1f4665c\" width=\"981\" /></p>",
+      "language": "EN",
+      "opt1": "<p>A</p>",
+      "opt2": "<p>B</p>",
+      "opt3": "<p>C</p>",
+      "opt4": "<p>D</p>",
+      "ans": "a,b,c,d",
+      "__order": 13,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 0,
+      "n_score": -2,
+      "time_taken": 324,
+      "std_ans": "a",
+      "ans_status": "incorrect"
+    },
+    {
+      "_id": {
+        "$oid": "69e5ff039498c17b9f0aa4b0"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "6936807a52cb2b62180ddd55"
+      },
+      "marks_positive": "3",
+      "marks_negative": "0",
+      "question_type": "MCQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1776680707,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1776680707,
+      "q_lang": "EN",
+      "question": "<p><img height=\"184\" src=\"https://client-media.onlinetestpanel.com/media/questions/user_6932cc9c62a7e2e82303b9cb/2026/04/20/69e5fefa58778\" width=\"1101\" /></p>",
+      "language": "EN",
+      "opt1": "<p>A</p>",
+      "opt2": "<p>B</p>",
+      "opt3": "<p>C</p>",
+      "opt4": "<p>D</p>",
+      "ans": "d",
+      "have_passage": 1,
+      "passage_id": {
+        "$oid": "69e5feec3f6c5830eb0f6d8e"
+      },
+      "__order": 14,
+      "passage_desc": [
+        {
+          "_id": {
+            "$oid": "69e5feec3f6c5830eb0f6d8e"
+          },
+          "passage": "<p><img height=\"1259\" src=\"https://client-media.onlinetestpanel.com/media/questions/user_6932cc9c62a7e2e82303b9cb/2026/04/20/69e5feebb1574\" width=\"1192\" /></p>",
+          "lang": "EN",
+          "font": "",
+          "created_by": {
+            "$oid": "6932cc9c62a7e2e82303b9cb"
+          }
+        }
+      ],
+      "hi_passage_desc": [],
+      "p_score": 0,
+      "n_score": 0,
+      "time_taken": 328,
+      "std_ans": "b",
+      "ans_status": "incorrect"
+    },
+    {
+      "_id": {
+        "$oid": "69e5ff25ce08ae14b9079fb0"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "6936807a52cb2b62180ddd55"
+      },
+      "marks_positive": "3",
+      "marks_negative": "0",
+      "question_type": "MCQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1776680741,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1776680741,
+      "q_lang": "EN",
+      "question": "<p><img height=\"341\" src=\"https://client-media.onlinetestpanel.com/media/questions/user_6932cc9c62a7e2e82303b9cb/2026/04/20/69e5ff1a14fbd\" width=\"1181\" /></p>",
+      "language": "EN",
+      "opt1": "<p>A</p>",
+      "opt2": "<p>B</p>",
+      "opt3": "<p>C</p>",
+      "opt4": "<p>D</p>",
+      "ans": "c",
+      "have_passage": 1,
+      "passage_id": {
+        "$oid": "69e5feec3f6c5830eb0f6d8e"
+      },
+      "__order": 15,
+      "passage_desc": [
+        {
+          "_id": {
+            "$oid": "69e5feec3f6c5830eb0f6d8e"
+          },
+          "passage": "<p><img height=\"1259\" src=\"https://client-media.onlinetestpanel.com/media/questions/user_6932cc9c62a7e2e82303b9cb/2026/04/20/69e5feebb1574\" width=\"1192\" /></p>",
+          "lang": "EN",
+          "font": "",
+          "created_by": {
+            "$oid": "6932cc9c62a7e2e82303b9cb"
+          }
+        }
+      ],
+      "hi_passage_desc": [],
+      "p_score": 0,
+      "n_score": 0,
+      "time_taken": 279,
+      "std_ans": "a",
+      "ans_status": "incorrect"
+    },
+    {
+      "_id": {
+        "$oid": "69e5ff6030b7cf8cba070daf"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "6936807a52cb2b62180ddd55"
+      },
+      "marks_positive": "3",
+      "marks_negative": "0",
+      "question_type": "MCQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1776680800,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1776680800,
+      "q_lang": "EN",
+      "question": "<p><img height=\"276\" src=\"https://client-media.onlinetestpanel.com/media/questions/user_6932cc9c62a7e2e82303b9cb/2026/04/20/69e5ff54ea72d\" width=\"1186\" /></p>",
+      "language": "EN",
+      "opt1": "<p>A</p>",
+      "opt2": "<p>B</p>",
+      "opt3": "<p>C</p>",
+      "opt4": "<p>D</p>",
+      "ans": "a",
+      "have_passage": 1,
+      "passage_id": {
+        "$oid": "69e5ff49948acf80f50d40fb"
+      },
+      "__order": 16,
+      "passage_desc": [
+        {
+          "_id": {
+            "$oid": "69e5ff49948acf80f50d40fb"
+          },
+          "passage": "<p><img height=\"1240\" src=\"https://client-media.onlinetestpanel.com/media/questions/user_6932cc9c62a7e2e82303b9cb/2026/04/20/69e5ff489d565\" width=\"1191\" /></p>",
+          "lang": "EN",
+          "font": "",
+          "created_by": {
+            "$oid": "6932cc9c62a7e2e82303b9cb"
+          }
+        }
+      ],
+      "hi_passage_desc": [],
+      "p_score": 3,
+      "n_score": 0,
+      "time_taken": 407,
+      "std_ans": "a",
+      "ans_status": "correct"
+    },
+    {
+      "_id": {
+        "$oid": "69e5ff7da7fae210100ea058"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "6936807a52cb2b62180ddd55"
+      },
+      "marks_positive": "3",
+      "marks_negative": "0",
+      "question_type": "MCQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1776680829,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1776680829,
+      "q_lang": "EN",
+      "question": "<p><img height=\"517\" src=\"https://client-media.onlinetestpanel.com/media/questions/user_6932cc9c62a7e2e82303b9cb/2026/04/20/69e5ff706b2eb\" width=\"1186\" /></p>",
+      "language": "EN",
+      "opt1": "<p>A</p>",
+      "opt2": "<p>B</p>",
+      "opt3": "<p>C</p>",
+      "opt4": "<p>D</p>",
+      "ans": "d",
+      "have_passage": 1,
+      "passage_id": {
+        "$oid": "69e5ff49948acf80f50d40fb"
+      },
+      "__order": 17,
+      "passage_desc": [
+        {
+          "_id": {
+            "$oid": "69e5ff49948acf80f50d40fb"
+          },
+          "passage": "<p><img height=\"1240\" src=\"https://client-media.onlinetestpanel.com/media/questions/user_6932cc9c62a7e2e82303b9cb/2026/04/20/69e5ff489d565\" width=\"1191\" /></p>",
+          "lang": "EN",
+          "font": "",
+          "created_by": {
+            "$oid": "6932cc9c62a7e2e82303b9cb"
+          }
+        }
+      ],
+      "hi_passage_desc": [],
+      "p_score": 3,
+      "n_score": 0,
+      "time_taken": 127,
+      "std_ans": "d",
+      "ans_status": "correct"
+    },
+    {
+      "_id": {
+        "$oid": "69e6019cd6a48c02340a5184"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "6938203a74289711aa090fac"
+      },
+      "marks_positive": "3",
+      "marks_negative": "1",
+      "question_type": "MCQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1776681372,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1776681372,
+      "q_lang": "EN",
+      "question": "<p><img height=\"732\" src=\"https://client-media.onlinetestpanel.com/media/questions/user_6932cc9c62a7e2e82303b9cb/2026/04/20/69e60193d44ab\" width=\"943\" /></p>",
+      "language": "EN",
+      "opt1": "<p>A</p>",
+      "opt2": "<p>B</p>",
+      "opt3": "<p>C</p>",
+      "opt4": "<p>D</p>",
+      "ans": "b",
+      "__order": 18,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 0,
+      "n_score": -1,
+      "time_taken": 116,
+      "std_ans": "c",
+      "ans_status": "incorrect"
+    },
+    {
+      "_id": {
+        "$oid": "69e601ac7b374891400975cf"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "6938203a74289711aa090fac"
+      },
+      "marks_positive": "3",
+      "marks_negative": "1",
+      "question_type": "MCQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1776681388,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1776681388,
+      "q_lang": "EN",
+      "question": "<p><img height=\"130\" src=\"https://client-media.onlinetestpanel.com/media/questions/user_6932cc9c62a7e2e82303b9cb/2026/04/20/69e601a464528\" width=\"1175\" /></p>",
+      "language": "EN",
+      "opt1": "<p>A</p>",
+      "opt2": "<p>B</p>",
+      "opt3": "<p>C</p>",
+      "opt4": "<p>D</p>",
+      "ans": "c",
+      "__order": 19,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 3,
+      "n_score": 0,
+      "time_taken": 226,
+      "std_ans": "c",
+      "ans_status": "correct"
+    },
+    {
+      "_id": {
+        "$oid": "69e601be02a3c6f8cb0c3b20"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "6938203a74289711aa090fac"
+      },
+      "marks_positive": "3",
+      "marks_negative": "1",
+      "question_type": "MCQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1776681406,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1776681406,
+      "q_lang": "EN",
+      "question": "<p><img height=\"163\" src=\"https://client-media.onlinetestpanel.com/media/questions/user_6932cc9c62a7e2e82303b9cb/2026/04/20/69e601b5ba9db\" width=\"1047\" /></p>",
+      "language": "EN",
+      "opt1": "<p>A</p>",
+      "opt2": "<p>B</p>",
+      "opt3": "<p>C</p>",
+      "opt4": "<p>D</p>",
+      "ans": "b",
+      "__order": 20,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 3,
+      "n_score": 0,
+      "time_taken": 174,
+      "std_ans": "b",
+      "ans_status": "correct"
+    },
+    {
+      "_id": {
+        "$oid": "69e601d216c6d1aa8702e6b4"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "6938203a74289711aa090fac"
+      },
+      "marks_positive": "3",
+      "marks_negative": "1",
+      "question_type": "MCQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1776681426,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1776681426,
+      "q_lang": "EN",
+      "question": "<p><img height=\"98\" src=\"https://client-media.onlinetestpanel.com/media/questions/user_6932cc9c62a7e2e82303b9cb/2026/04/20/69e601c807938\" width=\"1002\" /></p>",
+      "language": "EN",
+      "opt1": "<p>A</p>",
+      "opt2": "<p>B</p>",
+      "opt3": "<p>C</p>",
+      "opt4": "<p>D</p>",
+      "ans": "b",
+      "__order": 21,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 0,
+      "n_score": 0,
+      "time_taken": 119,
+      "std_ans": "",
+      "ans_status": "Unattempted"
+    },
+    {
+      "_id": {
+        "$oid": "69e601ea99cd88087409e7e0"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "6938203a74289711aa090fac"
+      },
+      "marks_positive": "3",
+      "marks_negative": "1",
+      "question_type": "MCQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1776681450,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1776681450,
+      "q_lang": "EN",
+      "question": "<p><img height=\"1046\" src=\"https://client-media.onlinetestpanel.com/media/questions/user_6932cc9c62a7e2e82303b9cb/2026/04/20/69e601e1d410e\" width=\"735\" /></p>",
+      "language": "EN",
+      "opt1": "<p>A</p>",
+      "opt2": "<p>B</p>",
+      "opt3": "<p>C</p>",
+      "opt4": "<p>D</p>",
+      "ans": "b",
+      "__order": 22,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 3,
+      "n_score": 0,
+      "time_taken": 142,
+      "std_ans": "b",
+      "ans_status": "correct"
+    },
+    {
+      "_id": {
+        "$oid": "69e602003468527f48022edd"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "6938203a74289711aa090fac"
+      },
+      "marks_positive": "3",
+      "marks_negative": "1",
+      "question_type": "MCQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1776681472,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1776681472,
+      "q_lang": "EN",
+      "question": "<p><img height=\"339\" src=\"https://client-media.onlinetestpanel.com/media/questions/user_6932cc9c62a7e2e82303b9cb/2026/04/20/69e601f671df5\" width=\"936\" /></p>",
+      "language": "EN",
+      "opt1": "<p>A</p>",
+      "opt2": "<p>B</p>",
+      "opt3": "<p>C</p>",
+      "opt4": "<p>D</p>",
+      "ans": "d",
+      "__order": 23,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 3,
+      "n_score": 0,
+      "time_taken": 59,
+      "std_ans": "d",
+      "ans_status": "correct"
+    },
+    {
+      "_id": {
+        "$oid": "69e6022c18e220d8a702d414"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "6938203a74289711aa090fac"
+      },
+      "marks_positive": "4",
+      "marks_negative": "2",
+      "question_type": "VMAQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1776681516,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1776681516,
+      "q_lang": "EN",
+      "question": "<p><img height=\"263\" src=\"https://client-media.onlinetestpanel.com/media/questions/user_6932cc9c62a7e2e82303b9cb/2026/04/20/69e602156ad87\" width=\"1198\" /></p>\r\n\r\n<p><img height=\"130\" src=\"https://client-media.onlinetestpanel.com/media/questions/user_6932cc9c62a7e2e82303b9cb/2026/04/20/69e6021eb216f\" width=\"1186\" /></p>",
+      "language": "EN",
+      "opt1": "<p>A</p>",
+      "opt2": "<p>B</p>",
+      "opt3": "<p>C</p>",
+      "opt4": "<p>D</p>",
+      "ans": "a,d",
+      "__order": 24,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 0,
+      "n_score": -2,
+      "time_taken": 239,
+      "std_ans": "a,b,d",
+      "ans_status": "incorrect"
+    },
+    {
+      "_id": {
+        "$oid": "69e6023f95210a53c40e97c7"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "6938203a74289711aa090fac"
+      },
+      "marks_positive": "4",
+      "marks_negative": "2",
+      "question_type": "VMAQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1776681535,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1776681535,
+      "q_lang": "EN",
+      "question": "<p><img height=\"210\" src=\"https://client-media.onlinetestpanel.com/media/questions/user_6932cc9c62a7e2e82303b9cb/2026/04/20/69e60233cd2ba\" width=\"1189\" /></p>",
+      "language": "EN",
+      "opt1": "<p>A</p>",
+      "opt2": "<p>B</p>",
+      "opt3": "<p>C</p>",
+      "opt4": "<p>D</p>",
+      "ans": "a,b,d",
+      "__order": 25,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 2,
+      "n_score": 0,
+      "time_taken": 47,
+      "std_ans": "b,d",
+      "ans_status": "correct"
+    },
+    {
+      "_id": {
+        "$oid": "69e6025bf56277d3b00c913b"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "6938203a74289711aa090fac"
+      },
+      "marks_positive": "4",
+      "marks_negative": "2",
+      "question_type": "VMAQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1776681563,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1776681563,
+      "q_lang": "EN",
+      "question": "<p><img height=\"423\" src=\"https://client-media.onlinetestpanel.com/media/questions/user_6932cc9c62a7e2e82303b9cb/2026/04/20/69e6024ebc1f5\" width=\"1189\" /></p>",
+      "language": "EN",
+      "opt1": "<p>A</p>",
+      "opt2": "<p>B</p>",
+      "opt3": "<p>C</p>",
+      "opt4": "<p>D</p>",
+      "ans": "a,b,d",
+      "__order": 26,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 0,
+      "n_score": 0,
+      "time_taken": 218,
+      "std_ans": "",
+      "ans_status": "Unattempted"
+    },
+    {
+      "_id": {
+        "$oid": "69e6026d5359b674480be36d"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "6938203a74289711aa090fac"
+      },
+      "marks_positive": "4",
+      "marks_negative": "2",
+      "question_type": "VMAQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1776681581,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1776681581,
+      "q_lang": "EN",
+      "question": "<p><img height=\"130\" src=\"https://client-media.onlinetestpanel.com/media/questions/user_6932cc9c62a7e2e82303b9cb/2026/04/20/69e602633f6c3\" width=\"1186\" /></p>",
+      "language": "EN",
+      "opt1": "<p>A</p>",
+      "opt2": "<p>B</p>",
+      "opt3": "<p>C</p>",
+      "opt4": "<p>D</p>",
+      "ans": "a",
+      "__order": 27,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 4,
+      "n_score": 0,
+      "time_taken": 105,
+      "std_ans": "a",
+      "ans_status": "correct"
+    },
+    {
+      "_id": {
+        "$oid": "69e602805359b674480be370"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "6938203a74289711aa090fac"
+      },
+      "marks_positive": "4",
+      "marks_negative": "2",
+      "question_type": "VMAQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1776681600,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1776681600,
+      "q_lang": "EN",
+      "question": "<p><img height=\"193\" src=\"https://client-media.onlinetestpanel.com/media/questions/user_6932cc9c62a7e2e82303b9cb/2026/04/20/69e6027597ef1\" width=\"594\" /></p>",
+      "language": "EN",
+      "opt1": "<p>A</p>",
+      "opt2": "<p>B</p>",
+      "opt3": "<p>C</p>",
+      "opt4": "<p>D</p>",
+      "ans": "b,c",
+      "__order": 28,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 0,
+      "n_score": -2,
+      "time_taken": 88,
+      "std_ans": "c,d,a",
+      "ans_status": "incorrect"
+    },
+    {
+      "_id": {
+        "$oid": "69e6029408add0837d044a16"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "6938203a74289711aa090fac"
+      },
+      "marks_positive": "4",
+      "marks_negative": "2",
+      "question_type": "VMAQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1776681620,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1776681620,
+      "q_lang": "EN",
+      "question": "<p><img height=\"75\" src=\"https://client-media.onlinetestpanel.com/media/questions/user_6932cc9c62a7e2e82303b9cb/2026/04/20/69e60288e955d\" width=\"1106\" /></p>",
+      "language": "EN",
+      "opt1": "<p>A</p>",
+      "opt2": "<p>B</p>",
+      "opt3": "<p>C</p>",
+      "opt4": "<p>D</p>",
+      "ans": "a,b,c",
+      "__order": 29,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 4,
+      "n_score": 0,
+      "time_taken": 26,
+      "std_ans": "a,b,c",
+      "ans_status": "correct"
+    },
+    {
+      "_id": {
+        "$oid": "69e602ab60afa05723041b94"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "6938203a74289711aa090fac"
+      },
+      "marks_positive": "4",
+      "marks_negative": "2",
+      "question_type": "VMAQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1776681643,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1776681643,
+      "q_lang": "EN",
+      "question": "<p><img height=\"384\" src=\"https://client-media.onlinetestpanel.com/media/questions/user_6932cc9c62a7e2e82303b9cb/2026/04/20/69e6029f16645\" width=\"1035\" /></p>",
+      "language": "EN",
+      "opt1": "<p>A</p>",
+      "opt2": "<p>B</p>",
+      "opt3": "<p>C</p>",
+      "opt4": "<p>D</p>",
+      "ans": "a,b,c,d",
+      "__order": 30,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 2,
+      "n_score": 0,
+      "time_taken": 140,
+      "std_ans": "c,a",
+      "ans_status": "correct"
+    },
+    {
+      "_id": {
+        "$oid": "69e602c31ef909244c03f149"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "6938203a74289711aa090fac"
+      },
+      "marks_positive": "4",
+      "marks_negative": "2",
+      "question_type": "VMAQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1776681667,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1776681667,
+      "q_lang": "EN",
+      "question": "<p><img height=\"492\" src=\"https://client-media.onlinetestpanel.com/media/questions/user_6932cc9c62a7e2e82303b9cb/2026/04/20/69e602b7643dd\" width=\"1193\" /></p>",
+      "language": "EN",
+      "opt1": "<p>A</p>",
+      "opt2": "<p>B</p>",
+      "opt3": "<p>C</p>",
+      "opt4": "<p>D</p>",
+      "ans": "a,c,d",
+      "__order": 31,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 2,
+      "n_score": 0,
+      "time_taken": 115,
+      "std_ans": "c,d",
+      "ans_status": "correct"
+    },
+    {
+      "_id": {
+        "$oid": "69e603016acd411ad50037be"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "6938203a74289711aa090fac"
+      },
+      "marks_positive": "3",
+      "marks_negative": "0",
+      "question_type": "MCQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1776681729,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1776681729,
+      "q_lang": "EN",
+      "question": "<p><img height=\"209\" src=\"https://client-media.onlinetestpanel.com/media/questions/user_6932cc9c62a7e2e82303b9cb/2026/04/20/69e602f69d046\" width=\"541\" /></p>",
+      "language": "EN",
+      "opt1": "<p>A</p>",
+      "opt2": "<p>B</p>",
+      "opt3": "<p>C</p>",
+      "opt4": "<p>D</p>",
+      "ans": "a",
+      "have_passage": 1,
+      "passage_id": {
+        "$oid": "69e602e6936bd088560eaf9a"
+      },
+      "__order": 32,
+      "passage_desc": [
+        {
+          "_id": {
+            "$oid": "69e602e6936bd088560eaf9a"
+          },
+          "passage": "<p><img height=\"107\" src=\"https://client-media.onlinetestpanel.com/media/questions/user_6932cc9c62a7e2e82303b9cb/2026/04/20/69e602e35c036\" width=\"1191\" /></p>",
+          "lang": "EN",
+          "font": "",
+          "created_by": {
+            "$oid": "6932cc9c62a7e2e82303b9cb"
+          }
+        }
+      ],
+      "hi_passage_desc": [],
+      "p_score": 3,
+      "n_score": 0,
+      "time_taken": 129,
+      "std_ans": "a",
+      "ans_status": "correct"
+    },
+    {
+      "_id": {
+        "$oid": "69e6031656e0b6bc8a01d753"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "6938203a74289711aa090fac"
+      },
+      "marks_positive": "3",
+      "marks_negative": "0",
+      "question_type": "MCQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1776681750,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1776681750,
+      "q_lang": "EN",
+      "question": "<p><img height=\"85\" src=\"https://client-media.onlinetestpanel.com/media/questions/user_6932cc9c62a7e2e82303b9cb/2026/04/20/69e6030d88b46\" width=\"877\" /></p>",
+      "language": "EN",
+      "opt1": "<p>A</p>",
+      "opt2": "<p>B</p>",
+      "opt3": "<p>C</p>",
+      "opt4": "<p>D</p>",
+      "ans": "c",
+      "have_passage": 1,
+      "passage_id": {
+        "$oid": "69e602e6936bd088560eaf9a"
+      },
+      "__order": 33,
+      "passage_desc": [
+        {
+          "_id": {
+            "$oid": "69e602e6936bd088560eaf9a"
+          },
+          "passage": "<p><img height=\"107\" src=\"https://client-media.onlinetestpanel.com/media/questions/user_6932cc9c62a7e2e82303b9cb/2026/04/20/69e602e35c036\" width=\"1191\" /></p>",
+          "lang": "EN",
+          "font": "",
+          "created_by": {
+            "$oid": "6932cc9c62a7e2e82303b9cb"
+          }
+        }
+      ],
+      "hi_passage_desc": [],
+      "p_score": 0,
+      "n_score": 0,
+      "time_taken": 99,
+      "std_ans": "b",
+      "ans_status": "incorrect"
+    },
+    {
+      "_id": {
+        "$oid": "69e60339455d4517e80015ac"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "6938203a74289711aa090fac"
+      },
+      "marks_positive": "3",
+      "marks_negative": "0",
+      "question_type": "MCQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1776681785,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1776681785,
+      "q_lang": "EN",
+      "question": "<p><img height=\"207\" src=\"https://client-media.onlinetestpanel.com/media/questions/user_6932cc9c62a7e2e82303b9cb/2026/04/20/69e6032f448fa\" width=\"971\" /></p>",
+      "language": "EN",
+      "opt1": "<p>A</p>",
+      "opt2": "<p>B</p>",
+      "opt3": "<p>C</p>",
+      "opt4": "<p>D</p>",
+      "ans": "c",
+      "have_passage": 1,
+      "passage_id": {
+        "$oid": "69e60324032f0e165a0cee34"
+      },
+      "__order": 34,
+      "passage_desc": [
+        {
+          "_id": {
+            "$oid": "69e60324032f0e165a0cee34"
+          },
+          "passage": "<p><img height=\"98\" src=\"https://client-media.onlinetestpanel.com/media/questions/user_6932cc9c62a7e2e82303b9cb/2026/04/20/69e6032358faa\" width=\"1063\" /></p>",
+          "lang": "EN",
+          "font": "",
+          "created_by": {
+            "$oid": "6932cc9c62a7e2e82303b9cb"
+          }
+        }
+      ],
+      "hi_passage_desc": [],
+      "p_score": 0,
+      "n_score": 0,
+      "time_taken": 328,
+      "std_ans": "d",
+      "ans_status": "incorrect"
+    },
+    {
+      "_id": {
+        "$oid": "69e6034ff6eacdfbe902954e"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "6938203a74289711aa090fac"
+      },
+      "marks_positive": "3",
+      "marks_negative": "0",
+      "question_type": "MCQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1776681807,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1776681807,
+      "q_lang": "EN",
+      "question": "<p><img height=\"293\" src=\"https://client-media.onlinetestpanel.com/media/questions/user_6932cc9c62a7e2e82303b9cb/2026/04/20/69e6034725035\" width=\"1101\" /></p>",
+      "language": "EN",
+      "opt1": "<p>A</p>",
+      "opt2": "<p>B</p>",
+      "opt3": "<p>C</p>",
+      "opt4": "<p>D</p>",
+      "ans": "c",
+      "have_passage": 1,
+      "passage_id": {
+        "$oid": "69e60324032f0e165a0cee34"
+      },
+      "__order": 35,
+      "passage_desc": [
+        {
+          "_id": {
+            "$oid": "69e60324032f0e165a0cee34"
+          },
+          "passage": "<p><img height=\"98\" src=\"https://client-media.onlinetestpanel.com/media/questions/user_6932cc9c62a7e2e82303b9cb/2026/04/20/69e6032358faa\" width=\"1063\" /></p>",
+          "lang": "EN",
+          "font": "",
+          "created_by": {
+            "$oid": "6932cc9c62a7e2e82303b9cb"
+          }
+        }
+      ],
+      "hi_passage_desc": [],
+      "p_score": 3,
+      "n_score": 0,
+      "time_taken": 133,
+      "std_ans": "c",
+      "ans_status": "correct"
+    },
+    {
+      "_id": {
+        "$oid": "69e607be67484587740334e8"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "693820bb29ef5fb68908aca5"
+      },
+      "marks_positive": "3",
+      "marks_negative": "1",
+      "question_type": "MCQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1776682942,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1776682942,
+      "q_lang": "EN",
+      "question": "<p><img height=\"389\" src=\"https://client-media.onlinetestpanel.com/media/questions/user_6932cc9c62a7e2e82303b9cb/2026/04/20/69e606b6a125c\" width=\"1023\" /></p>",
+      "language": "EN",
+      "opt1": "<p>A</p>",
+      "opt2": "<p>B</p>",
+      "opt3": "<p>C</p>",
+      "opt4": "<p>D</p>",
+      "ans": "a",
+      "__order": 36,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 0,
+      "n_score": 0,
+      "time_taken": 0,
+      "std_ans": null,
+      "ans_status": "Unattempted"
+    },
+    {
+      "_id": {
+        "$oid": "69e607dc67c8a668a60d5494"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "693820bb29ef5fb68908aca5"
+      },
+      "marks_positive": "3",
+      "marks_negative": "1",
+      "question_type": "MCQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1776682972,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1776682972,
+      "q_lang": "EN",
+      "question": "<p><img height=\"110\" src=\"https://client-media.onlinetestpanel.com/media/questions/user_6932cc9c62a7e2e82303b9cb/2026/04/20/69e607cadef64\" width=\"1063\" /></p>",
+      "language": "EN",
+      "opt1": "<p>A</p>",
+      "opt2": "<p>B</p>",
+      "opt3": "<p>C</p>",
+      "opt4": "<p>D</p>",
+      "ans": "c",
+      "__order": 37,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 3,
+      "n_score": 0,
+      "time_taken": 218,
+      "std_ans": "c",
+      "ans_status": "correct"
+    },
+    {
+      "_id": {
+        "$oid": "69e607fddc387f7a2802f378"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "693820bb29ef5fb68908aca5"
+      },
+      "marks_positive": "3",
+      "marks_negative": "1",
+      "question_type": "MCQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1776683005,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1776683005,
+      "q_lang": "EN",
+      "question": "<p><img height=\"174\" src=\"https://client-media.onlinetestpanel.com/media/questions/user_6932cc9c62a7e2e82303b9cb/2026/04/20/69e607f1e50e0\" width=\"997\" /></p>",
+      "language": "EN",
+      "opt1": "<p>A</p>",
+      "opt2": "<p>B</p>",
+      "opt3": "<p>C</p>",
+      "opt4": "<p>D</p>",
+      "ans": "d",
+      "__order": 38,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 3,
+      "n_score": 0,
+      "time_taken": 93,
+      "std_ans": "d",
+      "ans_status": "correct"
+    },
+    {
+      "_id": {
+        "$oid": "69e60826e022f3a2ca09f476"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "693820bb29ef5fb68908aca5"
+      },
+      "marks_positive": "3",
+      "marks_negative": "1",
+      "question_type": "MCQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1776683046,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1776683046,
+      "q_lang": "EN",
+      "question": "<p><img height=\"147\" src=\"https://client-media.onlinetestpanel.com/media/questions/user_6932cc9c62a7e2e82303b9cb/2026/04/20/69e608189b49e\" width=\"918\" /></p>",
+      "language": "EN",
+      "opt1": "<p>A</p>",
+      "opt2": "<p>B</p>",
+      "opt3": "<p>C</p>",
+      "opt4": "<p>D</p>",
+      "ans": "c",
+      "__order": 39,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 0,
+      "n_score": 0,
+      "time_taken": 81,
+      "std_ans": "",
+      "ans_status": "Unattempted"
+    },
+    {
+      "_id": {
+        "$oid": "69e6085935e969e2e70471be"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "693820bb29ef5fb68908aca5"
+      },
+      "marks_positive": "3",
+      "marks_negative": "1",
+      "question_type": "MCQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1776683097,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1776683097,
+      "q_lang": "EN",
+      "question": "<p><img height=\"103\" src=\"https://client-media.onlinetestpanel.com/media/questions/user_6932cc9c62a7e2e82303b9cb/2026/04/20/69e6083b444dd\" width=\"734\" /></p>",
+      "language": "EN",
+      "opt1": "<p>A</p>",
+      "opt2": "<p>B</p>",
+      "opt3": "<p>C</p>",
+      "opt4": "<p>D</p>",
+      "ans": "b",
+      "__order": 40,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 3,
+      "n_score": 0,
+      "time_taken": 375,
+      "std_ans": "b",
+      "ans_status": "correct"
+    },
+    {
+      "_id": {
+        "$oid": "69e608807ff8c92c1a03b3af"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "693820bb29ef5fb68908aca5"
+      },
+      "marks_positive": "3",
+      "marks_negative": "1",
+      "question_type": "MCQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1776683136,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1776683136,
+      "q_lang": "EN",
+      "question": "<p><img height=\"169\" src=\"https://client-media.onlinetestpanel.com/media/questions/user_6932cc9c62a7e2e82303b9cb/2026/04/20/69e608742a1c2\" width=\"1057\" /></p>",
+      "language": "EN",
+      "opt1": "<p>A</p>",
+      "opt2": "<p>B</p>",
+      "opt3": "<p>C</p>",
+      "opt4": "<p>D</p>",
+      "ans": "d",
+      "__order": 41,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 3,
+      "n_score": 0,
+      "time_taken": 138,
+      "std_ans": "d",
+      "ans_status": "correct"
+    },
+    {
+      "_id": {
+        "$oid": "69e608f99fb41ce8160a45d4"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "693820bb29ef5fb68908aca5"
+      },
+      "marks_positive": "4",
+      "marks_negative": "2",
+      "question_type": "VMAQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1776683257,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1776683257,
+      "q_lang": "EN",
+      "question": "<p><img height=\"117\" src=\"https://client-media.onlinetestpanel.com/media/questions/user_6932cc9c62a7e2e82303b9cb/2026/04/20/69e608a1dd938\" width=\"984\" /></p>",
+      "language": "EN",
+      "opt1": "<p>A</p>",
+      "opt2": "<p>B</p>",
+      "opt3": "<p>C</p>",
+      "opt4": "<p>D</p>",
+      "ans": "a,b,c",
+      "__order": 42,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 4,
+      "n_score": 0,
+      "time_taken": 125,
+      "std_ans": "b,c,a",
+      "ans_status": "correct"
+    },
+    {
+      "_id": {
+        "$oid": "69e6092833587d9ddb0031f7"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "693820bb29ef5fb68908aca5"
+      },
+      "marks_positive": "4",
+      "marks_negative": "2",
+      "question_type": "VMAQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1776683304,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1776683304,
+      "q_lang": "EN",
+      "question": "<p><img height=\"178\" src=\"https://client-media.onlinetestpanel.com/media/questions/user_6932cc9c62a7e2e82303b9cb/2026/04/20/69e60900e4cae\" width=\"1056\" /></p>\r\n\r\n<p><img height=\"83\" src=\"https://client-media.onlinetestpanel.com/media/questions/user_6932cc9c62a7e2e82303b9cb/2026/04/20/69e609187bce5\" width=\"660\" /></p>",
+      "language": "EN",
+      "opt1": "<p>A</p>",
+      "opt2": "<p>B</p>",
+      "opt3": "<p>C</p>",
+      "opt4": "<p>D</p>",
+      "ans": "d",
+      "__order": 43,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 4,
+      "n_score": 0,
+      "time_taken": 293,
+      "std_ans": "d",
+      "ans_status": "correct"
+    },
+    {
+      "_id": {
+        "$oid": "69e6094b23e2c4c681045370"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "693820bb29ef5fb68908aca5"
+      },
+      "marks_positive": "4",
+      "marks_negative": "2",
+      "question_type": "VMAQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1776683339,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1776683339,
+      "q_lang": "EN",
+      "question": "<p><img height=\"284\" src=\"https://client-media.onlinetestpanel.com/media/questions/user_6932cc9c62a7e2e82303b9cb/2026/04/20/69e6093c653b5\" width=\"866\" /></p>",
+      "language": "EN",
+      "opt1": "<p>A</p>",
+      "opt2": "<p>B</p>",
+      "opt3": "<p>C</p>",
+      "opt4": "<p>D</p>",
+      "ans": "b,c",
+      "__order": 44,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 4,
+      "n_score": 0,
+      "time_taken": 169,
+      "std_ans": "b,c",
+      "ans_status": "correct"
+    },
+    {
+      "_id": {
+        "$oid": "69e609750aa3c2bdaf0f6398"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "693820bb29ef5fb68908aca5"
+      },
+      "marks_positive": "4",
+      "marks_negative": "2",
+      "question_type": "VMAQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1776683381,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1776683381,
+      "q_lang": "EN",
+      "question": "<p><img height=\"329\" src=\"https://client-media.onlinetestpanel.com/media/questions/user_6932cc9c62a7e2e82303b9cb/2026/04/20/69e609664e2dd\" width=\"1042\" /></p>",
+      "language": "EN",
+      "opt1": "<p>A</p>",
+      "opt2": "<p>B</p>",
+      "opt3": "<p>C</p>",
+      "opt4": "<p>D</p>",
+      "ans": "a,b,c,d",
+      "__order": 45,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 4,
+      "n_score": 0,
+      "time_taken": 224,
+      "std_ans": "a,b,c,d",
+      "ans_status": "correct"
+    },
+    {
+      "_id": {
+        "$oid": "69e6099962f84815ec07912d"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "693820bb29ef5fb68908aca5"
+      },
+      "marks_positive": "4",
+      "marks_negative": "2",
+      "question_type": "VMAQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1776683417,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1776683417,
+      "q_lang": "EN",
+      "question": "<p><img height=\"318\" src=\"https://client-media.onlinetestpanel.com/media/questions/user_6932cc9c62a7e2e82303b9cb/2026/04/20/69e6098a8bdb3\" width=\"942\" /></p>",
+      "language": "EN",
+      "opt1": "<p>A</p>",
+      "opt2": "<p>B</p>",
+      "opt3": "<p>C</p>",
+      "opt4": "<p>D</p>",
+      "ans": "a,b,d",
+      "__order": 46,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 4,
+      "n_score": 0,
+      "time_taken": 249,
+      "std_ans": "d,a,b",
+      "ans_status": "correct"
+    },
+    {
+      "_id": {
+        "$oid": "69e60a04ccab453cf709b68e"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "693820bb29ef5fb68908aca5"
+      },
+      "marks_positive": "4",
+      "marks_negative": "2",
+      "question_type": "VMAQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1776683524,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1776683524,
+      "q_lang": "EN",
+      "question": "<p><img height=\"220\" src=\"https://client-media.onlinetestpanel.com/media/questions/user_6932cc9c62a7e2e82303b9cb/2026/04/20/69e609e60cb01\" width=\"951\" /></p>",
+      "language": "EN",
+      "opt1": "<p>A</p>",
+      "opt2": "<p>B</p>",
+      "opt3": "<p>C</p>",
+      "opt4": "<p>D</p>",
+      "ans": "a,c",
+      "have_passage": 0,
+      "passage_id": null,
+      "__order": 47,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 4,
+      "n_score": 0,
+      "time_taken": 281,
+      "std_ans": "a,c",
+      "ans_status": "correct"
+    },
+    {
+      "_id": {
+        "$oid": "69e60a37023d179f0902d526"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "693820bb29ef5fb68908aca5"
+      },
+      "marks_positive": "4",
+      "marks_negative": "2",
+      "question_type": "VMAQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1776683575,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1776683575,
+      "q_lang": "EN",
+      "question": "<p><img height=\"150\" src=\"https://client-media.onlinetestpanel.com/media/questions/user_6932cc9c62a7e2e82303b9cb/2026/04/20/69e60a240febf\" width=\"957\" /></p>",
+      "language": "EN",
+      "opt1": "<p>A</p>",
+      "opt2": "<p>B</p>",
+      "opt3": "<p>C</p>",
+      "opt4": "<p>D</p>",
+      "ans": "a,c",
+      "__order": 48,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 4,
+      "n_score": 0,
+      "time_taken": 68,
+      "std_ans": "a,c",
+      "ans_status": "correct"
+    },
+    {
+      "_id": {
+        "$oid": "69e60abba7e8db9b580c58ab"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "693820bb29ef5fb68908aca5"
+      },
+      "marks_positive": "4",
+      "marks_negative": "2",
+      "question_type": "VMAQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1776683707,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1776683707,
+      "q_lang": "EN",
+      "question": "<p><img height=\"150\" src=\"https://client-media.onlinetestpanel.com/media/questions/user_6932cc9c62a7e2e82303b9cb/2026/04/20/69e60aab69817\" width=\"902\" /></p>",
+      "language": "EN",
+      "opt1": "<p>A</p>",
+      "opt2": "<p>B</p>",
+      "opt3": "<p>C</p>",
+      "opt4": "<p>D</p>",
+      "ans": "a,b,d",
+      "__order": 49,
+      "passage_desc": [],
+      "hi_passage_desc": [],
+      "p_score": 0,
+      "n_score": -2,
+      "time_taken": 106,
+      "std_ans": "d,c,a",
+      "ans_status": "incorrect"
+    },
+    {
+      "_id": {
+        "$oid": "69e60b5a0325f019350d95f4"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "693820bb29ef5fb68908aca5"
+      },
+      "marks_positive": "3",
+      "marks_negative": "0",
+      "question_type": "MCQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1776683866,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1776683866,
+      "q_lang": "EN",
+      "question": "<p><img height=\"109\" src=\"https://client-media.onlinetestpanel.com/media/questions/user_6932cc9c62a7e2e82303b9cb/2026/04/20/69e60b4a41601\" width=\"790\" /></p>",
+      "language": "EN",
+      "opt1": "<p>A</p>",
+      "opt2": "<p>B</p>",
+      "opt3": "<p>C</p>",
+      "opt4": "<p>D</p>",
+      "ans": "b",
+      "have_passage": 1,
+      "passage_id": {
+        "$oid": "69e60b3e3cc0ed9f8b0f79be"
+      },
+      "__order": 50,
+      "passage_desc": [
+        {
+          "_id": {
+            "$oid": "69e60b3e3cc0ed9f8b0f79be"
+          },
+          "passage": "<p><img height=\"176\" src=\"https://client-media.onlinetestpanel.com/media/questions/user_6932cc9c62a7e2e82303b9cb/2026/04/20/69e60b3a65f50\" width=\"1053\" /></p>",
+          "lang": "EN",
+          "font": "",
+          "created_by": {
+            "$oid": "6932cc9c62a7e2e82303b9cb"
+          }
+        }
+      ],
+      "hi_passage_desc": [],
+      "p_score": 0,
+      "n_score": 0,
+      "time_taken": 245,
+      "std_ans": "c",
+      "ans_status": "incorrect"
+    },
+    {
+      "_id": {
+        "$oid": "69e60b8041099e022e0f3689"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "693820bb29ef5fb68908aca5"
+      },
+      "marks_positive": "3",
+      "marks_negative": "0",
+      "question_type": "MCQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1776683904,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1776683904,
+      "q_lang": "EN",
+      "question": "<p><img height=\"80\" src=\"https://client-media.onlinetestpanel.com/media/questions/user_6932cc9c62a7e2e82303b9cb/2026/04/20/69e60b73a9ca2\" width=\"789\" /></p>",
+      "language": "EN",
+      "opt1": "<p>A</p>",
+      "opt2": "<p>B</p>",
+      "opt3": "<p>C</p>",
+      "opt4": "<p>D</p>",
+      "ans": "a",
+      "have_passage": 1,
+      "passage_id": {
+        "$oid": "69e60b3e3cc0ed9f8b0f79be"
+      },
+      "__order": 51,
+      "passage_desc": [
+        {
+          "_id": {
+            "$oid": "69e60b3e3cc0ed9f8b0f79be"
+          },
+          "passage": "<p><img height=\"176\" src=\"https://client-media.onlinetestpanel.com/media/questions/user_6932cc9c62a7e2e82303b9cb/2026/04/20/69e60b3a65f50\" width=\"1053\" /></p>",
+          "lang": "EN",
+          "font": "",
+          "created_by": {
+            "$oid": "6932cc9c62a7e2e82303b9cb"
+          }
+        }
+      ],
+      "hi_passage_desc": [],
+      "p_score": 3,
+      "n_score": 0,
+      "time_taken": 3,
+      "std_ans": "a",
+      "ans_status": "correct"
+    },
+    {
+      "_id": {
+        "$oid": "69e60bd3a7e8db9b580c58b5"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "693820bb29ef5fb68908aca5"
+      },
+      "marks_positive": "3",
+      "marks_negative": "0",
+      "question_type": "MCQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1776683987,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1776683987,
+      "q_lang": "EN",
+      "question": "<p><img height=\"148\" src=\"https://client-media.onlinetestpanel.com/media/questions/user_6932cc9c62a7e2e82303b9cb/2026/04/20/69e60bcb67d02\" width=\"1029\" /></p>",
+      "language": "EN",
+      "opt1": "<p>A</p>",
+      "opt2": "<p>B</p>",
+      "opt3": "<p>C</p>",
+      "opt4": "<p>D</p>",
+      "ans": "c",
+      "have_passage": 1,
+      "passage_id": {
+        "$oid": "69e60bc4441f6a07cb090953"
+      },
+      "__order": 52,
+      "passage_desc": [
+        {
+          "_id": {
+            "$oid": "69e60bc4441f6a07cb090953"
+          },
+          "passage": "<p><img height=\"87\" src=\"https://client-media.onlinetestpanel.com/media/questions/user_6932cc9c62a7e2e82303b9cb/2026/04/20/69e60ba59c436\" width=\"821\" /></p>",
+          "lang": "EN",
+          "font": "",
+          "created_by": {
+            "$oid": "6932cc9c62a7e2e82303b9cb"
+          }
+        }
+      ],
+      "hi_passage_desc": [],
+      "p_score": 3,
+      "n_score": 0,
+      "time_taken": 167,
+      "std_ans": "c",
+      "ans_status": "correct"
+    },
+    {
+      "_id": {
+        "$oid": "69e60c03ccab453cf709b6a6"
+      },
+      "find_hint": "",
+      "subject": {
+        "$oid": "693820bb29ef5fb68908aca5"
+      },
+      "marks_positive": "3",
+      "marks_negative": "0",
+      "question_type": "MCQ",
+      "difficulty_level": "",
+      "font": "ARIL",
+      "created": 1776684035,
+      "status": 1,
+      "created_by": {
+        "$oid": "6932cc9c62a7e2e82303b9cb"
+      },
+      "created_at": 1776684035,
+      "q_lang": "EN",
+      "question": "<p><img height=\"120\" src=\"https://client-media.onlinetestpanel.com/media/questions/user_6932cc9c62a7e2e82303b9cb/2026/04/20/69e60be99a52a\" width=\"884\" /></p>",
+      "language": "EN",
+      "opt1": "<p>A</p>",
+      "opt2": "<p>B</p>",
+      "opt3": "<p>C</p>",
+      "opt4": "<p>D</p>",
+      "ans": "a",
+      "have_passage": 1,
+      "passage_id": {
+        "$oid": "69e60bc4441f6a07cb090953"
+      },
+      "__order": 53,
+      "passage_desc": [
+        {
+          "_id": {
+            "$oid": "69e60bc4441f6a07cb090953"
+          },
+          "passage": "<p><img height=\"87\" src=\"https://client-media.onlinetestpanel.com/media/questions/user_6932cc9c62a7e2e82303b9cb/2026/04/20/69e60ba59c436\" width=\"821\" /></p>",
+          "lang": "EN",
+          "font": "",
+          "created_by": {
+            "$oid": "6932cc9c62a7e2e82303b9cb"
+          }
+        }
+      ],
+      "hi_passage_desc": [],
+      "p_score": 3,
+      "n_score": 0,
+      "time_taken": 89,
+      "std_ans": "a",
+      "ans_status": "correct"
+    }
+  ]
+}

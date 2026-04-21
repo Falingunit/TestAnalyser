@@ -21,6 +21,7 @@ export type Question = {
   qtype: 'MCQ' | 'MAQ' | 'VMAQ' | 'NAT' | string
   correctAnswer: AnswerValue
   keyUpdate: AnswerValue
+  sharedPassageContent: string | null
   questionContent: string
   solutionContent: string | null
   optionContentA: string | null

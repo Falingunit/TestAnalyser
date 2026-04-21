@@ -83,6 +83,7 @@ export type QuestionRecord = {
   qtype: QuestionType
   correctAnswer: AnswerValue
   keyUpdate: AnswerValue
+  sharedPassageContent: string | null
   questionContent: string
   solutionContent: string | null
   optionContentA: string | null

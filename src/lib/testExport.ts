@@ -118,6 +118,7 @@ const buildExportQuestions = (test: TestRecord) =>
         timeSpentSeconds,
         bookmarked: Boolean(test.bookmarks[question.id]),
       },
+      sharedPassageHtml: question.sharedPassageContent,
       questionHtml: question.questionContent,
       options: getQuestionOptions(question).map((option) => ({
         label: option.label,
@@ -141,6 +142,14 @@ const buildQuestionPaperHtml = (test: TestRecord) => {
     .join("");
   const body = questions
     .map(({ question, displayNumber }) => {
+      const sharedPassage = htmlHasVisibleContent(question.sharedPassageContent)
+        ? `
+          <div class="shared-passage-block">
+            <div class="shared-passage-label">Shared passage</div>
+            <div class="question-html">${question.sharedPassageContent ?? ""}</div>
+          </div>
+        `
+        : ""
       const options = getQuestionOptions(question)
         .map(
           (option) => `
@@ -174,6 +183,7 @@ const buildQuestionPaperHtml = (test: TestRecord) => {
               <p>${escapeHtml(meta)}</p>
             </div>
           </div>
+          ${sharedPassage}
           <div class="question-body question-html">${question.questionContent}</div>
           ${options ? `<div class="options-grid">${options}</div>` : ""}
           <div class="answer-strip">
@@ -265,6 +275,20 @@ const buildQuestionPaperHtml = (test: TestRecord) => {
       }
       .question-body {
         font-size: 15px;
+      }
+      .shared-passage-block {
+        margin-bottom: 10px;
+        padding: 10px 12px;
+        border: 1px solid var(--border);
+        background: #f8f8f8;
+      }
+      .shared-passage-label {
+        margin-bottom: 6px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--muted);
       }
       .options-grid {
         margin-top: 10px;

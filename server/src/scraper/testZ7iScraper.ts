@@ -297,6 +297,27 @@ const getMarkingForType = (qtype: ScrapedQuestionType) => {
   }
 }
 
+const extractSharedPassageContent = (value: unknown) => {
+  if (!Array.isArray(value)) {
+    return null
+  }
+
+  const passages = value
+    .map((entry) => {
+      if (!entry || typeof entry !== 'object') {
+        return null
+      }
+      const passage =
+        typeof (entry as { passage?: unknown }).passage === 'string'
+          ? (entry as { passage: string }).passage.trim()
+          : ''
+      return passage || null
+    })
+    .filter((item): item is string => Boolean(item))
+
+  return passages.length > 0 ? passages.join('\n\n') : null
+}
+
 const parseResultsPage = (baseUrl: string, html: string) => {
   const $ = load(html)
   const panel = $('div.panel-heading')
@@ -589,6 +610,7 @@ const parseQuestionwisePayload = (
       })
 
     const marking = getMarkingForType(qtype)
+    const sharedPassageContent = extractSharedPassageContent(row.passage_desc)
     const questionContent = typeof row.question === 'string' ? row.question : ''
 
     questions.push({
@@ -597,6 +619,7 @@ const parseQuestionwisePayload = (
       subject,
       qtype,
       correctAnswerRaw,
+      sharedPassageContent,
       questionContent,
       optionContentA: optionA,
       optionContentB: optionB,
@@ -752,6 +775,7 @@ const parseSolutionQuestions = (html: string, subject: ScrapedSubject) => {
       subject,
       qtype,
       correctAnswerRaw,
+      sharedPassageContent: null,
       questionContent,
       optionContentA: optionContents[0],
       optionContentB: optionContents[1],
