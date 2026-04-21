@@ -57,6 +57,7 @@ type Store = {
   resyncAllTests: () => Promise<AuthResult>;
   syncExternalAccount: () => Promise<void>;
   resyncTest: (testId: string) => Promise<void>;
+  resyncTestForAllUsers: (testId: string) => Promise<AuthResult>;
   toggleQuestionBookmark: (payload: {
     testId: string;
     questionId: string;
@@ -863,6 +864,38 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const resyncTestForAllUsers: Store["resyncTestForAllUsers"] = async (
+    testId,
+  ) => {
+    const token = loadToken();
+    if (!token) {
+      return { ok: false, message: "Missing session token." };
+    }
+
+    try {
+      const data = await requestJson<{ test: TestRecord; message?: string }>(
+        `/api/tests/${testId}/resync-all`,
+        {
+          method: "POST",
+          token,
+        },
+      );
+      setState((prev) => ({
+        ...prev,
+        tests: replaceTest(prev.tests, data.test),
+      }));
+      return { ok: true, message: data.message };
+    } catch (error) {
+      const message =
+        error instanceof ApiError
+          ? error.message
+          : error instanceof Error
+            ? error.message
+            : "Unable to force resync this exam.";
+      return { ok: false, message };
+    }
+  };
+
   const toggleQuestionBookmark: Store["toggleQuestionBookmark"] = async ({
     testId,
     questionId,
@@ -1313,6 +1346,7 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
     syncExternalAccount,
     resyncAllTests,
     resyncTest,
+    resyncTestForAllUsers,
     toggleQuestionBookmark,
     updateQuestionTags,
     updateGlobalQuestionTags,

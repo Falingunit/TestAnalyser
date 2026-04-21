@@ -154,6 +154,7 @@ export const TestDetail = () => {
     updateMarkingScheme,
     isAdmin,
     resyncTest,
+    resyncTestForAllUsers,
     fetchTestLeaderboard,
   } = useAppStore();
   const isReadonlyView = searchParams.get("readonly") === "1";
@@ -207,13 +208,18 @@ export const TestDetail = () => {
   );
   const [markingMessage, setMarkingMessage] = useState<string | null>(null);
   const [exportMessage, setExportMessage] = useState<string | null>(null);
+  const [adminResyncMessage, setAdminResyncMessage] = useState<string | null>(
+    null,
+  );
 
   // NEW: Loading and Edited states
   const [isSaving, setIsSaving] = useState(false);
   const [isResyncing, setIsResyncing] = useState(false);
+  const [isAdminResyncing, setIsAdminResyncing] = useState(false);
   const [msFormEdited, setMsFormEdited] = useState(false); // Renamed from isDirty
 
   const [confirmResyncOpen, setConfirmResyncOpen] = useState(false);
+  const [confirmAdminResyncOpen, setConfirmAdminResyncOpen] = useState(false);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [isLoadingLeaderboard, setIsLoadingLeaderboard] = useState(false);
   const [leaderboardMessage, setLeaderboardMessage] = useState<string | null>(
@@ -255,6 +261,7 @@ export const TestDetail = () => {
     // 1. Only clear message if we actually navigated to a new test page
     if (isNewTest) {
       setMarkingMessage(null);
+      setAdminResyncMessage(null);
       setMsFormEdited(false); // Reset edited flag on new page load
       prevTestIdRef.current = test.id;
     }
@@ -355,6 +362,9 @@ export const TestDetail = () => {
     account &&
     account.syncStatus !== "syncing" &&
     !isResyncing,
+  );
+  const canForceResyncAllUsers = Boolean(
+    isAdmin && !isReadonlyView && test?.externalExamId && !isAdminResyncing,
   );
 
   const availableTypes = useMemo(() => {
@@ -1048,8 +1058,41 @@ export const TestDetail = () => {
                     ))}
                   </div>
                 </div>
+                {isAdmin && !isReadonlyView ? (
+                  <div className="flex flex-wrap items-start justify-between gap-3 rounded-lg border border-border/60 p-3">
+                    <div className="space-y-1">
+                      <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                        Force resync
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Refresh this exam for every synced participant.
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={!canForceResyncAllUsers}
+                      onClick={() => {
+                        if (!canForceResyncAllUsers) {
+                          return;
+                        }
+                        setConfirmAdminResyncOpen(true);
+                      }}
+                    >
+                      {isAdminResyncing
+                        ? "Resyncing..."
+                        : "Force resync for everyone"}
+                    </Button>
+                  </div>
+                ) : null}
                 {markingMessage ? (
                   <p className="text-xs text-muted-foreground">{markingMessage}</p>
+                ) : null}
+                {adminResyncMessage ? (
+                  <p className="text-xs text-muted-foreground">
+                    {adminResyncMessage}
+                  </p>
                 ) : null}
               </form>
               {!isAdmin ? (
@@ -1086,6 +1129,46 @@ export const TestDetail = () => {
               }}
             >
               Resync exam
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={confirmAdminResyncOpen}
+        onOpenChange={setConfirmAdminResyncOpen}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Force resync this exam for everyone?</DialogTitle>
+            <DialogDescription>
+              This will refresh the current exam for every synced participant
+              who already has it in the app.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setConfirmAdminResyncOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={async () => {
+                setConfirmAdminResyncOpen(false);
+                setAdminResyncMessage(null);
+                setIsAdminResyncing(true);
+                const result = await resyncTestForAllUsers(test.id);
+                setIsAdminResyncing(false);
+                setAdminResyncMessage(
+                  result.message ??
+                    (result.ok
+                      ? "Force resync completed."
+                      : "Force resync failed."),
+                );
+              }}
+            >
+              Force resync
             </Button>
           </DialogFooter>
         </DialogContent>

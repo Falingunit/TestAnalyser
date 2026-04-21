@@ -2363,6 +2363,194 @@ router.post('/:id/resync', requireAuth, async (req: AuthRequest, res, next) => {
   }
 })
 
+router.post('/:id/resync-all', requireAuth, async (req: AuthRequest, res, next) => {
+  try {
+    const adminCheck = await requireAdminUser(req)
+    if (!adminCheck.ok) {
+      return res.status(adminCheck.status).json({ error: adminCheck.error })
+    }
+
+    const attemptId = toSingleParam(req.params.id)
+    if (!isNonEmptyString(attemptId)) {
+      return res.status(400).json({ error: 'Invalid test id.' })
+    }
+
+    const attempt = await prisma.attempt.findFirst({
+      where: { id: attemptId, userId: req.user?.userId },
+      include: { exam: true },
+    })
+
+    if (!attempt) {
+      return res.status(404).json({ error: 'Test not found.' })
+    }
+
+    const externalExamId = attempt.exam.externalExamId
+    if (!externalExamId) {
+      return res.status(400).json({ error: 'External exam id missing.' })
+    }
+
+    const affectedAttempts = await prisma.attempt.findMany({
+      where: { examId: attempt.examId },
+      select: { userId: true },
+    })
+    const affectedUserIds = Array.from(new Set(affectedAttempts.map((item) => item.userId)))
+
+    if (affectedUserIds.length === 0) {
+      return res.status(404).json({ error: 'No attempts found for this exam.' })
+    }
+
+    const accounts = await prisma.externalAccount.findMany({
+      where: {
+        provider: 'test.z7i.in',
+        userId: { in: affectedUserIds },
+      },
+      include: { credential: true },
+    })
+
+    const syncableAccounts = accounts.filter((account) => Boolean(account.credential))
+    if (syncableAccounts.length === 0) {
+      return res.status(404).json({ error: 'No connected external accounts found.' })
+    }
+
+    let syncedCount = 0
+    let skippedCount = 0
+    let failedCount = 0
+
+    for (const account of syncableAccounts) {
+      if (!account.credential) {
+        skippedCount += 1
+        continue
+      }
+
+      if (account.syncStatus === 'SYNCING') {
+        skippedCount += 1
+        continue
+      }
+
+      const syncStartedAt = new Date()
+      await prisma.externalAccount.update({
+        where: { id: account.id },
+        data: {
+          status: 'CONNECTED',
+          statusMessage: null,
+          syncStatus: 'SYNCING',
+          syncTotal: 0,
+          syncCompleted: 0,
+          syncStartedAt,
+          syncFinishedAt: null,
+        },
+      })
+
+      try {
+        const password = decryptSecret({
+          encrypted: account.credential.encryptedPassword,
+          iv: account.credential.iv,
+          tag: account.credential.tag,
+        })
+
+        await syncExternalAccount({
+          userId: account.userId,
+          provider: account.provider,
+          username: account.username,
+          password,
+          onlyExamIds: [externalExamId],
+          forceAttemptExamIds: [externalExamId],
+          onProgress: async (progress: ScrapeProgress) => {
+            try {
+              await prisma.externalAccount.update({
+                where: { id: account.id },
+                data: {
+                  syncTotal: progress.total,
+                  syncCompleted: progress.completed,
+                },
+              })
+            } catch (progressError) {
+              console.error(progressError)
+            }
+          },
+        })
+
+        const now = new Date()
+        await prisma.externalAccount.update({
+          where: { id: account.id },
+          data: {
+            status: 'CONNECTED',
+            statusMessage: null,
+            lastSyncAt: now,
+            syncStatus: 'IDLE',
+            syncFinishedAt: now,
+          },
+        })
+        syncedCount += 1
+      } catch (error) {
+        failedCount += 1
+        await prisma.externalAccount.update({
+          where: { id: account.id },
+          data: {
+            status: 'ERROR',
+            statusMessage:
+              error instanceof Error ? error.message : 'Resync failed. Check logs.',
+            syncStatus: 'ERROR',
+            syncFinishedAt: new Date(),
+          },
+        })
+      }
+    }
+
+    const refreshed = await prisma.attempt.findFirst({
+      where: { userId: req.user!.userId, examId: attempt.examId },
+      include: {
+        exam: { include: { questions: true } },
+      },
+    })
+
+    if (!refreshed) {
+      return res.status(404).json({ error: 'Test not found.' })
+    }
+
+    const peerTimings = await fetchPeerTimingsForExam(
+      refreshed.examId,
+      req.user!.userId,
+    )
+    const peerAnswerStats = await fetchPeerAnswerStatsForExam(
+      refreshed.examId,
+      req.user!.userId,
+      refreshed.exam.questions.map((question) => ({
+        id: question.id,
+        qtype: question.qtype,
+        key: resolveQuestionKey(question),
+        correctMarking: question.correctMarking,
+        incorrectMarking: question.incorrectMarking,
+        unattemptedMarking: question.unattemptedMarking,
+      })),
+    )
+    const calculatedRank = await fetchCalculatedRankForAttempt({
+      attemptId: refreshed.id,
+      examId: refreshed.examId,
+      questions: refreshed.exam.questions,
+    })
+
+    const messageParts = [`Resynced ${syncedCount} account${syncedCount === 1 ? '' : 's'}.`]
+    if (skippedCount > 0) {
+      messageParts.push(
+        `Skipped ${skippedCount} account${skippedCount === 1 ? '' : 's'} already syncing.`,
+      )
+    }
+    if (failedCount > 0) {
+      messageParts.push(
+        `${failedCount} account${failedCount === 1 ? '' : 's'} failed.`,
+      )
+    }
+
+    return res.json({
+      test: serializeAttempt(refreshed, calculatedRank, peerTimings, peerAnswerStats),
+      message: messageParts.join(' '),
+    })
+  } catch (error) {
+    return next(error)
+  }
+})
+
 const jsonEquals = (a: unknown, b: unknown) =>
   JSON.stringify(a ?? null) === JSON.stringify(b ?? null)
 
