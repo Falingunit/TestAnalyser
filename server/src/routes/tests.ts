@@ -13,7 +13,7 @@ import {
 
 const router = Router()
 
-const parseStoredJson = (value: string | null) => {
+export const parseStoredJson = (value: string | null) => {
   if (value === null) {
     return null
   }
@@ -46,7 +46,7 @@ const getKeyOptionGroups = (value: unknown): string[][] => {
   return []
 }
 
-const getQuestionMarkForAnswer = (
+export const getQuestionMarkForAnswer = (
   question: {
     qtype: string
     correctAnswer: string
@@ -123,7 +123,7 @@ const getQuestionMarkForAnswer = (
   return isCorrect ? question.correctMarking : question.incorrectMarking
 }
 
-const buildCalculatedRankByAttemptId = (
+export const buildCalculatedRankByAttemptId = (
   attempts: Array<{
     id: string
     examId: string
@@ -240,7 +240,7 @@ const parseAttemptQuestionTags = (value: unknown) => {
   return result
 }
 
-const serializeAttempt = (
+export const serializeAttempt = (
   attempt: {
     id: string
     userId: string
@@ -311,6 +311,7 @@ const serializeAttempt = (
   return {
     id: attempt.id,
     userId: attempt.userId,
+    examId: attempt.exam.id,
     externalExamId: attempt.exam.externalExamId ?? undefined,
     title: attempt.exam.title,
     examDate: attempt.exam.examDate,
@@ -723,7 +724,7 @@ const fetchPeerAnswerStatsForExam = async (
   return statsByExam.get(examId) ?? {}
 }
 
-const buildParticipantKeyByUserId = async (userIds: string[]) => {
+export const buildParticipantKeyByUserId = async (userIds: string[]) => {
   if (userIds.length === 0) {
     return new Map<string, string>()
   }

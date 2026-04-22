@@ -30,6 +30,11 @@ const navItems = [
     icon: Bookmark,
   },
   {
+    to: "/app/leaderboards",
+    label: "Leaderboards",
+    icon: ListChecks,
+  },
+  {
     to: "/app/profile",
     label: "Preferences",
     icon: Settings,

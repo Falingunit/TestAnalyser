@@ -121,6 +121,21 @@ type Store = {
     message?: string;
     leaderboard?: LeaderboardEntry[];
   }>;
+  createLeaderboard: (payload: {
+    title: string;
+    examIds: string[];
+  }) => Promise<AuthResult>;
+  fetchLeaderboards: () => Promise<{
+    ok: boolean;
+    leaderboards: any[];
+    message?: string;
+  }>;
+  fetchCustomLeaderboard: (id: string) => Promise<{
+    ok: boolean;
+    leaderboard?: any[];
+    title?: string;
+    message?: string;
+  }>;
 };
 
 const StoreContext = createContext<Store | null>(null);
@@ -1318,6 +1333,74 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
       return { ok: false, message };
     }
   };
+
+  const createLeaderboard: Store["createLeaderboard"] = async (payload) => {
+    const token = loadToken();
+    if (!token) {
+      return { ok: false, message: "Missing session token." };
+    }
+    try {
+      await requestJson("/api/leaderboards", {
+        method: "POST",
+        token,
+        body: JSON.stringify(payload),
+      });
+      return { ok: true };
+    } catch (error) {
+      return {
+        ok: false,
+        message:
+          error instanceof Error ? error.message : "Unable to create leaderboard.",
+      };
+    }
+  };
+
+  const fetchLeaderboards: Store["fetchLeaderboards"] = async () => {
+    const token = loadToken();
+    if (!token) {
+      return { ok: false, message: "Missing session token.", leaderboards: [] };
+    }
+    try {
+      const data = await requestJson<{ leaderboards: any[] }>("/api/leaderboards", {
+        token,
+      });
+      return { ok: true, leaderboards: data.leaderboards };
+    } catch (error) {
+      return {
+        ok: false,
+        message:
+          error instanceof Error ? error.message : "Unable to fetch leaderboards.",
+        leaderboards: [],
+      };
+    }
+  };
+
+  const fetchCustomLeaderboard: Store["fetchCustomLeaderboard"] = async (id) => {
+    const token = loadToken();
+    if (!token) {
+      return { ok: false, message: "Missing session token." };
+    }
+    try {
+      const data = await requestJson<{ leaderboard: any[]; title: string }>(
+        `/api/leaderboards/${id}`,
+        { token },
+      );
+      return {
+        ok: true,
+        leaderboard: data.leaderboard,
+        title: data.title,
+      };
+    } catch (error) {
+      return {
+        ok: false,
+        message:
+          error instanceof Error
+            ? error.message
+            : "Unable to fetch custom leaderboard.",
+      };
+    }
+  };
+
   const adminEmails = [
     "spssabaris@gmail.com",
     "sbaniruddh1@gmail.com",
@@ -1359,6 +1442,9 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
     setMode,
     acknowledgeKeyUpdates,
     fetchTestLeaderboard,
+    createLeaderboard,
+    fetchLeaderboards,
+    fetchCustomLeaderboard,
   };
 
   return (

@@ -5,6 +5,7 @@ import { env } from './config.js'
 import authRouter from './routes/auth.js'
 import externalRouter from './routes/external.js'
 import testsRouter from './routes/tests.js'
+import leaderboardsRouter from './routes/leaderboards.js'
 import { errorHandler } from './middleware/error.js'
 
 const app = express()
@@ -33,6 +34,7 @@ app.get('/health', (_req, res) => {
 app.use('/api/auth', authRouter)
 app.use('/api/external', externalRouter)
 app.use('/api/tests', testsRouter)
+app.use('/api/leaderboards', leaderboardsRouter)
 
 app.use(errorHandler)
 

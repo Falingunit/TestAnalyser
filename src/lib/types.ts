@@ -102,6 +102,7 @@ export type QuestionRecord = {
 export type TestRecord = {
   id: string
   userId: string
+  examId: string
   externalExamId?: string
   title: string
   examDate: string

@@ -9,6 +9,8 @@ import { Profile } from '@/pages/Profile'
 import { QuestionDetail } from '@/pages/QuestionDetail'
 import { TestDetail } from '@/pages/TestDetail'
 import { Tests } from '@/pages/Tests'
+import { LeaderboardsList } from '@/pages/LeaderboardsList'
+import { CustomLeaderboardDetail } from '@/pages/CustomLeaderboardDetail'
 
 const ProtectedLayout = () => {
   const { currentUser, isBootstrapped } = useAppStore()
@@ -47,6 +49,8 @@ export const App = () => {
           path="questions/:testId/:questionId"
           element={<QuestionDetail />}
         />
+        <Route path="leaderboards" element={<LeaderboardsList />} />
+        <Route path="leaderboards/:id" element={<CustomLeaderboardDetail />} />
         <Route path="profile" element={<Profile />} />
       </Route>
       <Route path="*" element={<NotFound />} />

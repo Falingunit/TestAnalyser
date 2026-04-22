@@ -112,3 +112,11 @@ model Attempt {
   @@index([userId])
   @@index([examId])
 }
+
+model CustomLeaderboard {
+  id        String   @id @default(cuid())
+  title     String
+  examIds   String   @default("[]") // JSON array of externalExamId strings
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
