@@ -114,9 +114,10 @@ model Attempt {
 }
 
 model CustomLeaderboard {
-  id        String   @id @default(cuid())
-  title     String
-  examIds   String   @default("[]") // JSON array of externalExamId strings
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  examIds     String   @default("[]") // JSON array of externalExamId strings
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }

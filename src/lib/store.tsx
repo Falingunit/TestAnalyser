@@ -17,6 +17,8 @@ import type {
   UserPreferences,
   TestRecord,
   LeaderboardEntry,
+  CustomLeaderboard,
+  CustomLeaderboardEntry,
 } from "./types";
 
 const TOKEN_KEY = "testanalyser-token";
@@ -124,16 +126,30 @@ type Store = {
   createLeaderboard: (payload: {
     title: string;
     examIds: string[];
+    description?: string;
   }) => Promise<AuthResult>;
+  updateCustomLeaderboard: (id: string, payload: {
+    title?: string;
+    examIds?: string[];
+    description?: string;
+  }) => Promise<AuthResult>;
+  deleteCustomLeaderboard: (id: string) => Promise<AuthResult>;
   fetchLeaderboards: () => Promise<{
     ok: boolean;
-    leaderboards: any[];
+    leaderboards: CustomLeaderboard[];
     message?: string;
   }>;
   fetchCustomLeaderboard: (id: string) => Promise<{
     ok: boolean;
-    leaderboard?: any[];
+    leaderboard?: CustomLeaderboardEntry[];
     title?: string;
+    description?: string;
+    examTitles?: string[];
+    message?: string;
+  }>;
+  fetchCustomLeaderboardParticipant: (leaderboardId: string, participantKey: string) => Promise<{
+    ok: boolean;
+    attempts?: TestRecord[];
     message?: string;
   }>;
 };
@@ -1355,6 +1371,47 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const updateCustomLeaderboard: Store["updateCustomLeaderboard"] = async (id, payload) => {
+    const token = loadToken();
+    if (!token) {
+      return { ok: false, message: "Missing session token." };
+    }
+    try {
+      await requestJson(`/api/leaderboards/${id}`, {
+        method: "PATCH",
+        token,
+        body: JSON.stringify(payload),
+      });
+      return { ok: true };
+    } catch (error) {
+      return {
+        ok: false,
+        message:
+          error instanceof Error ? error.message : "Unable to update leaderboard.",
+      };
+    }
+  };
+
+  const deleteCustomLeaderboard: Store["deleteCustomLeaderboard"] = async (id) => {
+    const token = loadToken();
+    if (!token) {
+      return { ok: false, message: "Missing session token." };
+    }
+    try {
+      await requestJson(`/api/leaderboards/${id}`, {
+        method: "DELETE",
+        token,
+      });
+      return { ok: true };
+    } catch (error) {
+      return {
+        ok: false,
+        message:
+          error instanceof Error ? error.message : "Unable to delete leaderboard.",
+      };
+    }
+  };
+
   const fetchLeaderboards: Store["fetchLeaderboards"] = async () => {
     const token = loadToken();
     if (!token) {
@@ -1381,7 +1438,7 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
       return { ok: false, message: "Missing session token." };
     }
     try {
-      const data = await requestJson<{ leaderboard: any[]; title: string }>(
+      const data = await requestJson<{ leaderboard: any[]; title: string; description?: string }>(
         `/api/leaderboards/${id}`,
         { token },
       );
@@ -1389,6 +1446,7 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
         ok: true,
         leaderboard: data.leaderboard,
         title: data.title,
+        description: data.description,
       };
     } catch (error) {
       return {
@@ -1397,6 +1455,31 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
           error instanceof Error
             ? error.message
             : "Unable to fetch custom leaderboard.",
+      };
+    }
+  };
+
+  const fetchCustomLeaderboardParticipant: Store["fetchCustomLeaderboardParticipant"] = async (leaderboardId, participantKey) => {
+    const token = loadToken();
+    if (!token) {
+      return { ok: false, message: "Missing session token." };
+    }
+    try {
+      const data = await requestJson<{ attempts: TestRecord[] }>(
+        `/api/leaderboards/${leaderboardId}/participant/${encodeURIComponent(participantKey)}`,
+        { token },
+      );
+      return {
+        ok: true,
+        attempts: data.attempts,
+      };
+    } catch (error) {
+      return {
+        ok: false,
+        message:
+          error instanceof Error
+            ? error.message
+            : "Unable to fetch participant data.",
       };
     }
   };
@@ -1443,8 +1526,11 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
     acknowledgeKeyUpdates,
     fetchTestLeaderboard,
     createLeaderboard,
+    updateCustomLeaderboard,
+    deleteCustomLeaderboard,
     fetchLeaderboards,
     fetchCustomLeaderboard,
+    fetchCustomLeaderboardParticipant,
   };
 
   return (

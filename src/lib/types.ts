@@ -118,6 +118,28 @@ export type TestRecord = {
   questions: QuestionRecord[]
 }
 
+export type CustomLeaderboard = {
+  id: string
+  title: string
+  description: string | null
+  examIds: string
+  createdAt: string
+  updatedAt: string
+}
+
+export type CustomLeaderboardEntry = {
+  participantKey: string
+  externalUsername: string
+  displayName: string
+  akaNames: string[]
+  rank: number
+  score: number
+  totalScore: number
+  subjectScores: Record<string, { score: number, total: number }>
+  attemptCount: number
+  isCurrentUserParticipant: boolean
+}
+
 export type LeaderboardEntry = {
   participantKey: string
   externalUsername: string

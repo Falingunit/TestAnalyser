@@ -4,27 +4,14 @@ import { useAppStore } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { ChevronDown, ArrowLeft } from "lucide-react";
+import { ChevronDown, ArrowLeft, Loader2 } from "lucide-react";
 import { cn, LEADERBOARD_PREVIEW_TESTS_KEY } from "@/lib/utils";
 import { TestSummaryCard } from "@/components/TestSummaryCard";
-import { buildAnalysis, getQuestionMark } from "@/lib/analysis";
+import { buildAnalysis } from "@/lib/analysis";
 import { buildDisplayQuestions } from "@/lib/questionDisplay";
 import { SegmentedProgressBar } from "@/components/SegmentedProgressBar";
 import { Badge } from "@/components/ui/badge";
-import type { TestRecord, Subject } from "@/lib/types";
-
-type CustomLeaderboardEntry = {
-  participantKey: string;
-  externalUsername: string;
-  displayName: string;
-  akaNames: string[];
-  rank: number;
-  score: number;
-  totalScore: number;
-  attemptCount: number;
-  isCurrentUserParticipant: boolean;
-  attempts: TestRecord[];
-};
+import type { TestRecord, Subject, CustomLeaderboardEntry } from "@/lib/types";
 
 type LeaderboardSortKey = "rank" | "name" | "total" | "attempts" | Subject;
 type LeaderboardSortDirection = "asc" | "desc";
@@ -39,14 +26,18 @@ const subjectLabels: Record<Subject, string> = {
 export const CustomLeaderboardDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { state, fetchCustomLeaderboard } = useAppStore();
+  const { state, fetchCustomLeaderboard, fetchCustomLeaderboardParticipant } = useAppStore();
   const [leaderboard, setLeaderboard] = useState<CustomLeaderboardEntry[]>([]);
   const [title, setTitle] = useState("");
+  const [description, setDescription] = useState<string | null>(null);
+  const [examTitles, setExamTitles] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const [isLeaderboardCollapsed, setIsLeaderboardCollapsed] = useState(false);
   const [selectedLeaderboardKey, setSelectedLeaderboardKey] = useState<string | null>(null);
+  const [participantAttempts, setParticipantAttempts] = useState<Record<string, TestRecord[]>>({});
+  const [loadingParticipant, setLoadingParticipant] = useState(false);
 
   const [leaderboardSort, setLeaderboardSort] = useState<{
     key: LeaderboardSortKey;
@@ -67,6 +58,8 @@ export const CustomLeaderboardDetail = () => {
         if (data.ok) {
           setLeaderboard(data.leaderboard || []);
           setTitle(data.title || "");
+          setDescription(data.description || null);
+          setExamTitles(data.examTitles || []);
         } else {
           setError(data.message || "Failed to load leaderboard.");
         }
@@ -104,29 +97,8 @@ export const CustomLeaderboardDetail = () => {
   };
 
   const leaderboardRows = useMemo(() => {
-    const rows = leaderboard.map((entry) => {
-      const subjectScores = leaderboardSubjects.map((subject) => {
-        let score = 0;
-        let total = 0;
-        entry.attempts.forEach((test) => {
-          const subjectQuestions = test.questions.filter((q) => q.subject === subject);
-          score += subjectQuestions.reduce((sum, q) => sum + getQuestionMark(test, q), 0);
-          total += subjectQuestions.reduce((sum, q) => sum + q.correctMarking, 0);
-        });
-        return { subject, score, total };
-      });
-
-      return {
-        ...entry,
-        subjectScores,
-        subjectScoreMap: Object.fromEntries(
-          subjectScores.map((item) => [item.subject, item])
-        ) as Record<Subject, { subject: Subject; score: number; total: number }>,
-      };
-    });
-
     const direction = leaderboardSort.direction === "asc" ? 1 : -1;
-    return [...rows].sort((a, b) => {
+    return [...leaderboard].sort((a, b) => {
       if (leaderboardSort.key === "name") {
         const byName = a.displayName.localeCompare(b.displayName) || a.externalUsername.localeCompare(b.externalUsername);
         if (byName !== 0) return byName * direction;
@@ -138,7 +110,9 @@ export const CustomLeaderboardDetail = () => {
         if (diff !== 0) return diff * direction;
       } else {
         const subjKey = leaderboardSort.key as Subject;
-        const diff = a.subjectScoreMap[subjKey].score - b.subjectScoreMap[subjKey].score;
+        const scoreA = a.subjectScores[subjKey]?.score ?? 0;
+        const scoreB = b.subjectScores[subjKey]?.score ?? 0;
+        const diff = scoreA - scoreB;
         if (diff !== 0) return diff * direction;
       }
       return a.externalUsername.localeCompare(b.externalUsername);
@@ -152,6 +126,25 @@ export const CustomLeaderboardDetail = () => {
         : null,
     [leaderboard, selectedLeaderboardKey],
   );
+
+  useEffect(() => {
+    if (selectedLeaderboardKey && id && !participantAttempts[selectedLeaderboardKey]) {
+      setLoadingParticipant(true);
+      fetchCustomLeaderboardParticipant(id, selectedLeaderboardKey)
+        .then((data) => {
+          if (data.ok && data.attempts) {
+            setParticipantAttempts(prev => ({
+              ...prev,
+              [selectedLeaderboardKey]: data.attempts || []
+            }));
+          }
+          setLoadingParticipant(false);
+        })
+        .catch(() => {
+          setLoadingParticipant(false);
+        });
+    }
+  }, [selectedLeaderboardKey, id, fetchCustomLeaderboardParticipant, participantAttempts]);
 
   const openLeaderboardQuestions = (entry: CustomLeaderboardEntry, testRecord: TestRecord) => {
     const first = buildDisplayQuestions(testRecord.questions)[0];
@@ -189,15 +182,29 @@ export const CustomLeaderboardDetail = () => {
                 Leaderboard ranking
               </p>
               <h1 className="mt-2 text-3xl font-semibold">{title}</h1>
-              <p className="mt-2 text-sm text-muted-foreground">
-                Compare combined performance across selected tests.
-              </p>
+              <div className="mt-2 space-y-2">
+                {description && (
+                  <p className="text-sm text-muted-foreground max-w-3xl whitespace-pre-wrap">
+                    {description}
+                  </p>
+                )}
+                {examTitles.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    <span className="text-xs text-muted-foreground self-center">Included tests:</span>
+                    {examTitles.map((t, idx) => (
+                      <Badge key={idx} variant="outline" className="text-[10px] font-normal">
+                        {t}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
 
         <Dialog
-          open={Boolean(selectedLeaderboardEntry)}
+          open={Boolean(selectedLeaderboardKey)}
           onOpenChange={(open) => {
             if (!open) setSelectedLeaderboardKey(null);
           }}
@@ -215,26 +222,36 @@ export const CustomLeaderboardDetail = () => {
               </DialogDescription>
             </DialogHeader>
             <div className="flex-1 mt-2 overflow-y-auto pr-2 space-y-4">
-              {selectedLeaderboardEntry?.attempts.map((testRecord) => {
+              {loadingParticipant && (
+                <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                  <Loader2 className="h-8 w-8 animate-spin mb-4" />
+                  <p>Loading participant results...</p>
+                </div>
+              )}
+              {!loadingParticipant && selectedLeaderboardKey && participantAttempts[selectedLeaderboardKey]?.map((testRecord) => {
                 const analysis = buildAnalysis(testRecord);
                 return (
-                  <div key={testRecord.id} className="border border-border/60 rounded-lg p-4 bg-muted/20 relative">
-                    <div className="absolute top-4 right-4 z-10">
-                      <Button size="sm" onClick={() => openLeaderboardQuestions(selectedLeaderboardEntry, testRecord)}>
+                  <TestSummaryCard
+                    key={testRecord.id}
+                    test={testRecord}
+                    analysis={analysis}
+                    defaultExpanded={false}
+                    actions={<></>}
+                    collapsedAction={
+                      <Button size="sm" onClick={(e) => {
+                        e.stopPropagation();
+                        openLeaderboardQuestions(selectedLeaderboardEntry!, testRecord);
+                      }}>
                         Open questions
                       </Button>
-                    </div>
-                    <TestSummaryCard
-                      test={testRecord}
-                      analysis={analysis}
-                      defaultExpanded={false}
-                      actions={<></>}
-                      collapsedAction={<></>}
-                      reviewAction={<></>}
-                    />
-                  </div>
+                    }
+                    reviewAction={<></>}
+                  />
                 );
               })}
+              {!loadingParticipant && selectedLeaderboardKey && (!participantAttempts[selectedLeaderboardKey] || participantAttempts[selectedLeaderboardKey].length === 0) && (
+                <p className="text-center py-12 text-muted-foreground">No attempts found for this participant.</p>
+              )}
             </div>
           </DialogContent>
         </Dialog>
@@ -324,7 +341,7 @@ export const CustomLeaderboardDetail = () => {
                         {entry.attemptCount}
                       </div>
                       {leaderboardSubjects.map((subject) => {
-                        const item = entry.subjectScoreMap[subject];
+                        const item = entry.subjectScores[subject] || { score: 0, total: 0 };
                         return (
                           <div key={`${entry.participantKey}-${subject}`} className="w-full">
                             <span className="block text-right text-foreground/90 font-medium">

@@ -5,32 +5,36 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
+import { Pencil, Trash2 } from "lucide-react";
 
 type Leaderboard = {
   id: string;
   title: string;
+  description: string | null;
   examIds: string;
   createdAt: string;
 };
 
 export const LeaderboardsList = () => {
-  const { state, isAdmin, fetchLeaderboards, createLeaderboard } = useAppStore();
+  const { state, isAdmin, fetchLeaderboards, createLeaderboard, updateCustomLeaderboard, deleteCustomLeaderboard } = useAppStore();
   const [leaderboards, setLeaderboards] = useState<Leaderboard[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   // Filter state
   const [query, setQuery] = useState("");
 
   // Dialog state
   const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
   const [selectedTests, setSelectedTests] = useState<Set<string>>(new Set());
 
   const loadLeaderboards = async () => {
@@ -45,19 +49,60 @@ export const LeaderboardsList = () => {
     loadLeaderboards();
   }, []);
 
-  const handleCreate = async () => {
-    if (!title || selectedTests.size === 0) return;
-    const result = await createLeaderboard({
-      title,
-      examIds: Array.from(selectedTests),
-    });
-    if (result.ok) {
-      setIsDialogOpen(false);
-      setTitle("");
+  const handleOpenCreate = () => {
+    setEditingId(null);
+    setTitle("");
+    setDescription("");
+    setSelectedTests(new Set());
+    setIsDialogOpen(true);
+  };
+
+  const handleOpenEdit = (lb: Leaderboard) => {
+    setEditingId(lb.id);
+    setTitle(lb.title);
+    setDescription(lb.description || "");
+    try {
+      const ids = JSON.parse(lb.examIds) as string[];
+      setSelectedTests(new Set(ids));
+    } catch {
       setSelectedTests(new Set());
+    }
+    setIsDialogOpen(true);
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this leaderboard?")) return;
+    const result = await deleteCustomLeaderboard(id);
+    if (result.ok) {
       loadLeaderboards();
     } else {
-      alert(result.message || "Failed to create leaderboard");
+      alert(result.message || "Failed to delete leaderboard");
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (!title || selectedTests.size === 0) return;
+    
+    let result;
+    if (editingId) {
+      result = await updateCustomLeaderboard(editingId, {
+        title,
+        description,
+        examIds: Array.from(selectedTests),
+      });
+    } else {
+      result = await createLeaderboard({
+        title,
+        description,
+        examIds: Array.from(selectedTests),
+      });
+    }
+
+    if (result.ok) {
+      setIsDialogOpen(false);
+      loadLeaderboards();
+    } else {
+      alert(result.message || "Failed to save leaderboard");
     }
   };
 
@@ -75,7 +120,8 @@ export const LeaderboardsList = () => {
     return leaderboards.filter((lb) => {
       const inQuery =
         query.trim().length === 0 ||
-        lb.title.toLowerCase().includes(query.trim().toLowerCase());
+        lb.title.toLowerCase().includes(query.trim().toLowerCase()) ||
+        (lb.description?.toLowerCase().includes(query.trim().toLowerCase()) ?? false);
       return inQuery;
     });
   }, [leaderboards, query]);
@@ -98,61 +144,70 @@ export const LeaderboardsList = () => {
             </p>
           </div>
           {isAdmin && (
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-              <DialogTrigger asChild>
-                <Button size="lg">Create Leaderboard</Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle>Create New Leaderboard</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4 py-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="title">Title</Label>
-                    <Input
-                      id="title"
-                      value={title}
-                      onChange={(e) => setTitle(e.target.value)}
-                      placeholder="Enter leaderboard title"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Select Tests</Label>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-64 overflow-y-auto p-2 border rounded-md">
-                      {state.tests.map((test) => (
-                        <div
-                          key={test.examId}
-                          className="flex items-center space-x-2"
-                        >
-                          <input
-                            type="checkbox"
-                            id={test.examId}
-                            checked={selectedTests.has(test.examId)}
-                            onChange={() => toggleTest(test.examId)}
-                            className="rounded border-gray-300 text-primary focus:ring-primary h-4 w-4"
-                          />
-                          <Label
-                            htmlFor={test.examId}
-                            className="text-sm font-medium truncate"
-                          >
-                            {test.title}
-                          </Label>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  <Button
-                    onClick={handleCreate}
-                    disabled={!title || selectedTests.size === 0}
-                    className="w-full"
-                  >
-                    Create
-                  </Button>
-                </div>
-              </DialogContent>
-            </Dialog>
+            <Button size="lg" onClick={handleOpenCreate}>Create Leaderboard</Button>
           )}
         </div>
+
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>{editingId ? "Edit Leaderboard" : "Create New Leaderboard"}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="title">Title</Label>
+                <Input
+                  id="title"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="Enter leaderboard title"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="description">Description</Label>
+                <Textarea
+                  id="description"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="What tests are included?"
+                  rows={3}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Select Tests</Label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-64 overflow-y-auto p-2 border rounded-md">
+                  {state.tests.map((test) => (
+                    <div
+                      key={test.examId}
+                      className="flex items-center space-x-2"
+                    >
+                      <input
+                        type="checkbox"
+                        id={test.examId}
+                        checked={selectedTests.has(test.examId)}
+                        onChange={() => toggleTest(test.examId)}
+                        className="rounded border-gray-300 text-primary focus:ring-primary h-4 w-4"
+                      />
+                      <Label
+                        htmlFor={test.examId}
+                        className="text-sm font-medium truncate"
+                      >
+                        {test.title}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <Button
+                onClick={handleSubmit}
+                disabled={!title || selectedTests.size === 0}
+                className="w-full"
+              >
+                {editingId ? "Update" : "Create"}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,3fr)]">
           <Card className="app-panel">
@@ -165,7 +220,7 @@ export const LeaderboardsList = () => {
                 <Input
                   value={query}
                   onChange={(event) => setQuery(event.target.value)}
-                  placeholder="Search by title"
+                  placeholder="Search by title or description"
                 />
               </div>
             </CardContent>
@@ -175,8 +230,8 @@ export const LeaderboardsList = () => {
             {visibleLeaderboards.map((lb) => (
               <Card key={lb.id} className="app-panel">
                 <CardContent className="flex flex-row items-center justify-between p-6">
-                  <div className="flex-1">
-                    <p className="text-lg font-semibold text-foreground">
+                  <div className="flex-1 min-w-0 pr-4">
+                    <p className="text-lg font-semibold text-foreground truncate">
                       <Link
                         to={`/app/leaderboards/${lb.id}`}
                         className="hover:underline"
@@ -184,13 +239,30 @@ export const LeaderboardsList = () => {
                         {lb.title}
                       </Link>
                     </p>
-                    <p className="text-sm text-muted-foreground">
+                    {lb.description && (
+                      <p className="mt-1 text-sm text-muted-foreground line-clamp-2">
+                        {lb.description}
+                      </p>
+                    )}
+                    <p className="mt-1 text-xs text-muted-foreground">
                       Created on {new Date(lb.createdAt).toLocaleDateString()}
                     </p>
                   </div>
-                  <Button variant="outline" asChild>
-                    <Link to={`/app/leaderboards/${lb.id}`}>View Ranking</Link>
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    {isAdmin && (
+                      <>
+                        <Button variant="ghost" size="icon" onClick={() => handleOpenEdit(lb)}>
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive hover:bg-destructive/10" onClick={() => handleDelete(lb.id)}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </>
+                    )}
+                    <Button variant="outline" asChild>
+                      <Link to={`/app/leaderboards/${lb.id}`}>View Ranking</Link>
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             ))}
