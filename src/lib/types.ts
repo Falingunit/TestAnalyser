@@ -8,7 +8,6 @@ export type UserPreferences = {
   theme: ThemeName
   mode: ColorMode
   fontScale: number
-  showComparison: boolean
   acknowledgedKeyUpdates: Record<string, string>
 }
 

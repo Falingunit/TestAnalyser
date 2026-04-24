@@ -30,8 +30,8 @@ export const LeaderboardsList = () => {
     createLeaderboard,
     updateCustomLeaderboard,
     deleteCustomLeaderboard,
+    showComparison,
   } = useAppStore();
-  const showComparison = currentUser?.preferences.showComparison ?? true;
   const [leaderboards, setLeaderboards] = useState<Leaderboard[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);

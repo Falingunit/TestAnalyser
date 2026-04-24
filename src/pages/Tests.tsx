@@ -36,8 +36,7 @@ type SortOption =
   | 'rank-desc'
 
 export const Tests = () => {
-  const { state, currentUser, resyncTest, resyncAllTests } = useAppStore()
-  const showComparison = currentUser?.preferences.showComparison ?? true
+  const { state, currentUser, resyncTest, resyncAllTests, showComparison } = useAppStore()
   const [query, setQuery] = useState('')
   const [subject, setSubject] = useState<SubjectFilter>('ALL')
   const [sort, setSort] = useState<SortOption>('date-desc')

@@ -25,6 +25,7 @@ const TOKEN_KEY = "testanalyser-token";
 const USER_KEY = "testanalyser-user";
 const UI_KEY = "testanalyser-ui";
 const ADMIN_OVERRIDE_KEY = "testanalyser-admin-override";
+const SHOW_COMPARISON_KEY = "testanalyser-show-comparison";
 
 type AuthResult = { ok: boolean; message?: string };
 
@@ -34,6 +35,7 @@ type Store = {
   isAdmin: boolean;
   adminOverride: boolean;
   fontScale: number;
+  showComparison: boolean;
   setAdminOverride: (enabled: boolean) => void;
   setFontScale: (scale: number) => void;
   isBootstrapped: boolean;
@@ -211,6 +213,18 @@ const saveAdminOverride = (enabled: boolean) => {
   localStorage.setItem(ADMIN_OVERRIDE_KEY, String(enabled));
 };
 
+const loadShowComparison = () => {
+  const raw = localStorage.getItem(SHOW_COMPARISON_KEY);
+  if (raw === null) {
+    return true;
+  }
+  return raw === "true";
+};
+
+const saveShowComparison = (enabled: boolean) => {
+  localStorage.setItem(SHOW_COMPARISON_KEY, String(enabled));
+};
+
 const loadToken = () => localStorage.getItem(TOKEN_KEY);
 
 const saveToken = (token: string | null) => {
@@ -230,7 +244,6 @@ const normalizePreferences = (
       theme: fallbackUi.theme,
       mode: fallbackUi.mode,
       fontScale: fallbackUi.fontScale,
-      showComparison: true,
       acknowledgedKeyUpdates: {},
     };
   }
@@ -239,8 +252,6 @@ const normalizePreferences = (
   const theme = isTheme(prefs.theme) ? prefs.theme : fallbackUi.theme;
   const mode = isMode(prefs.mode) ? prefs.mode : fallbackUi.mode;
   const fontScale = normalizeFontScale(prefs.fontScale, fallbackUi.fontScale);
-  const showComparison =
-    typeof prefs.showComparison === "boolean" ? prefs.showComparison : true;
   const acknowledgedKeyUpdates =
     prefs.acknowledgedKeyUpdates &&
     typeof prefs.acknowledgedKeyUpdates === "object"
@@ -251,7 +262,6 @@ const normalizePreferences = (
     theme,
     mode,
     fontScale,
-    showComparison,
     acknowledgedKeyUpdates,
   };
 };
@@ -384,6 +394,7 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
   }));
   const [currentUser, setCurrentUser] = useState<User | null>(() => loadUser());
   const [adminOverride, setAdminOverrideState] = useState(loadAdminOverride);
+  const [showComparison, setShowComparisonState] = useState(loadShowComparison);
   const [isBootstrapped, setIsBootstrapped] = useState(false);
   const uiSnapshot = useRef(state.ui);
 
@@ -1275,9 +1286,8 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const setShowComparison: Store["setShowComparison"] = (show) => {
-    if (currentUser) {
-      void savePreferences({ ...currentUser.preferences, showComparison: show });
-    }
+    setShowComparisonState(show);
+    saveShowComparison(show);
   };
 
   const setFontScale: Store["setFontScale"] = (scale) => {
@@ -1511,6 +1521,7 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
     isAdmin,
     adminOverride,
     fontScale,
+    showComparison,
     setAdminOverride,
     setFontScale,
     isBootstrapped,

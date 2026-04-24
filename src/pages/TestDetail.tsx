@@ -156,8 +156,8 @@ export const TestDetail = () => {
     resyncTest,
     resyncTestForAllUsers,
     fetchTestLeaderboard,
+    showComparison,
   } = useAppStore();
-  const showComparison = currentUser?.preferences.showComparison ?? true;
   const isReadonlyView = searchParams.get("readonly") === "1";
   const previewParticipantName = searchParams.get("viewerName")?.trim() ?? "";
   const previewParticipantUsername =

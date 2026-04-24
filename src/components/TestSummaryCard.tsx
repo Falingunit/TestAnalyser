@@ -59,8 +59,7 @@ export const TestSummaryCard = ({
   defaultExpanded = false,
   reviewAction,
 }: TestSummaryCardProps) => {
-  const { currentUser } = useAppStore();
-  const showComparison = currentUser?.preferences.showComparison ?? true;
+  const { showComparison } = useAppStore();
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
   const overallTypeStats = useMemo(() => {
     const typeMap = {} as Record<

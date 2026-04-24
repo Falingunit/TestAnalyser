@@ -27,6 +27,7 @@ export const Profile = () => {
     setAdminOverride,
     setMode,
     setShowComparison,
+    showComparison,
   } = useAppStore();
   const [profileMessage, setProfileMessage] = useState<string | null>(null);
   const [passwordMessage, setPasswordMessage] = useState<string | null>(null);
@@ -222,7 +223,7 @@ export const Profile = () => {
                 </p>
               </div>
               <Switch
-                checked={currentUser?.preferences.showComparison ?? true}
+                checked={showComparison}
                 onCheckedChange={setShowComparison}
               />
             </div>

@@ -42,9 +42,8 @@ const navItems = [
 ];
 
 export const AppShell = ({ children }: { children: ReactNode }) => {
-  const { currentUser, logout, state, syncExternalAccount, setMode } =
+  const { currentUser, logout, state, syncExternalAccount, setMode, showComparison } =
     useAppStore();
-  const showComparison = currentUser?.preferences.showComparison ?? true;
   const filteredNavItems = navItems.filter((item) => {
     if (item.to === "/app/leaderboards") return showComparison;
     return true;

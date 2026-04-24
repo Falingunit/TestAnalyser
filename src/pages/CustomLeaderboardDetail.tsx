@@ -22,18 +22,18 @@ const subjectLabels: Record<Subject, string> = {
   CHEMISTRY: "Chem",
   MATHEMATICS: "Math",
 };
-
 export const CustomLeaderboardDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const {
     state,
-    currentUser,
     fetchCustomLeaderboard,
     fetchCustomLeaderboardParticipant,
+    showComparison,
   } = useAppStore();
-  const showComparison = currentUser?.preferences.showComparison ?? true;
   const [leaderboard, setLeaderboard] = useState<CustomLeaderboardEntry[]>([]);
+
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState<string | null>(null);
   const [examTitles, setExamTitles] = useState<string[]>([]);

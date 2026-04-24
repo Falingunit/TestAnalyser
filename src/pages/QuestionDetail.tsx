@@ -235,8 +235,8 @@ export const QuestionDetail = () => {
     updateGlobalQuestionTags,
     currentUser,
     isAdmin,
+    showComparison,
   } = useAppStore();
-  const showComparison = currentUser?.preferences.showComparison ?? true;
   const isReadonlyView = searchParams.get("readonly") === "1";
   const isBookmarkView = searchParams.get("bookmarks") === "1";
   const previewParticipantName = searchParams.get("viewerName")?.trim() ?? "";
