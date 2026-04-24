@@ -1685,7 +1685,7 @@ export const QuestionDetail = () => {
                 </div>
 
                 <div className="space-y-3">
-                  <p className={cn("text-xs uppercase tracking-[0.2em] text-muted-foreground", question.qtype === "NAT" && "hide-in-no-answer-copy")}>
+                  <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground hide-in-no-answer-copy">
                     {question.qtype === "NAT" ? "Answer" : "Options"}
                   </p>
                   {question.qtype === "NAT" ? (
@@ -1709,7 +1709,7 @@ export const QuestionDetail = () => {
                       </span>
                     </div>
                   ) : (
-                    <div className="grid gap-3">
+                    <div className="grid gap-3 hide-in-no-answer-copy">
                       {[
                         { label: "A", value: question.optionContentA },
                         { label: "B", value: question.optionContentB },
