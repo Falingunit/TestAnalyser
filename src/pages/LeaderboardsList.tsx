@@ -25,7 +25,6 @@ export const LeaderboardsList = () => {
   const {
     state,
     isAdmin,
-    currentUser,
     fetchLeaderboards,
     createLeaderboard,
     updateCustomLeaderboard,

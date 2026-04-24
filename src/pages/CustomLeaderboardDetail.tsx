@@ -25,7 +25,6 @@ const subjectLabels: Record<Subject, string> = {
 export const CustomLeaderboardDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
   const {
     state,
     fetchCustomLeaderboard,
