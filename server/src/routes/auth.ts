@@ -10,6 +10,7 @@ const defaultPreferences = {
   theme: 'ember',
   mode: 'system',
   fontScale: 1,
+  showComparison: true,
   acknowledgedKeyUpdates: {},
 }
 
@@ -35,6 +36,9 @@ const normalizePreferences = (value: unknown, existing: Record<string, unknown>)
     if (typeof prefs.fontScale === 'number' && Number.isFinite(prefs.fontScale)) {
       next.fontScale = clampFontScale(prefs.fontScale)
     }
+    if (typeof prefs.showComparison === 'boolean') {
+      next.showComparison = prefs.showComparison
+    }
     if (prefs.acknowledgedKeyUpdates && typeof prefs.acknowledgedKeyUpdates === 'object') {
       next.acknowledgedKeyUpdates = prefs.acknowledgedKeyUpdates
     }
@@ -47,6 +51,9 @@ const normalizePreferences = (value: unknown, existing: Record<string, unknown>)
   }
   if (typeof next.fontScale !== 'number') {
     next.fontScale = defaultPreferences.fontScale
+  }
+  if (typeof next.showComparison !== 'boolean') {
+    next.showComparison = defaultPreferences.showComparison
   }
   if (!next.acknowledgedKeyUpdates || typeof next.acknowledgedKeyUpdates !== 'object') {
     next.acknowledgedKeyUpdates = {}

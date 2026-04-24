@@ -26,6 +26,7 @@ export const Profile = () => {
     adminOverride,
     setAdminOverride,
     setMode,
+    setShowComparison,
   } = useAppStore();
   const [profileMessage, setProfileMessage] = useState<string | null>(null);
   const [passwordMessage, setPasswordMessage] = useState<string | null>(null);
@@ -203,6 +204,26 @@ export const Profile = () => {
                 onCheckedChange={(checked) =>
                   setMode(checked ? "dark" : "light")
                 }
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="app-panel">
+          <CardContent className="space-y-4 p-6">
+            <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+              Social
+            </p>
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-sm font-medium text-foreground">Compare</p>
+                <p className="text-xs text-muted-foreground">
+                  Show ranks and leaderboard statistics.
+                </p>
+              </div>
+              <Switch
+                checked={currentUser?.preferences.showComparison ?? true}
+                onCheckedChange={setShowComparison}
               />
             </div>
           </CardContent>

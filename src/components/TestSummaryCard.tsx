@@ -1,6 +1,7 @@
 import { useMemo, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { ChevronDown } from "lucide-react";
+import { useAppStore } from "@/lib/store";
 import { getQuestionStatus, type buildAnalysis } from "@/lib/analysis";
 import type { TestRecord } from "@/lib/types";
 import { SegmentedProgressBar } from "@/components/SegmentedProgressBar";
@@ -58,6 +59,8 @@ export const TestSummaryCard = ({
   defaultExpanded = false,
   reviewAction,
 }: TestSummaryCardProps) => {
+  const { currentUser } = useAppStore();
+  const showComparison = currentUser?.preferences.showComparison ?? true;
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
   const overallTypeStats = useMemo(() => {
     const typeMap = {} as Record<
@@ -243,7 +246,7 @@ export const TestSummaryCard = ({
             ) : (
               <Badge variant="secondary">Key changes verified</Badge>
             )}
-            {rankBadgeLabel ? (
+            {showComparison && rankBadgeLabel ? (
               <Badge variant="outline">{rankBadgeLabel}</Badge>
             ) : null}
             <SegmentedProgressBar
@@ -304,16 +307,20 @@ export const TestSummaryCard = ({
             <div className="rounded-lg border border-border bg-muted/30 p-3">
               <div className="grid grid-cols-2 gap-2 text-xs uppercase tracking-[0.2em] text-muted-foreground">
                 <span>Score</span>
-                <span className="text-right">Rank</span>
+                {showComparison && <span className="text-right">Rank</span>}
               </div>
               <div className="mt-2 grid grid-cols-2 gap-2">
                 <p className="text-2xl font-semibold">{scoreLabel}</p>
-                <div className="text-right">
-                  <p className="text-2xl font-semibold">{calculatedRankValue}</p>
-                  <p className="text-[11px] text-muted-foreground">
-                    Original: {originalRankValue}
-                  </p>
-                </div>
+                {showComparison && (
+                  <div className="text-right">
+                    <p className="text-2xl font-semibold">
+                      {calculatedRankValue}
+                    </p>
+                    <p className="text-[11px] text-muted-foreground">
+                      Original: {originalRankValue}
+                    </p>
+                  </div>
+                )}
               </div>
               {analysis &&
               analysis.keyChanges.length > 0 &&

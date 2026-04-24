@@ -26,7 +26,13 @@ const subjectLabels: Record<Subject, string> = {
 export const CustomLeaderboardDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { state, fetchCustomLeaderboard, fetchCustomLeaderboardParticipant } = useAppStore();
+  const {
+    state,
+    currentUser,
+    fetchCustomLeaderboard,
+    fetchCustomLeaderboardParticipant,
+  } = useAppStore();
+  const showComparison = currentUser?.preferences.showComparison ?? true;
   const [leaderboard, setLeaderboard] = useState<CustomLeaderboardEntry[]>([]);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState<string | null>(null);
@@ -35,8 +41,11 @@ export const CustomLeaderboardDetail = () => {
   const [error, setError] = useState<string | null>(null);
 
   const [isLeaderboardCollapsed, setIsLeaderboardCollapsed] = useState(false);
-  const [selectedLeaderboardKey, setSelectedLeaderboardKey] = useState<string | null>(null);
-  const [participantAttempts, setParticipantAttempts] = useState<Record<string, TestRecord[]>>({});
+  const [selectedLeaderboardKey, setSelectedLeaderboardKey] =
+    useState<string | null>(null);
+  const [participantAttempts, setParticipantAttempts] = useState<
+    Record<string, TestRecord[]>
+  >({});
   const [loadingParticipant, setLoadingParticipant] = useState(false);
 
   const [leaderboardSort, setLeaderboardSort] = useState<{
@@ -49,8 +58,8 @@ export const CustomLeaderboardDetail = () => {
 
   useEffect(() => {
     let active = true;
-    if (!id) return;
-    
+    if (!id || !showComparison) return;
+
     setLoading(true);
     fetchCustomLeaderboard(id)
       .then((data) => {
@@ -74,7 +83,7 @@ export const CustomLeaderboardDetail = () => {
     return () => {
       active = false;
     };
-  }, [id, fetchCustomLeaderboard, state.tests]);
+  }, [id, fetchCustomLeaderboard, state.tests, showComparison]);
 
   const handleLeaderboardSort = (key: LeaderboardSortKey) => {
     setLeaderboardSort((current) => {
@@ -100,12 +109,17 @@ export const CustomLeaderboardDetail = () => {
     const direction = leaderboardSort.direction === "asc" ? 1 : -1;
     return [...leaderboard].sort((a, b) => {
       if (leaderboardSort.key === "name") {
-        const byName = a.displayName.localeCompare(b.displayName) || a.externalUsername.localeCompare(b.externalUsername);
+        const byName =
+          a.displayName.localeCompare(b.displayName) ||
+          a.externalUsername.localeCompare(b.externalUsername);
         if (byName !== 0) return byName * direction;
       } else if (leaderboardSort.key === "attempts") {
         const diff = a.attemptCount - b.attemptCount;
         if (diff !== 0) return diff * direction;
-      } else if (leaderboardSort.key === "rank" || leaderboardSort.key === "total") {
+      } else if (
+        leaderboardSort.key === "rank" ||
+        leaderboardSort.key === "total"
+      ) {
         const diff = a.score - b.score;
         if (diff !== 0) return diff * direction;
       } else {
@@ -122,20 +136,27 @@ export const CustomLeaderboardDetail = () => {
   const selectedLeaderboardEntry = useMemo(
     () =>
       selectedLeaderboardKey
-        ? leaderboard.find((entry) => entry.participantKey === selectedLeaderboardKey) ?? null
+        ? leaderboard.find(
+            (entry) => entry.participantKey === selectedLeaderboardKey,
+          ) ?? null
         : null,
     [leaderboard, selectedLeaderboardKey],
   );
 
   useEffect(() => {
-    if (selectedLeaderboardKey && id && !participantAttempts[selectedLeaderboardKey]) {
+    if (
+      selectedLeaderboardKey &&
+      id &&
+      !participantAttempts[selectedLeaderboardKey] &&
+      showComparison
+    ) {
       setLoadingParticipant(true);
       fetchCustomLeaderboardParticipant(id, selectedLeaderboardKey)
         .then((data) => {
           if (data.ok && data.attempts) {
-            setParticipantAttempts(prev => ({
+            setParticipantAttempts((prev) => ({
               ...prev,
-              [selectedLeaderboardKey]: data.attempts || []
+              [selectedLeaderboardKey]: data.attempts || [],
             }));
           }
           setLoadingParticipant(false);
@@ -144,26 +165,51 @@ export const CustomLeaderboardDetail = () => {
           setLoadingParticipant(false);
         });
     }
-  }, [selectedLeaderboardKey, id, fetchCustomLeaderboardParticipant, participantAttempts]);
+  }, [
+    selectedLeaderboardKey,
+    id,
+    fetchCustomLeaderboardParticipant,
+    participantAttempts,
+    showComparison,
+  ]);
 
-  const openLeaderboardQuestions = (entry: CustomLeaderboardEntry, testRecord: TestRecord) => {
+  const openLeaderboardQuestions = (
+    entry: CustomLeaderboardEntry,
+    testRecord: TestRecord,
+  ) => {
     const first = buildDisplayQuestions(testRecord.questions)[0];
     const firstQuestionId = first?.question.id;
     if (!firstQuestionId) return;
 
     const raw = sessionStorage.getItem(LEADERBOARD_PREVIEW_TESTS_KEY);
-    const parsed = raw && typeof raw === "string" ? (JSON.parse(raw) as Record<string, unknown>) : {};
+    const parsed =
+      raw && typeof raw === "string"
+        ? (JSON.parse(raw) as Record<string, unknown>)
+        : {};
     parsed[testRecord.id] = testRecord;
-    sessionStorage.setItem(LEADERBOARD_PREVIEW_TESTS_KEY, JSON.stringify(parsed));
-    
+    sessionStorage.setItem(
+      LEADERBOARD_PREVIEW_TESTS_KEY,
+      JSON.stringify(parsed),
+    );
+
     const params = new URLSearchParams({
       readonly: "1",
       participantKey: entry.participantKey,
       viewerName: entry.displayName,
       viewerUsername: entry.externalUsername,
     });
-    navigate(`/app/questions/${testRecord.id}/${firstQuestionId}?${params.toString()}`);
+    navigate(
+      `/app/questions/${testRecord.id}/${firstQuestionId}?${params.toString()}`,
+    );
   };
+
+  if (!showComparison) {
+    return (
+      <div className="flex h-[50vh] items-center justify-center p-8 text-center text-muted-foreground">
+        Comparison features are disabled in your preferences.
+      </div>
+    );
+  }
 
   if (loading) return <div className="p-4">Loading...</div>;
   if (error) return <div className="p-4 text-red-500">{error}</div>;

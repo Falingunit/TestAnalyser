@@ -44,6 +44,11 @@ const navItems = [
 export const AppShell = ({ children }: { children: ReactNode }) => {
   const { currentUser, logout, state, syncExternalAccount, setMode } =
     useAppStore();
+  const showComparison = currentUser?.preferences.showComparison ?? true;
+  const filteredNavItems = navItems.filter((item) => {
+    if (item.to === "/app/leaderboards") return showComparison;
+    return true;
+  });
   const mode = currentUser?.preferences.mode ?? state.ui.mode;
   const isDark = mode === "dark";
   const account = state.externalAccounts.find(
@@ -70,7 +75,7 @@ export const AppShell = ({ children }: { children: ReactNode }) => {
         <div className="flex flex-wrap items-center justify-between gap-4 px-6 py-3">
           <div className="flex flex-wrap items-center gap-4">
             <nav className="flex flex-wrap items-center gap-2 text-sm max-lg:hidden">
-              {navItems.map((item) => (
+              {filteredNavItems.map((item) => (
                 <NavLink
                   key={item.to}
                   to={item.to}
@@ -108,7 +113,7 @@ export const AppShell = ({ children }: { children: ReactNode }) => {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                {navItems.map((item) => (
+                {filteredNavItems.map((item) => (
                   <DropdownMenuItem key={item.to} asChild>
                     <Link to={item.to}>{item.label}</Link>
                   </DropdownMenuItem>

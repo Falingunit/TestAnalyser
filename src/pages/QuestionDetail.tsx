@@ -236,6 +236,7 @@ export const QuestionDetail = () => {
     currentUser,
     isAdmin,
   } = useAppStore();
+  const showComparison = currentUser?.preferences.showComparison ?? true;
   const isReadonlyView = searchParams.get("readonly") === "1";
   const isBookmarkView = searchParams.get("bookmarks") === "1";
   const previewParticipantName = searchParams.get("viewerName")?.trim() ?? "";
@@ -1776,7 +1777,7 @@ export const QuestionDetail = () => {
                                   html={item.value ?? ""}
                                   onClick={handleRichContentClick}
                                 />
-                                {optionCount !== null ? (
+                                {showComparison && optionCount !== null ? (
                                   <div className="hide-in-no-answer-copy flex flex-col items-end text-[10px] uppercase tracking-wide text-muted-foreground">
                                     <span>Others picked</span>
                                     <span className="text-xs font-black text-foreground">
@@ -1790,7 +1791,7 @@ export const QuestionDetail = () => {
                         })}
                     </div>
                   )}
-                  {hasPeerAnswerStats ? (
+                  {showComparison && hasPeerAnswerStats ? (
                     <div className="hide-in-no-answer-copy flex items-center justify-end text-[10px] uppercase tracking-wide text-muted-foreground">
                       <span>Unattempted (Others)</span>
                       <span className="ml-2 text-xs font-black text-foreground">
@@ -1798,7 +1799,7 @@ export const QuestionDetail = () => {
                       </span>
                     </div>
                   ) : null}
-                  {hasPeerAnswerStats && question.qtype === "NAT" ? (
+                  {showComparison && hasPeerAnswerStats && question.qtype === "NAT" ? (
                     <div className="hide-in-no-answer-copy flex items-center justify-end gap-4 text-[10px] uppercase tracking-wide text-muted-foreground">
                       <span>Correct</span>
                       <span className="text-xs font-black text-foreground">
@@ -1967,14 +1968,16 @@ export const QuestionDetail = () => {
                       {formatSeconds(timeSpent)}
                     </div>
                   </div>
-                  <div className="flex items-center justify-between transition-colors">
-                    <span className="text-xs font-normal text-neutral-800 dark:text-neutral-300 uppercase tracking-widest">
-                      Avg Time (Others)
-                    </span>
-                    <div className="px-2.5 py-1 rounded-lg text-xs font-black bg-emerald-50 dark:bg-emerald-900/30 text-blue-600 dark:text-blue-400">
-                      {peerTimeLabel}
+                  {showComparison && (
+                    <div className="flex items-center justify-between transition-colors">
+                      <span className="text-xs font-normal text-neutral-800 dark:text-neutral-300 uppercase tracking-widest">
+                        Avg Time (Others)
+                      </span>
+                      <div className="px-2.5 py-1 rounded-lg text-xs font-black bg-emerald-50 dark:bg-emerald-900/30 text-blue-600 dark:text-blue-400">
+                        {peerTimeLabel}
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
                 <Separator />
               </div>

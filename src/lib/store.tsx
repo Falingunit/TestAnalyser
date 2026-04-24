@@ -117,6 +117,7 @@ type Store = {
   }) => Promise<AuthResult>;
   setTheme: (theme: ThemeName) => void;
   setMode: (mode: ColorMode) => void;
+  setShowComparison: (show: boolean) => void;
   acknowledgeKeyUpdates: (testId: string) => Promise<void>;
   fetchTestLeaderboard: (testId: string) => Promise<{
     ok: boolean;
@@ -229,6 +230,7 @@ const normalizePreferences = (
       theme: fallbackUi.theme,
       mode: fallbackUi.mode,
       fontScale: fallbackUi.fontScale,
+      showComparison: true,
       acknowledgedKeyUpdates: {},
     };
   }
@@ -237,6 +239,8 @@ const normalizePreferences = (
   const theme = isTheme(prefs.theme) ? prefs.theme : fallbackUi.theme;
   const mode = isMode(prefs.mode) ? prefs.mode : fallbackUi.mode;
   const fontScale = normalizeFontScale(prefs.fontScale, fallbackUi.fontScale);
+  const showComparison =
+    typeof prefs.showComparison === "boolean" ? prefs.showComparison : true;
   const acknowledgedKeyUpdates =
     prefs.acknowledgedKeyUpdates &&
     typeof prefs.acknowledgedKeyUpdates === "object"
@@ -247,6 +251,7 @@ const normalizePreferences = (
     theme,
     mode,
     fontScale,
+    showComparison,
     acknowledgedKeyUpdates,
   };
 };
@@ -1269,6 +1274,12 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
     }));
   };
 
+  const setShowComparison: Store["setShowComparison"] = (show) => {
+    if (currentUser) {
+      void savePreferences({ ...currentUser.preferences, showComparison: show });
+    }
+  };
+
   const setFontScale: Store["setFontScale"] = (scale) => {
     const nextScale = clampFontScale(scale);
     if (currentUser) {
@@ -1523,6 +1534,7 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
     updateMarkingScheme,
     setTheme,
     setMode,
+    setShowComparison,
     acknowledgeKeyUpdates,
     fetchTestLeaderboard,
     createLeaderboard,

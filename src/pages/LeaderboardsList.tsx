@@ -21,9 +21,17 @@ type Leaderboard = {
   examIds: string;
   createdAt: string;
 };
-
 export const LeaderboardsList = () => {
-  const { state, isAdmin, fetchLeaderboards, createLeaderboard, updateCustomLeaderboard, deleteCustomLeaderboard } = useAppStore();
+  const {
+    state,
+    isAdmin,
+    currentUser,
+    fetchLeaderboards,
+    createLeaderboard,
+    updateCustomLeaderboard,
+    deleteCustomLeaderboard,
+  } = useAppStore();
+  const showComparison = currentUser?.preferences.showComparison ?? true;
   const [leaderboards, setLeaderboards] = useState<Leaderboard[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -46,8 +54,22 @@ export const LeaderboardsList = () => {
   };
 
   useEffect(() => {
-    loadLeaderboards();
-  }, []);
+    if (showComparison) {
+      loadLeaderboards();
+    }
+  }, [showComparison]);
+
+  if (!showComparison) {
+    return (
+      <div className="flex h-[50vh] items-center justify-center p-8 text-center text-muted-foreground">
+        Comparison features are disabled in your preferences.
+      </div>
+    );
+  }
+
+  if (loading) {
+    return <div className="p-4">Loading leaderboards...</div>;
+  }
 
   const handleOpenCreate = () => {
     setEditingId(null);
@@ -125,10 +147,6 @@ export const LeaderboardsList = () => {
       return inQuery;
     });
   }, [leaderboards, query]);
-
-  if (loading) {
-    return <div className="p-4">Loading leaderboards...</div>;
-  }
 
   return (
     <div className="space-y-6">

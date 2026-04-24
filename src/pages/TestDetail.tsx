@@ -157,6 +157,7 @@ export const TestDetail = () => {
     resyncTestForAllUsers,
     fetchTestLeaderboard,
   } = useAppStore();
+  const showComparison = currentUser?.preferences.showComparison ?? true;
   const isReadonlyView = searchParams.get("readonly") === "1";
   const previewParticipantName = searchParams.get("viewerName")?.trim() ?? "";
   const previewParticipantUsername =
@@ -1226,200 +1227,202 @@ export const TestDetail = () => {
         </DialogContent>
       </Dialog>
 
-      <section>
-        <Card className="app-panel">
-          <CardContent className="space-y-4 p-6">
-            <div className="flex items-start justify-between gap-3">
-              <div className="space-y-1">
-                <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                  Leaderboard
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Ranked by best score per external account for this exam.
-                </p>
+      {showComparison && (
+        <section>
+          <Card className="app-panel">
+            <CardContent className="space-y-4 p-6">
+              <div className="flex items-start justify-between gap-3">
+                <div className="space-y-1">
+                  <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                    Leaderboard
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Ranked by best score per external account for this exam.
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() =>
+                    setIsLeaderboardCollapsed((current) => !current)
+                  }
+                  aria-expanded={!isLeaderboardCollapsed}
+                >
+                  {isLeaderboardCollapsed ? "Show" : "Hide"}
+                  <ChevronDown
+                    className={cn(
+                      "ml-1 h-4 w-4 transition-transform",
+                      isLeaderboardCollapsed ? "-rotate-90" : "rotate-0",
+                    )}
+                  />
+                </Button>
               </div>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() =>
-                  setIsLeaderboardCollapsed((current) => !current)
-                }
-                aria-expanded={!isLeaderboardCollapsed}
-              >
-                {isLeaderboardCollapsed ? "Show" : "Hide"}
-                <ChevronDown
-                  className={cn(
-                    "ml-1 h-4 w-4 transition-transform",
-                    isLeaderboardCollapsed ? "-rotate-90" : "rotate-0",
-                  )}
-                />
-              </Button>
-            </div>
 
-            {isLeaderboardCollapsed ? (
-              <p className="text-sm text-muted-foreground">
-                {leaderboardRows.length} entries
-              </p>
-            ) : isLoadingLeaderboard ? (
-              <p className="text-sm text-muted-foreground">
-                Loading leaderboard...
-              </p>
-            ) : leaderboardMessage ? (
-              <div className="rounded-lg border border-border bg-background p-3 text-xs text-muted-foreground">
-                {leaderboardMessage}
-              </div>
-            ) : leaderboardRows.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                No leaderboard entries available yet.
-              </p>
-            ) : (
-              <div className="overflow-hidden rounded-lg border border-border/60">
-                <div className="grid grid-cols-[72px_minmax(220px,1fr)_minmax(0,220px)_minmax(0,160px)_minmax(0,160px)_minmax(0,160px)_minmax(0,180px)_120px] gap-3 bg-muted/50 px-3 py-2 text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-                  <button
-                    type="button"
-                    className="cursor-pointer text-left transition-colors hover:text-foreground"
-                    onClick={() => handleLeaderboardSort("rank")}
-                  >
-                    <span className="inline-flex items-center gap-1">
-                      Rank
-                      {getLeaderboardSortIndicator("rank") ? (
-                        <span>{getLeaderboardSortIndicator("rank")}</span>
-                      ) : null}
-                    </span>
-                  </button>
-                  <button
-                    type="button"
-                    className="cursor-pointer text-left transition-colors hover:text-foreground"
-                    onClick={() => handleLeaderboardSort("name")}
-                  >
-                    <span className="inline-flex items-center gap-1">
-                      Name
-                      {getLeaderboardSortIndicator("name") ? (
-                        <span>{getLeaderboardSortIndicator("name")}</span>
-                      ) : null}
-                    </span>
-                  </button>
-                  <span className="text-right">Linked</span>
-                  {leaderboardSubjects.map((subject) => (
+              {isLeaderboardCollapsed ? (
+                <p className="text-sm text-muted-foreground">
+                  {leaderboardRows.length} entries
+                </p>
+              ) : isLoadingLeaderboard ? (
+                <p className="text-sm text-muted-foreground">
+                  Loading leaderboard...
+                </p>
+              ) : leaderboardMessage ? (
+                <div className="rounded-lg border border-border bg-background p-3 text-xs text-muted-foreground">
+                  {leaderboardMessage}
+                </div>
+              ) : leaderboardRows.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  No leaderboard entries available yet.
+                </p>
+              ) : (
+                <div className="overflow-hidden rounded-lg border border-border/60">
+                  <div className="grid grid-cols-[72px_minmax(220px,1fr)_minmax(0,220px)_minmax(0,160px)_minmax(0,160px)_minmax(0,160px)_minmax(0,180px)_120px] gap-3 bg-muted/50 px-3 py-2 text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
                     <button
-                      key={subject}
                       type="button"
-                      className="cursor-pointer text-right transition-colors hover:text-foreground"
-                      onClick={() => handleLeaderboardSort(subject)}
+                      className="cursor-pointer text-left transition-colors hover:text-foreground"
+                      onClick={() => handleLeaderboardSort("rank")}
                     >
-                      <span className="inline-flex items-center justify-end gap-1">
-                        {subjectLabels[subject]}
-                        {getLeaderboardSortIndicator(subject) ? (
-                          <span>{getLeaderboardSortIndicator(subject)}</span>
+                      <span className="inline-flex items-center gap-1">
+                        Rank
+                        {getLeaderboardSortIndicator("rank") ? (
+                          <span>{getLeaderboardSortIndicator("rank")}</span>
                         ) : null}
                       </span>
                     </button>
-                  ))}
-                  <button
-                    type="button"
-                    className="cursor-pointer text-right transition-colors hover:text-foreground"
-                    onClick={() => handleLeaderboardSort("total")}
-                  >
-                    <span className="inline-flex items-center justify-end gap-1">
-                      Total
-                      {getLeaderboardSortIndicator("total") ? (
-                        <span>{getLeaderboardSortIndicator("total")}</span>
-                      ) : null}
-                    </span>
-                  </button>
-                  <span className="text-right">Summary</span>
-                </div>
-                <div className="divide-y divide-border/60">
-                  {leaderboardRows.map((entry) => (
-                    <div
-                      key={entry.participantKey}
-                      className="grid grid-cols-[72px_minmax(220px,1fr)_minmax(0,220px)_minmax(0,160px)_minmax(0,160px)_minmax(0,160px)_minmax(0,180px)_120px] items-start gap-3 px-3 py-2 text-xs text-muted-foreground"
+                    <button
+                      type="button"
+                      className="cursor-pointer text-left transition-colors hover:text-foreground"
+                      onClick={() => handleLeaderboardSort("name")}
                     >
-                      <span className="font-semibold text-foreground">
-                        #{entry.computedRank}
+                      <span className="inline-flex items-center gap-1">
+                        Name
+                        {getLeaderboardSortIndicator("name") ? (
+                          <span>{getLeaderboardSortIndicator("name")}</span>
+                        ) : null}
                       </span>
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="truncate text-sm font-semibold text-foreground">
-                            {entry.displayName}
-                          </span>
-                          {entry.isCurrentUserParticipant ? (
-                            <Badge variant="secondary">You</Badge>
+                    </button>
+                    <span className="text-right">Linked</span>
+                    {leaderboardSubjects.map((subject) => (
+                      <button
+                        key={subject}
+                        type="button"
+                        className="cursor-pointer text-right transition-colors hover:text-foreground"
+                        onClick={() => handleLeaderboardSort(subject)}
+                      >
+                        <span className="inline-flex items-center justify-end gap-1">
+                          {subjectLabels[subject]}
+                          {getLeaderboardSortIndicator(subject) ? (
+                            <span>{getLeaderboardSortIndicator(subject)}</span>
+                          ) : null}
+                        </span>
+                      </button>
+                    ))}
+                    <button
+                      type="button"
+                      className="cursor-pointer text-right transition-colors hover:text-foreground"
+                      onClick={() => handleLeaderboardSort("total")}
+                    >
+                      <span className="inline-flex items-center justify-end gap-1">
+                        Total
+                        {getLeaderboardSortIndicator("total") ? (
+                          <span>{getLeaderboardSortIndicator("total")}</span>
+                        ) : null}
+                      </span>
+                    </button>
+                    <span className="text-right">Summary</span>
+                  </div>
+                  <div className="divide-y divide-border/60">
+                    {leaderboardRows.map((entry) => (
+                      <div
+                        key={entry.participantKey}
+                        className="grid grid-cols-[72px_minmax(220px,1fr)_minmax(0,220px)_minmax(0,160px)_minmax(0,160px)_minmax(0,160px)_minmax(0,180px)_120px] items-start gap-3 px-3 py-2 text-xs text-muted-foreground"
+                      >
+                        <span className="font-semibold text-foreground">
+                          #{entry.computedRank}
+                        </span>
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="truncate text-sm font-semibold text-foreground">
+                              {entry.displayName}
+                            </span>
+                            {entry.isCurrentUserParticipant ? (
+                              <Badge variant="secondary">You</Badge>
+                            ) : null}
+                          </div>
+                        </div>
+                        <div className="min-w-0 text-right">
+                          <p className="truncate text-[11px] text-muted-foreground">
+                            @{entry.externalUsername}
+                          </p>
+                          {entry.akaNames.length > 0 ? (
+                            <p className="truncate text-[11px] text-muted-foreground">
+                              a.k.a. {entry.akaNames.join(", ")}
+                            </p>
                           ) : null}
                         </div>
+                        {leaderboardSubjects.map((subject) => {
+                          const item = entry.subjectScoreMap[subject];
+                          return (
+                            <div key={`${entry.participantKey}-${subject}`} className="w-full">
+                              <span className="block text-right text-foreground/90">
+                                {item.score}/{item.total}
+                              </span>
+                              <SegmentedProgressBar
+                                className="mt-1 h-1.5"
+                                segments={[
+                                  {
+                                    value: Math.max(0, item.score),
+                                    className: "bg-sky-500",
+                                  },
+                                  {
+                                    value: Math.max(0, item.total - item.score),
+                                    className: "bg-zinc-300 dark:bg-zinc-700",
+                                  },
+                                ]}
+                              />
+                            </div>
+                          );
+                        })}
+                        <div className="w-full">
+                          <span className="block text-right text-foreground/90">
+                            {entry.score}/{entry.totalScore}
+                          </span>
+                          <SegmentedProgressBar
+                            className="mt-1 h-2"
+                            segments={[
+                              {
+                                value: Math.max(0, entry.score),
+                                className: "bg-emerald-500",
+                              },
+                              {
+                                value: Math.max(0, entry.totalScore - entry.score),
+                                className: "bg-zinc-300 dark:bg-zinc-700",
+                              },
+                            ]}
+                          />
+                        </div>
+                        <div className="justify-self-end text-right">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() =>
+                              setSelectedLeaderboardKey(entry.participantKey)
+                            }
+                          >
+                            View
+                          </Button>
+                        </div>
                       </div>
-                      <div className="min-w-0 text-right">
-                        <p className="truncate text-[11px] text-muted-foreground">
-                          @{entry.externalUsername}
-                        </p>
-                        {entry.akaNames.length > 0 ? (
-                          <p className="truncate text-[11px] text-muted-foreground">
-                            a.k.a. {entry.akaNames.join(", ")}
-                          </p>
-                        ) : null}
-                      </div>
-                      {leaderboardSubjects.map((subject) => {
-                        const item = entry.subjectScoreMap[subject];
-                        return (
-                          <div key={`${entry.participantKey}-${subject}`} className="w-full">
-                            <span className="block text-right text-foreground/90">
-                              {item.score}/{item.total}
-                            </span>
-                            <SegmentedProgressBar
-                              className="mt-1 h-1.5"
-                              segments={[
-                                {
-                                  value: Math.max(0, item.score),
-                                  className: "bg-sky-500",
-                                },
-                                {
-                                  value: Math.max(0, item.total - item.score),
-                                  className: "bg-zinc-300 dark:bg-zinc-700",
-                                },
-                              ]}
-                            />
-                          </div>
-                        );
-                      })}
-                      <div className="w-full">
-                        <span className="block text-right text-foreground/90">
-                          {entry.score}/{entry.totalScore}
-                        </span>
-                        <SegmentedProgressBar
-                          className="mt-1 h-2"
-                          segments={[
-                            {
-                              value: Math.max(0, entry.score),
-                              className: "bg-emerald-500",
-                            },
-                            {
-                              value: Math.max(0, entry.totalScore - entry.score),
-                              className: "bg-zinc-300 dark:bg-zinc-700",
-                            },
-                          ]}
-                        />
-                      </div>
-                      <div className="justify-self-end text-right">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() =>
-                            setSelectedLeaderboardKey(entry.participantKey)
-                          }
-                        >
-                          View
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </section>
+              )}
+            </CardContent>
+          </Card>
+        </section>
+      )}
 
       <section>
         <Card className="app-panel">

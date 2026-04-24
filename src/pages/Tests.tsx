@@ -37,6 +37,7 @@ type SortOption =
 
 export const Tests = () => {
   const { state, currentUser, resyncTest, resyncAllTests } = useAppStore()
+  const showComparison = currentUser?.preferences.showComparison ?? true
   const [query, setQuery] = useState('')
   const [subject, setSubject] = useState<SubjectFilter>('ALL')
   const [sort, setSort] = useState<SortOption>('date-desc')
@@ -178,8 +179,12 @@ export const Tests = () => {
                     <SelectItem value="date-asc">Oldest first</SelectItem>
                     <SelectItem value="score-desc">Highest score</SelectItem>
                     <SelectItem value="score-asc">Lowest score</SelectItem>
-                    <SelectItem value="rank-asc">Best rank</SelectItem>
-                    <SelectItem value="rank-desc">Worst rank</SelectItem>
+                    {showComparison && (
+                      <>
+                        <SelectItem value="rank-asc">Best rank</SelectItem>
+                        <SelectItem value="rank-desc">Worst rank</SelectItem>
+                      </>
+                    )}
                   </SelectContent>
                 </Select>
               </div>
