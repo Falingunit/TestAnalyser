@@ -97,12 +97,39 @@ router.patch('/:id', requireAuth, async (req: AuthRequest, res, next) => {
       return res.status(400).json({ error: 'Invalid leaderboard id.' })
     }
 
-    const { title, description, examIds } = req.body as { title?: string, description?: string, examIds?: string[] }
-    
-    const updateData: any = {}
-    if (isNonEmptyString(title)) updateData.title = title
-    if (description !== undefined) updateData.description = description
-    if (Array.isArray(examIds)) updateData.examIds = JSON.stringify(examIds)
+    const { title, description, examIds } = req.body as {
+      title?: string
+      description?: string
+      examIds?: string[]
+    }
+
+    const updateData: {
+      title?: string
+      description?: string | null
+      examIds?: string
+    } = {}
+
+    if (title !== undefined) {
+      if (!isNonEmptyString(title)) {
+        return res.status(400).json({ error: 'title is required' })
+      }
+      updateData.title = title.trim()
+    }
+
+    if (description !== undefined) {
+      updateData.description = description
+    }
+
+    if (examIds !== undefined) {
+      if (!Array.isArray(examIds) || examIds.length === 0) {
+        return res.status(400).json({ error: 'examIds must be a non-empty array' })
+      }
+      updateData.examIds = JSON.stringify(examIds)
+    }
+
+    if (Object.keys(updateData).length === 0) {
+      return res.status(400).json({ error: 'No valid leaderboard fields provided.' })
+    }
 
     const leaderboard = await prisma.customLeaderboard.update({
       where: { id: leaderboardId },
@@ -136,7 +163,6 @@ router.delete('/:id', requireAuth, async (req: AuthRequest, res, next) => {
     return next(error)
   }
 })
-
 router.get('/:id', requireAuth, async (req: AuthRequest, res, next) => {
   try {
     if (!req.user) {

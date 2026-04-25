@@ -1459,7 +1459,12 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
       return { ok: false, message: "Missing session token." };
     }
     try {
-      const data = await requestJson<{ leaderboard: any[]; title: string; description?: string }>(
+      const data = await requestJson<{
+        leaderboard: CustomLeaderboardEntry[];
+        title: string;
+        description?: string | null;
+        examTitles?: string[];
+      }>(
         `/api/leaderboards/${id}`,
         { token },
       );
@@ -1467,7 +1472,8 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
         ok: true,
         leaderboard: data.leaderboard,
         title: data.title,
-        description: data.description,
+        description: data.description ?? undefined,
+        examTitles: data.examTitles ?? [],
       };
     } catch (error) {
       return {
