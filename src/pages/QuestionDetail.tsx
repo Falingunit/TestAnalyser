@@ -151,14 +151,6 @@ type ContentDraftField =
 
 type QuestionContentDraft = Record<ContentDraftField, string>;
 
-type ChatMessage = {
-  id: string;
-  author: string;
-  body: string;
-  createdAt: string;
-  pinned?: boolean;
-};
-
 type KeyAnswerGroup = {
   id: string;
   single: string;
@@ -326,9 +318,6 @@ export const QuestionDetail = () => {
   const [notes, setNotes] = useState("");
   const [isSavingTags, setIsSavingTags] = useState(false);
   const [isSavingGlobalTags, setIsSavingGlobalTags] = useState(false);
-  const [chatInput, setChatInput] = useState("");
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
-  const [chatKeyLoaded, setChatKeyLoaded] = useState<string | null>(null);
   const [isBookmarking, setIsBookmarking] = useState(false);
   const [isCopying, setIsCopying] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -826,10 +815,6 @@ export const QuestionDetail = () => {
     !isReadonlyView && test && question
       ? `testanalyser-question-notes-${test.id}-${question.id}`
       : null;
-  const chatKey =
-    !isReadonlyView && test && question
-      ? `testanalyser-question-chat-${test.id}-${question.id}`
-      : null;
   const readonlySearch = useMemo(() => {
     const params = new URLSearchParams();
     if (isBookmarkView) {
@@ -869,16 +854,6 @@ export const QuestionDetail = () => {
     }
     navigate(questionLink(targetQuestionId));
   };
-  const orderedMessages = useMemo(() => {
-    return [...chatMessages].sort((a, b) => {
-      const pinDelta = Number(Boolean(b.pinned)) - Number(Boolean(a.pinned));
-      if (pinDelta !== 0) {
-        return pinDelta;
-      }
-      return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
-    });
-  }, [chatMessages]);
-  const activeMessages = chatKeyLoaded === chatKey ? orderedMessages : [];
 
   useEffect(() => {
     if (!question && isBookmarkView && displayQuestions.length > 0) {
@@ -980,52 +955,6 @@ export const QuestionDetail = () => {
     }
     localStorage.setItem(notesKey, notes);
   }, [notes, notesKey]);
-
-  useEffect(() => {
-    if (!chatKey) {
-      setChatMessages([]);
-      setChatKeyLoaded(null);
-      return;
-    }
-    const raw = localStorage.getItem(chatKey);
-    if (!raw) {
-      setChatMessages([]);
-      setChatKeyLoaded(chatKey);
-      return;
-    }
-    try {
-      const parsed = JSON.parse(raw) as ChatMessage[];
-      setChatMessages(Array.isArray(parsed) ? parsed : []);
-    } catch {
-      setChatMessages([]);
-    }
-    setChatKeyLoaded(chatKey);
-  }, [chatKey]);
-
-  useEffect(() => {
-    if (!chatKey || chatKeyLoaded !== chatKey) {
-      return;
-    }
-    localStorage.setItem(chatKey, JSON.stringify(chatMessages));
-  }, [chatKey, chatKeyLoaded, chatMessages]);
-
-  const handleChatSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const trimmed = chatInput.trim();
-    if (!trimmed) {
-      return;
-    }
-    const author = currentUser?.name ?? "User";
-    const nextMessage: ChatMessage = {
-      id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
-      author,
-      body: trimmed,
-      createdAt: new Date().toISOString(),
-      pinned: false,
-    };
-    setChatMessages((prevMessages) => [...prevMessages, nextMessage]);
-    setChatInput("");
-  };
 
   const clampZoom = (value: number) => Math.min(4, Math.max(0.1, value));
   const dragThreshold = 4;
@@ -1150,25 +1079,6 @@ export const QuestionDetail = () => {
     }
   };
 
-  const togglePin = (id: string) => {
-    if (!hasAdminPrivileges) {
-      return;
-    }
-    setChatMessages((prevMessages) =>
-      prevMessages.map((message) =>
-        message.id === id ? { ...message, pinned: !message.pinned } : message,
-      ),
-    );
-  };
-
-  const deleteMessage = (id: string, author: string) => {
-    if (!hasAdminPrivileges && currentUser?.name !== author) {
-      return;
-    }
-    setChatMessages((prevMessages) =>
-      prevMessages.filter((message) => message.id !== id),
-    );
-  };
   const handleCopyQuestionImage = async (withoutAnswers = false) => {
     const node = questionCopyRef.current;
     if (!node) return;
@@ -2027,91 +1937,6 @@ export const QuestionDetail = () => {
                 </div>
               ) : null}
 
-              {!isReadonlyView ? (
-                <div className="space-y-3">
-                  <div className="space-y-1">
-                    <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                      Key discussion
-                    </p>
-                  </div>
-                  <div className="space-y-2">
-                    {activeMessages.length === 0 ? (
-                      <p className="text-xs text-muted-foreground">
-                        No messages yet. Start the discussion.
-                      </p>
-                    ) : (
-                      activeMessages.map((chat) => (
-                        <div
-                          key={chat.id}
-                          className={cn(
-                            "rounded-lg border border-border p-3 text-xs",
-                            chat.pinned ? "bg-amber-500/10" : "bg-background",
-                          )}
-                        >
-                          <div className="flex items-center justify-between gap-2">
-                            <div className="space-y-1">
-                              <p className="font-semibold text-foreground">
-                                {chat.author}
-                              </p>
-                              <p className="text-[11px] text-muted-foreground">
-                                {new Date(chat.createdAt).toLocaleString()}
-                              </p>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => togglePin(chat.id)}
-                                disabled={!hasAdminPrivileges}
-                                title={
-                                  hasAdminPrivileges
-                                    ? "Toggle pin"
-                                    : "Admins only"
-                                }
-                              >
-                                {chat.pinned ? "Unpin" : "Pin"}
-                              </Button>
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                onClick={() =>
-                                  deleteMessage(chat.id, chat.author)
-                                }
-                                disabled={
-                                  !hasAdminPrivileges &&
-                                  currentUser?.name !== chat.author
-                                }
-                                title={
-                                  hasAdminPrivileges ||
-                                  currentUser?.name === chat.author
-                                    ? "Delete message"
-                                    : "Admins or message author only"
-                                }
-                              >
-                                Delete
-                              </Button>
-                            </div>
-                          </div>
-                          <p className="mt-2 text-xs text-foreground/90">
-                            {chat.body}
-                          </p>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                  <form className="flex gap-2" onSubmit={handleChatSubmit}>
-                    <Input
-                      value={chatInput}
-                      onChange={(event) => setChatInput(event.target.value)}
-                      placeholder="Add a message"
-                    />
-                    <Button type="submit">Send</Button>
-                  </form>
-                  <Separator />
-                </div>
-              ) : null}
               {!isReadonlyView && currentUser && hasAdminPrivileges ? (
                 <div className="space-y-3">
                   <div className="space-y-1">

@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { Navigate, Outlet, Route, Routes } from 'react-router-dom'
 import { AppShell } from '@/components/AppShell'
 import { useAppStore } from '@/lib/store'
@@ -30,6 +31,18 @@ const ProtectedLayout = () => {
 
 export const App = () => {
   const { currentUser, isBootstrapped } = useAppStore()
+
+  useEffect(() => {
+    const chatStoragePrefix = 'testanalyser-question-chat-'
+
+    for (let index = localStorage.length - 1; index >= 0; index -= 1) {
+      const key = localStorage.key(index)
+      if (key?.startsWith(chatStoragePrefix)) {
+        localStorage.removeItem(key)
+      }
+    }
+  }, [])
+
   if (!isBootstrapped) {
     return null
   }
