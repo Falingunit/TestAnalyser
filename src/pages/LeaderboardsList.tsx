@@ -58,6 +58,16 @@ export const LeaderboardsList = () => {
     }
   }, [showComparison]);
 
+  const visibleLeaderboards = useMemo(() => {
+    return leaderboards.filter((lb) => {
+      const inQuery =
+        query.trim().length === 0 ||
+        lb.title.toLowerCase().includes(query.trim().toLowerCase()) ||
+        (lb.description?.toLowerCase().includes(query.trim().toLowerCase()) ?? false);
+      return inQuery;
+    });
+  }, [leaderboards, query]);
+
   if (!showComparison) {
     return (
       <div className="flex h-[50vh] items-center justify-center p-8 text-center text-muted-foreground">
@@ -136,16 +146,6 @@ export const LeaderboardsList = () => {
     }
     setSelectedTests(next);
   };
-
-  const visibleLeaderboards = useMemo(() => {
-    return leaderboards.filter((lb) => {
-      const inQuery =
-        query.trim().length === 0 ||
-        lb.title.toLowerCase().includes(query.trim().toLowerCase()) ||
-        (lb.description?.toLowerCase().includes(query.trim().toLowerCase()) ?? false);
-      return inQuery;
-    });
-  }, [leaderboards, query]);
 
   return (
     <div className="space-y-6">
