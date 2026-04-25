@@ -24,6 +24,7 @@ model ExternalAccount {
   userId         String
   provider       String
   username       String
+  remoteDisplayName String?
   status         String                     @default("CONNECTED")
   syncStatus     String                     @default("IDLE")
   syncTotal      Int                        @default(0)

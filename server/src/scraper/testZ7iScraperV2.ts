@@ -1,6 +1,6 @@
 import { mkdir, writeFile } from 'fs/promises'
 import { join } from 'path'
-import { chromium, type Page } from 'playwright'
+import { chromium, type BrowserContext, type Page } from 'playwright'
 import { env } from '../config.js'
 import type {
   ScrapeProgress,
@@ -91,6 +91,13 @@ const tryParseJsonPayload = (text: string) => {
 }
 
 const collapseText = (value: string) => value.replace(/\s+/g, ' ').trim()
+
+const normalizeOptionalText = (value: unknown) => {
+  if (typeof value !== 'string') {
+    return ''
+  }
+  return collapseText(value)
+}
 
 const extractOid = (value: unknown): string | null => {
   if (!value) {
@@ -519,6 +526,61 @@ const extractScoreOverviewFromJson = (payload: unknown) => {
   return { title, overview }
 }
 
+export const extractRemoteDisplayNameFromTestReportPayload = (payload: unknown) => {
+  if (!payload || typeof payload !== 'object') {
+    return null
+  }
+
+  const root = payload as Record<string, unknown>
+  const data = Array.isArray(root.data) ? root.data : []
+  for (const entry of data) {
+    if (!entry || typeof entry !== 'object') {
+      continue
+    }
+    const studentList = Array.isArray((entry as Record<string, unknown>).student)
+      ? ((entry as Record<string, unknown>).student as unknown[])
+      : []
+    for (const student of studentList) {
+      if (!student || typeof student !== 'object') {
+        continue
+      }
+      const studentRecord = student as Record<string, unknown>
+      const parts = [
+        normalizeOptionalText(studentRecord.firstname),
+        normalizeOptionalText(studentRecord.lastname),
+      ].filter(Boolean)
+      if (parts.length === 0) {
+        continue
+      }
+      const name = collapseText(parts.join(' '))
+      if (name) {
+        return name
+      }
+    }
+  }
+
+  return null
+}
+
+const fetchRemoteDisplayNameFromReports = async (
+  context: BrowserContext,
+  baseUrl: string,
+) => {
+  const response = await context.request.get(
+    `${baseUrl}/student/reports/get-test-report/0?perpage=20`,
+    { timeout: env.scraperTimeoutMs },
+  )
+  const body = await response.text()
+  const parsed = tryParseJsonPayload(body)
+  if (!response.ok() || !parsed) {
+    await saveDebugText('report-list-name', body)
+    throw new Error('Failed to load report list for remote name.')
+  }
+
+  await saveDebugJson('report-list-name', parsed)
+  return extractRemoteDisplayNameFromTestReportPayload(parsed)
+}
+
 const parseTestEntry = (entry: Record<string, unknown>, index: number) => {
   const title =
     (typeof entry.test_name === 'string' && entry.test_name.trim()) ||
@@ -663,6 +725,24 @@ export const verifyTestZ7iLogin = async (payload: {
   }
 }
 
+export const fetchTestZ7iRemoteDisplayName = async (payload: {
+  username: string
+  password: string
+  verificationCode?: string
+}) => {
+  const browser = await chromium.launch({ headless: env.scraperHeadless })
+  const context = await browser.newContext()
+  const page = await context.newPage()
+
+  try {
+    await login(page, payload)
+    return await fetchRemoteDisplayNameFromReports(context, env.scraperBaseUrl)
+  } finally {
+    await context.close()
+    await browser.close()
+  }
+}
+
 export const scrapeTestZ7iV2 = async (payload: {
   username: string
   password: string
@@ -683,6 +763,13 @@ export const scrapeTestZ7iV2 = async (payload: {
 
   try {
     await login(page, payload)
+    let remoteDisplayName: string | null = null
+    try {
+      remoteDisplayName = await fetchRemoteDisplayNameFromReports(context, baseUrl)
+    } catch (error) {
+      const err = error instanceof Error ? error.message : 'Unknown error'
+      warnings.push(`Remote name fetch failed: ${err}`)
+    }
     const packageIdFromNetwork = page
       .waitForResponse(
         (response) =>
@@ -835,7 +922,7 @@ export const scrapeTestZ7iV2 = async (payload: {
       })
     }
 
-    return { reports, warnings }
+    return { reports, warnings, remoteDisplayName }
   } finally {
     await context.close()
     await browser.close()

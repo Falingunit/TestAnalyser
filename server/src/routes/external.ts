@@ -2,7 +2,10 @@ import { Router } from 'express'
 import { prisma } from '../db.js'
 import { requireAuth, type AuthRequest } from '../middleware/auth.js'
 import type { ScrapeProgress } from '../scraper/types.js'
-import { verifyTestZ7iLogin } from '../scraper/testZ7iScraperV2.js'
+import {
+  fetchTestZ7iRemoteDisplayName,
+  verifyTestZ7iLogin,
+} from '../scraper/testZ7iScraperV2.js'
 import { syncExternalAccount } from '../services/syncService.js'
 import { decryptSecret, encryptSecret } from '../utils/crypto.js'
 
@@ -16,6 +19,7 @@ const serializeAccount = (account: {
   userId: string
   provider: string
   username: string
+  remoteDisplayName: string | null
   status: string
   syncStatus: string
   syncTotal: number
@@ -29,6 +33,7 @@ const serializeAccount = (account: {
   userId: account.userId,
   provider: account.provider,
   username: account.username,
+  remoteDisplayName: account.remoteDisplayName,
   status: account.status,
   syncStatus: account.syncStatus,
   syncTotal: account.syncTotal,
@@ -38,6 +43,37 @@ const serializeAccount = (account: {
   lastSyncAt: account.lastSyncAt,
   statusMessage: account.statusMessage,
 })
+
+const refreshRemoteDisplayName = async (payload: {
+  accountId: string
+  username: string
+  password: string
+  verificationCode?: string
+}) => {
+  try {
+    const remoteDisplayName = await fetchTestZ7iRemoteDisplayName({
+      username: payload.username,
+      password: payload.password,
+      verificationCode: payload.verificationCode,
+    })
+
+    if (!remoteDisplayName) {
+      return await prisma.externalAccount.findUnique({
+        where: { id: payload.accountId },
+      })
+    }
+
+    return await prisma.externalAccount.update({
+      where: { id: payload.accountId },
+      data: { remoteDisplayName },
+    })
+  } catch (error) {
+    console.error(error)
+    return await prisma.externalAccount.findUnique({
+      where: { id: payload.accountId },
+    })
+  }
+}
 
 router.get('/', requireAuth, async (req: AuthRequest, res, next) => {
   try {
@@ -90,6 +126,20 @@ router.post('/connect', requireAuth, async (req: AuthRequest, res, next) => {
       return res.status(401).json({ error: message })
     }
 
+    const normalizedUsername = username.trim()
+    const existingAccount = await prisma.externalAccount.findUnique({
+      where: {
+        userId_provider: {
+          userId: req.user.userId,
+          provider: providerValue,
+        },
+      },
+      select: {
+        id: true,
+        username: true,
+      },
+    })
+
     const account = await prisma.externalAccount.upsert({
       where: {
         userId_provider: {
@@ -98,7 +148,9 @@ router.post('/connect', requireAuth, async (req: AuthRequest, res, next) => {
         },
       },
       update: {
-        username: username.trim(),
+        username: normalizedUsername,
+        remoteDisplayName:
+          existingAccount && existingAccount.username !== normalizedUsername ? null : undefined,
         status: 'CONNECTED',
         statusMessage: null,
         syncStatus: 'IDLE',
@@ -110,7 +162,7 @@ router.post('/connect', requireAuth, async (req: AuthRequest, res, next) => {
       create: {
         userId: req.user.userId,
         provider: providerValue,
-        username: username.trim(),
+        username: normalizedUsername,
         status: 'CONNECTED',
       },
     })
@@ -131,7 +183,16 @@ router.post('/connect', requireAuth, async (req: AuthRequest, res, next) => {
       },
     })
 
-    return res.json({ account: serializeAccount(account) })
+    const refreshedAccount =
+      (await refreshRemoteDisplayName({
+        accountId: account.id,
+        username: normalizedUsername,
+        password,
+        verificationCode:
+          typeof verificationCode === 'string' ? verificationCode.trim() : undefined,
+      })) ?? account
+
+    return res.json({ account: serializeAccount(refreshedAccount) })
   } catch (error) {
     return next(error)
   }
@@ -247,6 +308,49 @@ router.post('/sync', requireAuth, async (req: AuthRequest, res, next) => {
         },
       })
     }
+    return next(error)
+  }
+})
+
+router.post('/refresh-missing-name', requireAuth, async (req: AuthRequest, res, next) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ error: 'Unauthorized.' })
+    }
+
+    const account = await prisma.externalAccount.findUnique({
+      where: {
+        userId_provider: {
+          userId: req.user.userId,
+          provider: 'test.z7i.in',
+        },
+      },
+      include: { credential: true },
+    })
+
+    if (!account || !account.credential) {
+      return res.status(404).json({ error: 'External account not connected.' })
+    }
+
+    if (account.remoteDisplayName) {
+      return res.json({ account: serializeAccount(account) })
+    }
+
+    const password = decryptSecret({
+      encrypted: account.credential.encryptedPassword,
+      iv: account.credential.iv,
+      tag: account.credential.tag,
+    })
+
+    const refreshedAccount =
+      (await refreshRemoteDisplayName({
+        accountId: account.id,
+        username: account.username,
+        password,
+      })) ?? account
+
+    return res.json({ account: serializeAccount(refreshedAccount) })
+  } catch (error) {
     return next(error)
   }
 })

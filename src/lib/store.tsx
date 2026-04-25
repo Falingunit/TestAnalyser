@@ -3,6 +3,7 @@ import {
   createContext,
   useContext,
   useEffect,
+  useEffectEvent,
   useRef,
   useState,
   type ReactNode,
@@ -340,6 +341,7 @@ const normalizeAccount = (account: {
   userId: string;
   provider: string;
   username: string;
+  remoteDisplayName?: string | null;
   status: string;
   syncStatus?: string;
   syncTotal?: number;
@@ -353,6 +355,7 @@ const normalizeAccount = (account: {
   userId: account.userId,
   provider: "test.z7i.in",
   username: account.username,
+  remoteDisplayName: account.remoteDisplayName ?? null,
   status: normalizeAccountStatus(account.status),
   syncStatus: normalizeSyncStatus(account.syncStatus),
   syncTotal: typeof account.syncTotal === "number" ? account.syncTotal : 0,
@@ -503,7 +506,11 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
       }
 
       try {
-        await Promise.all([refreshAccounts(token), refreshTests(token)]);
+        const [accounts] = await Promise.all([
+          refreshAccounts(token),
+          refreshTests(token),
+        ]);
+        triggerMissingRemoteDisplayNameRefresh(token, accounts);
       } catch (error) {
         console.error(error);
       } finally {
@@ -541,10 +548,11 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
           fontScale: normalized.preferences.fontScale,
         },
       }));
-      await Promise.all([
+      const [accounts] = await Promise.all([
         refreshAccounts(data.token),
         refreshTests(data.token),
       ]);
+      triggerMissingRemoteDisplayNameRefresh(data.token, accounts);
       return { ok: true };
     } catch (error) {
       return {
@@ -581,10 +589,11 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
           fontScale: normalized.preferences.fontScale,
         },
       }));
-      await Promise.all([
+      const [accounts] = await Promise.all([
         refreshAccounts(data.token),
         refreshTests(data.token),
       ]);
+      triggerMissingRemoteDisplayNameRefresh(data.token, accounts);
       return { ok: true };
     } catch (error) {
       return {
@@ -674,6 +683,32 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
         : [...prev.externalAccounts, next],
     }));
   };
+
+  const refreshMissingRemoteDisplayName = async (token: string) => {
+    try {
+      const data = await requestJson<{ account: ExternalAccount }>(
+        "/api/external/refresh-missing-name",
+        {
+          method: "POST",
+          token,
+        },
+      );
+      upsertAccount(normalizeAccount(data.account));
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const triggerMissingRemoteDisplayNameRefresh = useEffectEvent((
+    token: string,
+    accounts: ExternalAccount[],
+  ) => {
+    const account = accounts.find((item) => item.provider === "test.z7i.in");
+    if (!account || account.remoteDisplayName) {
+      return;
+    }
+    void refreshMissingRemoteDisplayName(token);
+  });
 
   const connectExternalAccount: Store["connectExternalAccount"] = async (
     payload,

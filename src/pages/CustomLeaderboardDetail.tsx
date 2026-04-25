@@ -8,6 +8,7 @@ import { cn, LEADERBOARD_PREVIEW_TESTS_KEY } from "@/lib/utils";
 import { buildDisplayQuestions } from "@/lib/questionDisplay";
 import { TestSummaryCard } from "@/components/TestSummaryCard";
 import { SegmentedProgressBar } from "@/components/SegmentedProgressBar";
+import { ParticipantNameWithTooltip } from "@/components/ParticipantNameWithTooltip";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -344,6 +345,7 @@ export const CustomLeaderboardDetail = () => {
       readonly: "1",
       participantKey: entry.participantKey,
       viewerName: entry.displayName,
+      viewerRemoteName: entry.remoteDisplayName ?? "",
       viewerUsername: entry.externalUsername,
     });
     navigate(
@@ -497,7 +499,15 @@ export const CustomLeaderboardDetail = () => {
             <DialogHeader>
               <DialogTitle>
                 {selectedLeaderboardEntry
-                  ? `${selectedLeaderboardEntry.displayName} summary`
+                  ? (
+                      <>
+                        <ParticipantNameWithTooltip
+                          visibleName={selectedLeaderboardEntry.displayName}
+                          remoteDisplayName={selectedLeaderboardEntry.remoteDisplayName}
+                        />{" "}
+                        summary
+                      </>
+                    )
                   : "Summary"}
               </DialogTitle>
               <DialogDescription>
@@ -724,9 +734,11 @@ export const CustomLeaderboardDetail = () => {
                       </span>
                       <div className="min-w-0">
                         <div className="flex items-center gap-2">
-                          <span className="truncate text-sm font-semibold text-foreground">
-                            {entry.displayName}
-                          </span>
+                          <ParticipantNameWithTooltip
+                            visibleName={entry.displayName}
+                            remoteDisplayName={entry.remoteDisplayName}
+                            className="truncate text-sm font-semibold text-foreground"
+                          />
                           {entry.isCurrentUserParticipant ? (
                             <Badge variant="secondary">You</Badge>
                           ) : null}

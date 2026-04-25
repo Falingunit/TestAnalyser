@@ -745,6 +745,88 @@ export const buildParticipantKeyByUserId = async (userIds: string[]) => {
   return participantKeyByUserId
 }
 
+export const buildExternalParticipantNameMeta = async (
+  participantKeys: Iterable<string>,
+) => {
+  const externalUsernames = Array.from(new Set(Array.from(participantKeys)))
+    .filter((key) => key.startsWith('external:test.z7i.in:'))
+    .map((key) => key.replace('external:test.z7i.in:', ''))
+
+  const linkedAccounts =
+    externalUsernames.length === 0
+      ? []
+      : await prisma.externalAccount.findMany({
+          where: {
+            provider: 'test.z7i.in',
+            username: { in: externalUsernames },
+          },
+          select: {
+            username: true,
+            remoteDisplayName: true,
+            user: {
+              select: {
+                name: true,
+                email: true,
+                createdAt: true,
+              },
+            },
+          },
+        })
+
+  const nameMetaByParticipantKey = new Map<
+    string,
+    { displayName: string; akaNames: string[]; remoteDisplayName: string | null }
+  >()
+  const localAccountsByUsername = new Map<
+    string,
+    Array<{
+      name: string
+      email: string
+      createdAt: Date
+      remoteDisplayName: string | null
+    }>
+  >()
+
+  linkedAccounts.forEach((account) => {
+    const current = localAccountsByUsername.get(account.username) ?? []
+    current.push({
+      name: account.user.name,
+      email: account.user.email,
+      createdAt: account.user.createdAt,
+      remoteDisplayName: account.remoteDisplayName,
+    })
+    localAccountsByUsername.set(account.username, current)
+  })
+
+  localAccountsByUsername.forEach((accounts, username) => {
+    const sorted = [...accounts].sort((a, b) => {
+      if (a.createdAt.getTime() !== b.createdAt.getTime()) {
+        return a.createdAt.getTime() - b.createdAt.getTime()
+      }
+      return a.email.localeCompare(b.email)
+    })
+    const normalizeIdentity = (payload: { name: string; email: string }) => {
+      const base = payload.name.trim() || payload.email.trim()
+      return base || username
+    }
+    const ordered = sorted.map((item) => normalizeIdentity(item))
+    const dedupedOrdered: string[] = []
+    ordered.forEach((item) => {
+      if (!dedupedOrdered.includes(item)) {
+        dedupedOrdered.push(item)
+      }
+    })
+    nameMetaByParticipantKey.set(`external:test.z7i.in:${username}`, {
+      displayName: dedupedOrdered[0] ?? username,
+      akaNames: dedupedOrdered.slice(1),
+      remoteDisplayName:
+        sorted.find((account) => Boolean(account.remoteDisplayName))?.remoteDisplayName ?? null,
+    })
+  })
+
+  return nameMetaByParticipantKey
+}
+
 const fetchCalculatedRankForAttempt = async (
   payload: {
     attemptId: string
@@ -1214,68 +1296,9 @@ router.get('/:id/leaderboard', requireAuth, async (req: AuthRequest, res, next) 
 
     const currentParticipantKey =
       participantKeyByUserId.get(req.user.userId) ?? `user:${req.user.userId}`
-    const externalUsernames = Array.from(aggregated.keys())
-      .filter((key) => key.startsWith('external:test.z7i.in:'))
-      .map((key) => key.replace('external:test.z7i.in:', ''))
-    const linkedLocalAccounts =
-      externalUsernames.length === 0
-        ? []
-        : await prisma.externalAccount.findMany({
-            where: {
-              provider: 'test.z7i.in',
-              username: { in: externalUsernames },
-            },
-            select: {
-              username: true,
-              user: {
-                select: {
-                  name: true,
-                  email: true,
-                  createdAt: true,
-                },
-              },
-            },
-          })
-    const nameMetaByParticipantKey = new Map<
-      string,
-      { displayName: string; akaNames: string[] }
-    >()
-    const localAccountsByUsername = new Map<
-      string,
-      Array<{ name: string; email: string; createdAt: Date }>
-    >()
-    linkedLocalAccounts.forEach((account) => {
-      const current = localAccountsByUsername.get(account.username) ?? []
-      current.push({
-        name: account.user.name,
-        email: account.user.email,
-        createdAt: account.user.createdAt,
-      })
-      localAccountsByUsername.set(account.username, current)
-    })
-    localAccountsByUsername.forEach((accounts, username) => {
-      const sorted = [...accounts].sort((a, b) => {
-        if (a.createdAt.getTime() !== b.createdAt.getTime()) {
-          return a.createdAt.getTime() - b.createdAt.getTime()
-        }
-        return a.email.localeCompare(b.email)
-      })
-      const normalizeIdentity = (payload: { name: string; email: string }) => {
-        const base = payload.name.trim() || payload.email.trim()
-        return base || username
-      }
-      const ordered = sorted.map((item) => normalizeIdentity(item))
-      const dedupedOrdered: string[] = []
-      ordered.forEach((item) => {
-        if (!dedupedOrdered.includes(item)) {
-          dedupedOrdered.push(item)
-        }
-      })
-      nameMetaByParticipantKey.set(`external:test.z7i.in:${username}`, {
-        displayName: dedupedOrdered[0] ?? username,
-        akaNames: dedupedOrdered.slice(1),
-      })
-    })
+    const nameMetaByParticipantKey = await buildExternalParticipantNameMeta(
+      aggregated.keys(),
+    )
     const leaderboard = Array.from(aggregated.entries())
       .map(([participantKey, payload]) => {
         const testPayload = serializeAttempt(
@@ -1290,12 +1313,14 @@ router.get('/:id/leaderboard', requireAuth, async (req: AuthRequest, res, next) 
         const labelMeta = nameMetaByParticipantKey.get(participantKey) ?? {
           displayName: externalUsername,
           akaNames: [],
+          remoteDisplayName: null,
         }
         return {
           participantKey,
           externalUsername,
           displayName: labelMeta.displayName,
           akaNames: labelMeta.akaNames,
+          remoteDisplayName: labelMeta.remoteDisplayName,
           rank: payload.rank,
           score: payload.score,
           totalScore,

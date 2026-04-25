@@ -27,6 +27,7 @@ export type ExternalAccount = {
   userId: string
   provider: 'test.z7i.in'
   username: string
+  remoteDisplayName?: string | null
   status: ExternalAccountStatus
   syncStatus: ExternalAccountSyncStatus
   syncTotal: number
@@ -132,6 +133,7 @@ export type CustomLeaderboardEntry = {
   externalUsername: string
   displayName: string
   akaNames: string[]
+  remoteDisplayName: string | null
   rank: number
   score: number
   totalScore: number
@@ -145,6 +147,7 @@ export type LeaderboardEntry = {
   externalUsername: string
   displayName: string
   akaNames: string[]
+  remoteDisplayName: string | null
   rank: number
   score: number
   totalScore: number

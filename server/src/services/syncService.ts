@@ -686,6 +686,18 @@ export const syncExternalAccount = async (payload: {
     onProgress: payload.onProgress,
   })
 
+  if (result.remoteDisplayName) {
+    await prisma.externalAccount.updateMany({
+      where: {
+        userId: payload.userId,
+        provider: payload.provider,
+      },
+      data: {
+        remoteDisplayName: result.remoteDisplayName,
+      },
+    })
+  }
+
   const saved = [] as Array<{ id: string; title: string }>
   const warnings = [...result.warnings]
 

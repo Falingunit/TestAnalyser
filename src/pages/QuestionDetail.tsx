@@ -12,6 +12,7 @@ import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom"
 import { Bookmark, ChevronDown, Copy, CopyX, Menu, Pencil, X } from "lucide-react";
 import { toBlob } from "html-to-image";
 import { useAppStore } from "@/lib/store";
+import { ParticipantNameWithTooltip } from "@/components/ParticipantNameWithTooltip";
 import {
   buildAnalysis,
   formatAnswerValue,
@@ -240,6 +241,8 @@ export const QuestionDetail = () => {
   const isReadonlyView = searchParams.get("readonly") === "1";
   const isBookmarkView = searchParams.get("bookmarks") === "1";
   const previewParticipantName = searchParams.get("viewerName")?.trim() ?? "";
+  const previewParticipantRemoteName =
+    searchParams.get("viewerRemoteName")?.trim() ?? "";
   const previewParticipantUsername =
     searchParams.get("viewerUsername")?.trim() ?? "";
   const previewParticipantKey = searchParams.get("participantKey")?.trim() ?? "";
@@ -842,6 +845,9 @@ export const QuestionDetail = () => {
     if (previewParticipantName) {
       params.set("viewerName", previewParticipantName);
     }
+    if (previewParticipantRemoteName) {
+      params.set("viewerRemoteName", previewParticipantRemoteName);
+    }
     if (previewParticipantUsername) {
       params.set("viewerUsername", previewParticipantUsername);
     }
@@ -851,6 +857,7 @@ export const QuestionDetail = () => {
     isReadonlyView,
     previewParticipantKey,
     previewParticipantName,
+    previewParticipantRemoteName,
     previewParticipantUsername,
   ]);
   const resolvedTestId = test?.id ?? testId ?? "";
@@ -1495,9 +1502,11 @@ export const QuestionDetail = () => {
       {isReadonlyView ? (
         <div className="rounded-md border border-border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
           Viewing leaderboard attempt:
-          <span className="ml-1 font-semibold text-foreground">
-            {previewParticipantName || "Participant"}
-          </span>
+          <ParticipantNameWithTooltip
+            visibleName={previewParticipantName || "Participant"}
+            remoteDisplayName={previewParticipantRemoteName}
+            className="ml-1 font-semibold text-foreground"
+          />
           {previewParticipantUsername ? (
             <span className="ml-1">@{previewParticipantUsername}</span>
           ) : null}

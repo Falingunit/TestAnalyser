@@ -5,6 +5,7 @@ import {
   serializeAttempt,
   parseStoredJson,
   getQuestionMarkForAnswer,
+  buildExternalParticipantNameMeta,
   buildParticipantKeyByUserId,
 } from './tests.js'
 
@@ -299,52 +300,26 @@ router.get('/:id', requireAuth, async (req: AuthRequest, res, next) => {
 
     // Prepare Name resolution
     const currentParticipantKey = participantKeyByUserId.get(req.user.userId) ?? `user:${req.user.userId}`
-    const externalUsernames = Array.from(aggregated.keys())
-      .filter((key) => key.startsWith('external:test.z7i.in:'))
-      .map((key) => key.replace('external:test.z7i.in:', ''))
-
-    const linkedLocalAccounts = externalUsernames.length === 0 ? [] : await prisma.externalAccount.findMany({
-      where: { provider: 'test.z7i.in', username: { in: externalUsernames } },
-      select: { username: true, user: { select: { name: true, email: true, createdAt: true } } }
-    })
-
-    const nameMetaByParticipantKey = new Map<string, { displayName: string; akaNames: string[] }>()
-    const localAccountsByUsername = new Map<string, Array<{ name: string; email: string; createdAt: Date }>>()
-
-    linkedLocalAccounts.forEach((account) => {
-      const current = localAccountsByUsername.get(account.username) ?? []
-      current.push({ name: account.user.name, email: account.user.email, createdAt: account.user.createdAt })
-      localAccountsByUsername.set(account.username, current)
-    })
-
-    localAccountsByUsername.forEach((accounts, username) => {
-      const sorted = [...accounts].sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime() || a.email.localeCompare(b.email))
-      const normalizeIdentity = (payload: { name: string; email: string }) => {
-        const base = payload.name.trim() || payload.email.trim()
-        return base || username
-      }
-      const ordered = sorted.map((item) => normalizeIdentity(item))
-      const dedupedOrdered: string[] = []
-      ordered.forEach((item) => {
-        if (!dedupedOrdered.includes(item)) dedupedOrdered.push(item)
-      })
-      nameMetaByParticipantKey.set(`external:test.z7i.in:${username}`, {
-        displayName: dedupedOrdered[0] ?? username,
-        akaNames: dedupedOrdered.slice(1),
-      })
-    })
+    const nameMetaByParticipantKey = await buildExternalParticipantNameMeta(
+      aggregated.keys(),
+    )
 
     const sortedEntries = Array.from(aggregated.entries())
       .map(([participantKey, payload]) => {
         const externalUsername = participantKey.startsWith('external:test.z7i.in:')
           ? participantKey.replace('external:test.z7i.in:', '')
           : participantKey
-        const labelMeta = nameMetaByParticipantKey.get(participantKey) ?? { displayName: externalUsername, akaNames: [] }
+        const labelMeta = nameMetaByParticipantKey.get(participantKey) ?? {
+          displayName: externalUsername,
+          akaNames: [],
+          remoteDisplayName: null,
+        }
         return {
           participantKey,
           externalUsername,
           displayName: labelMeta.displayName,
           akaNames: labelMeta.akaNames,
+          remoteDisplayName: labelMeta.remoteDisplayName,
           score: payload.score,
           subjectScores: payload.subjectScores,
           totalScore: totalLeaderboardScore,

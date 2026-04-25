@@ -21,6 +21,7 @@ import { SegmentedProgressBar } from "@/components/SegmentedProgressBar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { ParticipantNameWithTooltip } from "@/components/ParticipantNameWithTooltip";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -160,6 +161,8 @@ export const TestDetail = () => {
   } = useAppStore();
   const isReadonlyView = searchParams.get("readonly") === "1";
   const previewParticipantName = searchParams.get("viewerName")?.trim() ?? "";
+  const previewParticipantRemoteName =
+    searchParams.get("viewerRemoteName")?.trim() ?? "";
   const previewParticipantUsername =
     searchParams.get("viewerUsername")?.trim() ?? "";
 
@@ -801,6 +804,7 @@ export const TestDetail = () => {
       readonly: "1",
       participantKey: entry.participantKey,
       viewerName: entry.displayName,
+      viewerRemoteName: entry.remoteDisplayName ?? "",
       viewerUsername: entry.externalUsername,
     });
     if (ownedTestId) {
@@ -827,9 +831,11 @@ export const TestDetail = () => {
       {isReadonlyView ? (
         <div className="rounded-md border border-border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
           Viewing leaderboard attempt:
-          <span className="ml-1 font-semibold text-foreground">
-            {previewParticipantName || "Participant"}
-          </span>
+          <ParticipantNameWithTooltip
+            visibleName={previewParticipantName || "Participant"}
+            remoteDisplayName={previewParticipantRemoteName}
+            className="ml-1 font-semibold text-foreground"
+          />
           {previewParticipantUsername ? (
             <span className="ml-1">@{previewParticipantUsername}</span>
           ) : null}
@@ -1187,7 +1193,15 @@ export const TestDetail = () => {
           <DialogHeader>
             <DialogTitle>
               {selectedLeaderboardEntry
-                ? `${selectedLeaderboardEntry.displayName} summary`
+                ? (
+                    <>
+                      <ParticipantNameWithTooltip
+                        visibleName={selectedLeaderboardEntry.displayName}
+                        remoteDisplayName={selectedLeaderboardEntry.remoteDisplayName}
+                      />{" "}
+                      summary
+                    </>
+                  )
                 : "Summary"}
             </DialogTitle>
             <DialogDescription>
@@ -1343,9 +1357,11 @@ export const TestDetail = () => {
                         </span>
                         <div className="min-w-0">
                           <div className="flex items-center gap-2">
-                            <span className="truncate text-sm font-semibold text-foreground">
-                              {entry.displayName}
-                            </span>
+                            <ParticipantNameWithTooltip
+                              visibleName={entry.displayName}
+                              remoteDisplayName={entry.remoteDisplayName}
+                              className="truncate text-sm font-semibold text-foreground"
+                            />
                             {entry.isCurrentUserParticipant ? (
                               <Badge variant="secondary">You</Badge>
                             ) : null}

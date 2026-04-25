@@ -43,6 +43,7 @@ export type ScrapedReport = {
 export type ScrapeResult = {
   reports: ScrapedReport[]
   warnings: string[]
+  remoteDisplayName?: string | null
 }
 
 export type ScrapeProgress = {

@@ -66,6 +66,7 @@ export type ExternalAccount = {
   userId: string
   provider: string
   username: string
+  remoteDisplayName: string | null
   status: string
   syncStatus: string
   syncTotal: number
