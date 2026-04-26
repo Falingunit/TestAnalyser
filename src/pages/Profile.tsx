@@ -27,6 +27,7 @@ export const Profile = () => {
     setAdminOverride,
     setMode,
     setShowComparison,
+    setCommunitySolutionsEnabled,
     showComparison,
   } = useAppStore();
   const [profileMessage, setProfileMessage] = useState<string | null>(null);
@@ -41,6 +42,8 @@ export const Profile = () => {
   );
   const mode = currentUser?.preferences.mode ?? state.ui.mode;
   const isDark = mode === "dark";
+  const communitySolutionsEnabled =
+    currentUser?.preferences.communitySolutionsEnabled ?? true;
 
   const handleProfileSave = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -225,6 +228,20 @@ export const Profile = () => {
               <Switch
                 checked={showComparison}
                 onCheckedChange={setShowComparison}
+              />
+            </div>
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-sm font-medium text-foreground">
+                  Community solutions
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Show and interact with question-level community solutions.
+                </p>
+              </div>
+              <Switch
+                checked={communitySolutionsEnabled}
+                onCheckedChange={setCommunitySolutionsEnabled}
               />
             </div>
           </CardContent>

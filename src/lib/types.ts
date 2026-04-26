@@ -9,6 +9,7 @@ export type UserPreferences = {
   mode: ColorMode
   fontScale: number
   acknowledgedKeyUpdates: Record<string, string>
+  communitySolutionsEnabled: boolean
 }
 
 export type User = {
@@ -154,6 +155,49 @@ export type LeaderboardEntry = {
   attemptCount: number
   isCurrentUserParticipant: boolean
   test: TestRecord
+}
+
+export type CommunitySolutionVoteValue = -1 | 0 | 1
+
+export type CommunityAuthor = {
+  id: string
+  name: string
+  role: UserRole
+}
+
+export type CommunitySolutionComment = {
+  id: string
+  solutionId: string
+  contentMarkdown: string
+  createdAt: string
+  updatedAt: string
+  author: CommunityAuthor
+  canEdit: boolean
+  canDelete: boolean
+}
+
+export type CommunitySolution = {
+  id: string
+  questionId: string
+  contentMarkdown: string
+  score: number
+  upvoteCount: number
+  downvoteCount: number
+  pinnedAt: string | null
+  createdAt: string
+  updatedAt: string
+  currentUserVote: CommunitySolutionVoteValue
+  author: CommunityAuthor
+  canEdit: boolean
+  canDelete: boolean
+  canPin: boolean
+  comments: CommunitySolutionComment[]
+}
+
+export type QuestionCommunityThread = {
+  questionId: string
+  solutionCount: number
+  solutions: CommunitySolution[]
 }
 
 export type AppState = {

@@ -5,6 +5,13 @@ import type { ScrapeProgress } from '../scraper/types.js'
 import { syncExternalAccount } from '../services/syncService.js'
 import { decryptSecret } from '../utils/crypto.js'
 import {
+  deleteCommunityMarkdownAssets,
+  deleteTemporaryCommunityImages,
+  finalizeCommunityMarkdownAssets,
+  hasVisibleMarkdownContent,
+  saveTemporaryCommunityImage,
+} from '../utils/communityAssets.js'
+import {
   deleteTemporaryQuestionImages,
   finalizeQuestionContentAssets,
   hasVisibleHtmlContent,
@@ -864,6 +871,8 @@ const ADMIN_EMAILS = new Set([
   'sbaniruddh1@gmail.com',
   'testing@gmail.com',
 ])
+const MAX_SOLUTION_MARKDOWN_LENGTH = 20_000
+const MAX_COMMENT_MARKDOWN_LENGTH = 5_000
 
 const toSingleParam = (value: string | string[] | undefined) =>
   Array.isArray(value) ? value[0] : value
@@ -900,6 +909,214 @@ const normalizeHtmlField = (value: unknown) => {
   }
   const trimmed = value.trim()
   return trimmed.length > 0 ? trimmed : null
+}
+
+const normalizeMarkdownField = (value: unknown) => {
+  if (typeof value !== 'string') {
+    return null
+  }
+  const trimmed = value.trim()
+  return trimmed.length > 0 ? trimmed : null
+}
+
+const parseUserPreferences = (value: unknown) => {
+  const parsed = typeof value === 'string' ? parseStoredJson(value) : value
+  return parsed && typeof parsed === 'object'
+    ? (parsed as Record<string, unknown>)
+    : {}
+}
+
+const isCommunitySolutionsEnabled = (value: unknown) =>
+  parseUserPreferences(value).communitySolutionsEnabled !== false
+
+const normalizeCommunityRole = (user: { email: string; role: string }) =>
+  isAdminRole(user.role) || ADMIN_EMAILS.has(user.email.toLowerCase()) ? 'admin' : 'user'
+
+const validateMarkdownContent = (
+  value: string | null,
+  maxLength: number,
+  fieldName: string,
+) => {
+  if (!value) {
+    return `${fieldName} is required.`
+  }
+  if (value.length > maxLength) {
+    return `${fieldName} must be ${maxLength} characters or fewer.`
+  }
+  if (!hasVisibleMarkdownContent(value)) {
+    return `${fieldName} cannot be empty.`
+  }
+  return null
+}
+
+const serializeCommunityAuthor = (user: {
+  id: string
+  name: string
+  email: string
+  role: string
+}) => ({
+  id: user.id,
+  name: user.name,
+  role: normalizeCommunityRole(user),
+})
+
+const compareSolutions = (
+  left: {
+    pinnedAt: Date | null
+    score: number
+    upvoteCount: number
+    updatedAt: Date
+  },
+  right: {
+    pinnedAt: Date | null
+    score: number
+    upvoteCount: number
+    updatedAt: Date
+  },
+) => {
+  if (Boolean(left.pinnedAt) !== Boolean(right.pinnedAt)) {
+    return left.pinnedAt ? -1 : 1
+  }
+  if (left.pinnedAt && right.pinnedAt && left.pinnedAt.getTime() !== right.pinnedAt.getTime()) {
+    return right.pinnedAt.getTime() - left.pinnedAt.getTime()
+  }
+  if (left.score !== right.score) {
+    return right.score - left.score
+  }
+  if (left.upvoteCount !== right.upvoteCount) {
+    return right.upvoteCount - left.upvoteCount
+  }
+  return right.updatedAt.getTime() - left.updatedAt.getTime()
+}
+
+const resolveCommunityContext = async (
+  req: AuthRequest,
+  attemptId: string,
+  questionId: string,
+) => {
+  if (!req.user) {
+    return { ok: false as const, status: 401, error: 'Unauthorized.' }
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: req.user.userId },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      preferences: true,
+    },
+  })
+  if (!user) {
+    return { ok: false as const, status: 404, error: 'User not found.' }
+  }
+  if (!isCommunitySolutionsEnabled(user.preferences)) {
+    return {
+      ok: false as const,
+      status: 403,
+      error: 'Community solutions are disabled in your preferences.',
+    }
+  }
+
+  const attempt = await prisma.attempt.findFirst({
+    where: { id: attemptId, userId: user.id },
+    include: {
+      exam: { include: { questions: true } },
+    },
+  })
+  if (!attempt) {
+    return { ok: false as const, status: 404, error: 'Test not found.' }
+  }
+
+  const question = attempt.exam.questions.find((item) => item.id === questionId)
+  if (!question) {
+    return { ok: false as const, status: 404, error: 'Question not found.' }
+  }
+
+  return {
+    ok: true as const,
+    user,
+    isAdmin: normalizeCommunityRole(user) === 'admin',
+    attempt,
+    question,
+  }
+}
+
+const fetchCommunityPayload = async (payload: {
+  questionId: string
+  currentUserId: string
+  currentUserIsAdmin: boolean
+}) => {
+  const solutions = await prisma.questionCommunitySolution.findMany({
+    where: { questionId: payload.questionId },
+    include: {
+      user: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+        },
+      },
+      votes: {
+        where: { userId: payload.currentUserId },
+        select: { value: true },
+      },
+      comments: {
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              role: true,
+            },
+          },
+        },
+        orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+      },
+    },
+  })
+
+  const serializedSolutions = solutions
+    .sort(compareSolutions)
+    .map((solution) => ({
+      id: solution.id,
+      questionId: solution.questionId,
+      contentMarkdown: solution.contentMarkdown,
+      score: solution.score,
+      upvoteCount: solution.upvoteCount,
+      downvoteCount: solution.downvoteCount,
+      pinnedAt: solution.pinnedAt ? solution.pinnedAt.toISOString() : null,
+      createdAt: solution.createdAt.toISOString(),
+      updatedAt: solution.updatedAt.toISOString(),
+      currentUserVote: solution.votes[0]?.value ?? 0,
+      author: serializeCommunityAuthor(solution.user),
+      canEdit:
+        payload.currentUserIsAdmin || solution.userId === payload.currentUserId,
+      canDelete:
+        payload.currentUserIsAdmin || solution.userId === payload.currentUserId,
+      canPin: payload.currentUserIsAdmin,
+      comments: solution.comments.map((comment) => ({
+        id: comment.id,
+        solutionId: comment.solutionId,
+        contentMarkdown: comment.contentMarkdown,
+        createdAt: comment.createdAt.toISOString(),
+        updatedAt: comment.updatedAt.toISOString(),
+        author: serializeCommunityAuthor(comment.user),
+        canEdit:
+          payload.currentUserIsAdmin || comment.userId === payload.currentUserId,
+        canDelete:
+          payload.currentUserIsAdmin || comment.userId === payload.currentUserId,
+      })),
+    }))
+
+  return {
+    questionId: payload.questionId,
+    solutionCount: serializedSolutions.length,
+    solutions: serializedSolutions,
+  }
 }
 
 const toFiniteNumber = (value: unknown) => {
@@ -1344,6 +1561,788 @@ router.get('/:id/leaderboard', requireAuth, async (req: AuthRequest, res, next) 
     return next(error)
   }
 })
+
+router.get(
+  '/:id/community-counts',
+  requireAuth,
+  async (req: AuthRequest, res, next) => {
+    try {
+      const attemptId = toSingleParam(req.params.id)
+      if (!isNonEmptyString(attemptId)) {
+        return res.status(400).json({ error: 'Invalid test id.' })
+      }
+      if (!req.user) {
+        return res.status(401).json({ error: 'Unauthorized.' })
+      }
+
+      const user = await prisma.user.findUnique({
+        where: { id: req.user.userId },
+        select: { preferences: true },
+      })
+      if (!user) {
+        return res.status(404).json({ error: 'User not found.' })
+      }
+      if (!isCommunitySolutionsEnabled(user.preferences)) {
+        return res
+          .status(403)
+          .json({ error: 'Community solutions are disabled in your preferences.' })
+      }
+
+      const attempt = await prisma.attempt.findFirst({
+        where: { id: attemptId, userId: req.user.userId },
+        include: {
+          exam: {
+            select: {
+              questions: {
+                select: { id: true },
+              },
+            },
+          },
+        },
+      })
+      if (!attempt) {
+        return res.status(404).json({ error: 'Test not found.' })
+      }
+
+      const questionIds = attempt.exam.questions.map((question) => question.id)
+      const solutions = await prisma.questionCommunitySolution.findMany({
+        where: { questionId: { in: questionIds } },
+        select: { questionId: true },
+      })
+
+      const counts: Record<string, number> = {}
+      questionIds.forEach((questionId) => {
+        counts[questionId] = 0
+      })
+      solutions.forEach((solution) => {
+        counts[solution.questionId] = (counts[solution.questionId] ?? 0) + 1
+      })
+
+      return res.json({ counts })
+    } catch (error) {
+      return next(error)
+    }
+  },
+)
+
+router.get(
+  '/:id/questions/:questionId/community',
+  requireAuth,
+  async (req: AuthRequest, res, next) => {
+    try {
+      const attemptId = toSingleParam(req.params.id)
+      const questionId = toSingleParam(req.params.questionId)
+
+      if (!isNonEmptyString(attemptId)) {
+        return res.status(400).json({ error: 'Invalid test id.' })
+      }
+      if (!isNonEmptyString(questionId)) {
+        return res.status(400).json({ error: 'questionId is required.' })
+      }
+
+      const context = await resolveCommunityContext(req, attemptId, questionId)
+      if (!context.ok) {
+        return res.status(context.status).json({ error: context.error })
+      }
+
+      const payload = await fetchCommunityPayload({
+        questionId: context.question.id,
+        currentUserId: context.user.id,
+        currentUserIsAdmin: context.isAdmin,
+      })
+
+      return res.json(payload)
+    } catch (error) {
+      return next(error)
+    }
+  },
+)
+
+router.post(
+  '/:id/questions/:questionId/community-assets/temp',
+  requireAuth,
+  async (req: AuthRequest, res, next) => {
+    try {
+      const attemptId = toSingleParam(req.params.id)
+      const questionId = toSingleParam(req.params.questionId)
+      const dataUrl = req.body?.dataUrl
+
+      if (!isNonEmptyString(attemptId)) {
+        return res.status(400).json({ error: 'Invalid test id.' })
+      }
+      if (!isNonEmptyString(questionId)) {
+        return res.status(400).json({ error: 'questionId is required.' })
+      }
+      if (!isNonEmptyString(dataUrl)) {
+        return res.status(400).json({ error: 'dataUrl is required.' })
+      }
+
+      const context = await resolveCommunityContext(req, attemptId, questionId)
+      if (!context.ok) {
+        return res.status(context.status).json({ error: context.error })
+      }
+
+      const image = await saveTemporaryCommunityImage({
+        userId: context.user.id,
+        dataUrl,
+        baseUrl: getRequestBaseUrl(req),
+      })
+
+      return res.json({ url: image.url })
+    } catch (error) {
+      return next(error)
+    }
+  },
+)
+
+router.post(
+  '/:id/questions/:questionId/community-assets/temp/cleanup',
+  requireAuth,
+  async (req: AuthRequest, res, next) => {
+    try {
+      const attemptId = toSingleParam(req.params.id)
+      const questionId = toSingleParam(req.params.questionId)
+      const urls = Array.isArray(req.body?.urls) ? req.body.urls.filter(isNonEmptyString) : []
+
+      if (!isNonEmptyString(attemptId)) {
+        return res.status(400).json({ error: 'Invalid test id.' })
+      }
+      if (!isNonEmptyString(questionId)) {
+        return res.status(400).json({ error: 'questionId is required.' })
+      }
+
+      const context = await resolveCommunityContext(req, attemptId, questionId)
+      if (!context.ok) {
+        return res.status(context.status).json({ error: context.error })
+      }
+
+      await deleteTemporaryCommunityImages({
+        userId: context.user.id,
+        urls,
+      })
+
+      return res.json({ ok: true })
+    } catch (error) {
+      return next(error)
+    }
+  },
+)
+
+router.post(
+  '/:id/questions/:questionId/community-solutions',
+  requireAuth,
+  async (req: AuthRequest, res, next) => {
+    try {
+      const attemptId = toSingleParam(req.params.id)
+      const questionId = toSingleParam(req.params.questionId)
+
+      if (!isNonEmptyString(attemptId)) {
+        return res.status(400).json({ error: 'Invalid test id.' })
+      }
+      if (!isNonEmptyString(questionId)) {
+        return res.status(400).json({ error: 'questionId is required.' })
+      }
+
+      const context = await resolveCommunityContext(req, attemptId, questionId)
+      if (!context.ok) {
+        return res.status(context.status).json({ error: context.error })
+      }
+
+      const contentMarkdown = normalizeMarkdownField(req.body?.contentMarkdown)
+      const validationError = validateMarkdownContent(
+        contentMarkdown,
+        MAX_SOLUTION_MARKDOWN_LENGTH,
+        'Solution content',
+      )
+      if (validationError) {
+        return res.status(400).json({ error: validationError })
+      }
+
+      const existing = await prisma.questionCommunitySolution.findUnique({
+        where: {
+          questionId_userId: {
+            questionId: context.question.id,
+            userId: context.user.id,
+          },
+        },
+        select: { id: true },
+      })
+      if (existing) {
+        return res.status(409).json({ error: 'You can only create one solution per question.' })
+      }
+
+      const solution = await prisma.questionCommunitySolution.create({
+        data: {
+          questionId: context.question.id,
+          userId: context.user.id,
+          contentMarkdown: contentMarkdown!,
+        },
+      })
+
+      try {
+        const finalizedMarkdown = await finalizeCommunityMarkdownAssets({
+          userId: context.user.id,
+          entityKind: 'solution',
+          entityId: solution.id,
+          baseUrl: getRequestBaseUrl(req),
+          markdown: contentMarkdown!,
+          previousMarkdownValues: [],
+        })
+
+        if (finalizedMarkdown !== contentMarkdown) {
+          await prisma.questionCommunitySolution.update({
+            where: { id: solution.id },
+            data: { contentMarkdown: finalizedMarkdown },
+          })
+        }
+      } catch (error) {
+        await prisma.questionCommunitySolution.delete({ where: { id: solution.id } })
+        throw error
+      }
+
+      const payload = await fetchCommunityPayload({
+        questionId: context.question.id,
+        currentUserId: context.user.id,
+        currentUserIsAdmin: context.isAdmin,
+      })
+      return res.status(201).json(payload)
+    } catch (error) {
+      return next(error)
+    }
+  },
+)
+
+router.patch(
+  '/:id/questions/:questionId/community-solutions/:solutionId',
+  requireAuth,
+  async (req: AuthRequest, res, next) => {
+    try {
+      const attemptId = toSingleParam(req.params.id)
+      const questionId = toSingleParam(req.params.questionId)
+      const solutionId = toSingleParam(req.params.solutionId)
+
+      if (!isNonEmptyString(attemptId)) {
+        return res.status(400).json({ error: 'Invalid test id.' })
+      }
+      if (!isNonEmptyString(questionId) || !isNonEmptyString(solutionId)) {
+        return res.status(400).json({ error: 'questionId and solutionId are required.' })
+      }
+
+      const context = await resolveCommunityContext(req, attemptId, questionId)
+      if (!context.ok) {
+        return res.status(context.status).json({ error: context.error })
+      }
+
+      const solution = await prisma.questionCommunitySolution.findFirst({
+        where: {
+          id: solutionId,
+          questionId: context.question.id,
+        },
+        select: {
+          id: true,
+          userId: true,
+          contentMarkdown: true,
+        },
+      })
+      if (!solution) {
+        return res.status(404).json({ error: 'Solution not found.' })
+      }
+      if (!context.isAdmin && solution.userId !== context.user.id) {
+        return res.status(403).json({ error: 'You cannot edit this solution.' })
+      }
+
+      const contentMarkdown = normalizeMarkdownField(req.body?.contentMarkdown)
+      const validationError = validateMarkdownContent(
+        contentMarkdown,
+        MAX_SOLUTION_MARKDOWN_LENGTH,
+        'Solution content',
+      )
+      if (validationError) {
+        return res.status(400).json({ error: validationError })
+      }
+
+      const finalizedMarkdown = await finalizeCommunityMarkdownAssets({
+        userId: context.user.id,
+        entityKind: 'solution',
+        entityId: solution.id,
+        baseUrl: getRequestBaseUrl(req),
+        markdown: contentMarkdown!,
+        previousMarkdownValues: [solution.contentMarkdown],
+      })
+
+      await prisma.questionCommunitySolution.update({
+        where: { id: solution.id },
+        data: { contentMarkdown: finalizedMarkdown },
+      })
+
+      const payload = await fetchCommunityPayload({
+        questionId: context.question.id,
+        currentUserId: context.user.id,
+        currentUserIsAdmin: context.isAdmin,
+      })
+      return res.json(payload)
+    } catch (error) {
+      return next(error)
+    }
+  },
+)
+
+router.delete(
+  '/:id/questions/:questionId/community-solutions/:solutionId',
+  requireAuth,
+  async (req: AuthRequest, res, next) => {
+    try {
+      const attemptId = toSingleParam(req.params.id)
+      const questionId = toSingleParam(req.params.questionId)
+      const solutionId = toSingleParam(req.params.solutionId)
+
+      if (!isNonEmptyString(attemptId)) {
+        return res.status(400).json({ error: 'Invalid test id.' })
+      }
+      if (!isNonEmptyString(questionId) || !isNonEmptyString(solutionId)) {
+        return res.status(400).json({ error: 'questionId and solutionId are required.' })
+      }
+
+      const context = await resolveCommunityContext(req, attemptId, questionId)
+      if (!context.ok) {
+        return res.status(context.status).json({ error: context.error })
+      }
+
+      const solution = await prisma.questionCommunitySolution.findFirst({
+        where: {
+          id: solutionId,
+          questionId: context.question.id,
+        },
+        include: {
+          comments: {
+            select: {
+              id: true,
+              contentMarkdown: true,
+            },
+          },
+        },
+      })
+      if (!solution) {
+        return res.status(404).json({ error: 'Solution not found.' })
+      }
+      if (!context.isAdmin && solution.userId !== context.user.id) {
+        return res.status(403).json({ error: 'You cannot delete this solution.' })
+      }
+
+      await prisma.questionCommunitySolution.delete({
+        where: { id: solution.id },
+      })
+
+      await Promise.all([
+        deleteCommunityMarkdownAssets({
+          entityKind: 'solution',
+          entityId: solution.id,
+          markdownValues: [solution.contentMarkdown],
+        }),
+        ...solution.comments.map((comment) =>
+          deleteCommunityMarkdownAssets({
+            entityKind: 'comment',
+            entityId: comment.id,
+            markdownValues: [comment.contentMarkdown],
+          }),
+        ),
+      ])
+
+      const payload = await fetchCommunityPayload({
+        questionId: context.question.id,
+        currentUserId: context.user.id,
+        currentUserIsAdmin: context.isAdmin,
+      })
+      return res.json(payload)
+    } catch (error) {
+      return next(error)
+    }
+  },
+)
+
+router.post(
+  '/:id/questions/:questionId/community-solutions/:solutionId/vote',
+  requireAuth,
+  async (req: AuthRequest, res, next) => {
+    try {
+      const attemptId = toSingleParam(req.params.id)
+      const questionId = toSingleParam(req.params.questionId)
+      const solutionId = toSingleParam(req.params.solutionId)
+      const requestedValue = req.body?.value
+
+      if (!isNonEmptyString(attemptId)) {
+        return res.status(400).json({ error: 'Invalid test id.' })
+      }
+      if (!isNonEmptyString(questionId) || !isNonEmptyString(solutionId)) {
+        return res.status(400).json({ error: 'questionId and solutionId are required.' })
+      }
+      if (requestedValue !== 1 && requestedValue !== -1) {
+        return res.status(400).json({ error: 'value must be 1 or -1.' })
+      }
+
+      const context = await resolveCommunityContext(req, attemptId, questionId)
+      if (!context.ok) {
+        return res.status(context.status).json({ error: context.error })
+      }
+
+      const solution = await prisma.questionCommunitySolution.findFirst({
+        where: {
+          id: solutionId,
+          questionId: context.question.id,
+        },
+        select: { id: true },
+      })
+      if (!solution) {
+        return res.status(404).json({ error: 'Solution not found.' })
+      }
+
+      await prisma.$transaction(async (tx) => {
+        const existingVote = await tx.questionCommunitySolutionVote.findUnique({
+          where: {
+            solutionId_userId: {
+              solutionId: solution.id,
+              userId: context.user.id,
+            },
+          },
+        })
+
+        if (existingVote && existingVote.value === requestedValue) {
+          await tx.questionCommunitySolutionVote.delete({
+            where: { id: existingVote.id },
+          })
+        } else if (existingVote) {
+          await tx.questionCommunitySolutionVote.update({
+            where: { id: existingVote.id },
+            data: { value: requestedValue },
+          })
+        } else {
+          await tx.questionCommunitySolutionVote.create({
+            data: {
+              solutionId: solution.id,
+              userId: context.user.id,
+              value: requestedValue,
+            },
+          })
+        }
+
+        const votes = await tx.questionCommunitySolutionVote.findMany({
+          where: { solutionId: solution.id },
+          select: { value: true },
+        })
+        const upvoteCount = votes.filter((vote) => vote.value === 1).length
+        const downvoteCount = votes.filter((vote) => vote.value === -1).length
+        await tx.questionCommunitySolution.update({
+          where: { id: solution.id },
+          data: {
+            score: upvoteCount - downvoteCount,
+            upvoteCount,
+            downvoteCount,
+          },
+        })
+      })
+
+      const payload = await fetchCommunityPayload({
+        questionId: context.question.id,
+        currentUserId: context.user.id,
+        currentUserIsAdmin: context.isAdmin,
+      })
+      return res.json(payload)
+    } catch (error) {
+      return next(error)
+    }
+  },
+)
+
+router.patch(
+  '/:id/questions/:questionId/community-solutions/:solutionId/pin',
+  requireAuth,
+  async (req: AuthRequest, res, next) => {
+    try {
+      const attemptId = toSingleParam(req.params.id)
+      const questionId = toSingleParam(req.params.questionId)
+      const solutionId = toSingleParam(req.params.solutionId)
+
+      if (!isNonEmptyString(attemptId)) {
+        return res.status(400).json({ error: 'Invalid test id.' })
+      }
+      if (!isNonEmptyString(questionId) || !isNonEmptyString(solutionId)) {
+        return res.status(400).json({ error: 'questionId and solutionId are required.' })
+      }
+
+      const context = await resolveCommunityContext(req, attemptId, questionId)
+      if (!context.ok) {
+        return res.status(context.status).json({ error: context.error })
+      }
+      if (!context.isAdmin) {
+        return res.status(403).json({ error: 'Admin access required.' })
+      }
+
+      const solution = await prisma.questionCommunitySolution.findFirst({
+        where: {
+          id: solutionId,
+          questionId: context.question.id,
+        },
+        select: { id: true, pinnedAt: true },
+      })
+      if (!solution) {
+        return res.status(404).json({ error: 'Solution not found.' })
+      }
+
+      const pinned =
+        typeof req.body?.pinned === 'boolean' ? req.body.pinned : !Boolean(solution.pinnedAt)
+
+      await prisma.questionCommunitySolution.update({
+        where: { id: solution.id },
+        data: {
+          pinnedAt: pinned ? new Date() : null,
+        },
+      })
+
+      const payload = await fetchCommunityPayload({
+        questionId: context.question.id,
+        currentUserId: context.user.id,
+        currentUserIsAdmin: context.isAdmin,
+      })
+      return res.json(payload)
+    } catch (error) {
+      return next(error)
+    }
+  },
+)
+
+router.post(
+  '/:id/questions/:questionId/community-solutions/:solutionId/comments',
+  requireAuth,
+  async (req: AuthRequest, res, next) => {
+    try {
+      const attemptId = toSingleParam(req.params.id)
+      const questionId = toSingleParam(req.params.questionId)
+      const solutionId = toSingleParam(req.params.solutionId)
+
+      if (!isNonEmptyString(attemptId)) {
+        return res.status(400).json({ error: 'Invalid test id.' })
+      }
+      if (!isNonEmptyString(questionId) || !isNonEmptyString(solutionId)) {
+        return res.status(400).json({ error: 'questionId and solutionId are required.' })
+      }
+
+      const context = await resolveCommunityContext(req, attemptId, questionId)
+      if (!context.ok) {
+        return res.status(context.status).json({ error: context.error })
+      }
+
+      const solution = await prisma.questionCommunitySolution.findFirst({
+        where: {
+          id: solutionId,
+          questionId: context.question.id,
+        },
+        select: { id: true },
+      })
+      if (!solution) {
+        return res.status(404).json({ error: 'Solution not found.' })
+      }
+
+      const contentMarkdown = normalizeMarkdownField(req.body?.contentMarkdown)
+      const validationError = validateMarkdownContent(
+        contentMarkdown,
+        MAX_COMMENT_MARKDOWN_LENGTH,
+        'Comment content',
+      )
+      if (validationError) {
+        return res.status(400).json({ error: validationError })
+      }
+
+      const comment = await prisma.questionCommunitySolutionComment.create({
+        data: {
+          solutionId: solution.id,
+          userId: context.user.id,
+          contentMarkdown: contentMarkdown!,
+        },
+      })
+
+      try {
+        const finalizedMarkdown = await finalizeCommunityMarkdownAssets({
+          userId: context.user.id,
+          entityKind: 'comment',
+          entityId: comment.id,
+          baseUrl: getRequestBaseUrl(req),
+          markdown: contentMarkdown!,
+          previousMarkdownValues: [],
+        })
+
+        if (finalizedMarkdown !== contentMarkdown) {
+          await prisma.questionCommunitySolutionComment.update({
+            where: { id: comment.id },
+            data: { contentMarkdown: finalizedMarkdown },
+          })
+        }
+      } catch (error) {
+        await prisma.questionCommunitySolutionComment.delete({ where: { id: comment.id } })
+        throw error
+      }
+
+      const payload = await fetchCommunityPayload({
+        questionId: context.question.id,
+        currentUserId: context.user.id,
+        currentUserIsAdmin: context.isAdmin,
+      })
+      return res.status(201).json(payload)
+    } catch (error) {
+      return next(error)
+    }
+  },
+)
+
+router.patch(
+  '/:id/questions/:questionId/community-solutions/:solutionId/comments/:commentId',
+  requireAuth,
+  async (req: AuthRequest, res, next) => {
+    try {
+      const attemptId = toSingleParam(req.params.id)
+      const questionId = toSingleParam(req.params.questionId)
+      const solutionId = toSingleParam(req.params.solutionId)
+      const commentId = toSingleParam(req.params.commentId)
+
+      if (!isNonEmptyString(attemptId)) {
+        return res.status(400).json({ error: 'Invalid test id.' })
+      }
+      if (
+        !isNonEmptyString(questionId) ||
+        !isNonEmptyString(solutionId) ||
+        !isNonEmptyString(commentId)
+      ) {
+        return res
+          .status(400)
+          .json({ error: 'questionId, solutionId, and commentId are required.' })
+      }
+
+      const context = await resolveCommunityContext(req, attemptId, questionId)
+      if (!context.ok) {
+        return res.status(context.status).json({ error: context.error })
+      }
+
+      const comment = await prisma.questionCommunitySolutionComment.findFirst({
+        where: {
+          id: commentId,
+          solutionId,
+          solution: { is: { questionId: context.question.id } },
+        },
+        select: {
+          id: true,
+          userId: true,
+          contentMarkdown: true,
+        },
+      })
+      if (!comment) {
+        return res.status(404).json({ error: 'Comment not found.' })
+      }
+      if (!context.isAdmin && comment.userId !== context.user.id) {
+        return res.status(403).json({ error: 'You cannot edit this comment.' })
+      }
+
+      const contentMarkdown = normalizeMarkdownField(req.body?.contentMarkdown)
+      const validationError = validateMarkdownContent(
+        contentMarkdown,
+        MAX_COMMENT_MARKDOWN_LENGTH,
+        'Comment content',
+      )
+      if (validationError) {
+        return res.status(400).json({ error: validationError })
+      }
+
+      const finalizedMarkdown = await finalizeCommunityMarkdownAssets({
+        userId: context.user.id,
+        entityKind: 'comment',
+        entityId: comment.id,
+        baseUrl: getRequestBaseUrl(req),
+        markdown: contentMarkdown!,
+        previousMarkdownValues: [comment.contentMarkdown],
+      })
+
+      await prisma.questionCommunitySolutionComment.update({
+        where: { id: comment.id },
+        data: { contentMarkdown: finalizedMarkdown },
+      })
+
+      const payload = await fetchCommunityPayload({
+        questionId: context.question.id,
+        currentUserId: context.user.id,
+        currentUserIsAdmin: context.isAdmin,
+      })
+      return res.json(payload)
+    } catch (error) {
+      return next(error)
+    }
+  },
+)
+
+router.delete(
+  '/:id/questions/:questionId/community-solutions/:solutionId/comments/:commentId',
+  requireAuth,
+  async (req: AuthRequest, res, next) => {
+    try {
+      const attemptId = toSingleParam(req.params.id)
+      const questionId = toSingleParam(req.params.questionId)
+      const solutionId = toSingleParam(req.params.solutionId)
+      const commentId = toSingleParam(req.params.commentId)
+
+      if (!isNonEmptyString(attemptId)) {
+        return res.status(400).json({ error: 'Invalid test id.' })
+      }
+      if (
+        !isNonEmptyString(questionId) ||
+        !isNonEmptyString(solutionId) ||
+        !isNonEmptyString(commentId)
+      ) {
+        return res
+          .status(400)
+          .json({ error: 'questionId, solutionId, and commentId are required.' })
+      }
+
+      const context = await resolveCommunityContext(req, attemptId, questionId)
+      if (!context.ok) {
+        return res.status(context.status).json({ error: context.error })
+      }
+
+      const comment = await prisma.questionCommunitySolutionComment.findFirst({
+        where: {
+          id: commentId,
+          solutionId,
+          solution: { is: { questionId: context.question.id } },
+        },
+        select: {
+          id: true,
+          userId: true,
+          contentMarkdown: true,
+        },
+      })
+      if (!comment) {
+        return res.status(404).json({ error: 'Comment not found.' })
+      }
+      if (!context.isAdmin && comment.userId !== context.user.id) {
+        return res.status(403).json({ error: 'You cannot delete this comment.' })
+      }
+
+      await prisma.questionCommunitySolutionComment.delete({
+        where: { id: comment.id },
+      })
+      await deleteCommunityMarkdownAssets({
+        entityKind: 'comment',
+        entityId: comment.id,
+        markdownValues: [comment.contentMarkdown],
+      })
+
+      const payload = await fetchCommunityPayload({
+        questionId: context.question.id,
+        currentUserId: context.user.id,
+        currentUserIsAdmin: context.isAdmin,
+      })
+      return res.json(payload)
+    } catch (error) {
+      return next(error)
+    }
+  },
+)
 
 router.post(
   '/:id/questions/:questionId/content-images/temp',

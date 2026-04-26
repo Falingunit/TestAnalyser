@@ -12,6 +12,7 @@ import { ApiError, requestJson } from "./api";
 import type {
   AppState,
   ColorMode,
+  CommunitySolutionVoteValue,
   ExternalAccount,
   ThemeName,
   User,
@@ -20,6 +21,7 @@ import type {
   LeaderboardEntry,
   CustomLeaderboard,
   CustomLeaderboardEntry,
+  QuestionCommunityThread,
 } from "./types";
 
 const TOKEN_KEY = "testanalyser-token";
@@ -29,16 +31,29 @@ const ADMIN_OVERRIDE_KEY = "testanalyser-admin-override";
 const SHOW_COMPARISON_KEY = "testanalyser-show-comparison";
 
 type AuthResult = { ok: boolean; message?: string };
+type CommunityThreadResult = {
+  ok: boolean;
+  thread?: QuestionCommunityThread;
+  message?: string;
+};
+type CommunityCountsResult = {
+  ok: boolean;
+  counts?: Record<string, number>;
+  message?: string;
+};
 
 type Store = {
   state: AppState;
   currentUser: User | null;
+  questionCommunityByQuestionId: Record<string, QuestionCommunityThread | undefined>;
+  communityCountsByTestId: Record<string, Record<string, number> | undefined>;
   isAdmin: boolean;
   adminOverride: boolean;
   fontScale: number;
   showComparison: boolean;
   setAdminOverride: (enabled: boolean) => void;
   setFontScale: (scale: number) => void;
+  setCommunitySolutionsEnabled: (enabled: boolean) => void;
   isBootstrapped: boolean;
   register: (payload: {
     name: string;
@@ -106,6 +121,68 @@ type Store = {
     dataUrl: string;
   }) => Promise<{ ok: boolean; url?: string; message?: string }>;
   discardTemporaryQuestionImages: (payload: {
+    testId: string;
+    questionId: string;
+    urls: string[];
+  }) => Promise<AuthResult>;
+  fetchQuestionCommunity: (payload: {
+    testId: string;
+    questionId: string;
+  }) => Promise<CommunityThreadResult>;
+  fetchTestCommunityCounts: (testId: string) => Promise<CommunityCountsResult>;
+  createQuestionCommunitySolution: (payload: {
+    testId: string;
+    questionId: string;
+    contentMarkdown: string;
+  }) => Promise<CommunityThreadResult>;
+  updateQuestionCommunitySolution: (payload: {
+    testId: string;
+    questionId: string;
+    solutionId: string;
+    contentMarkdown: string;
+  }) => Promise<CommunityThreadResult>;
+  deleteQuestionCommunitySolution: (payload: {
+    testId: string;
+    questionId: string;
+    solutionId: string;
+  }) => Promise<CommunityThreadResult>;
+  voteQuestionCommunitySolution: (payload: {
+    testId: string;
+    questionId: string;
+    solutionId: string;
+    value: Exclude<CommunitySolutionVoteValue, 0>;
+  }) => Promise<CommunityThreadResult>;
+  pinQuestionCommunitySolution: (payload: {
+    testId: string;
+    questionId: string;
+    solutionId: string;
+    pinned: boolean;
+  }) => Promise<CommunityThreadResult>;
+  createQuestionCommunityComment: (payload: {
+    testId: string;
+    questionId: string;
+    solutionId: string;
+    contentMarkdown: string;
+  }) => Promise<CommunityThreadResult>;
+  updateQuestionCommunityComment: (payload: {
+    testId: string;
+    questionId: string;
+    solutionId: string;
+    commentId: string;
+    contentMarkdown: string;
+  }) => Promise<CommunityThreadResult>;
+  deleteQuestionCommunityComment: (payload: {
+    testId: string;
+    questionId: string;
+    solutionId: string;
+    commentId: string;
+  }) => Promise<CommunityThreadResult>;
+  uploadTemporaryCommunityImage: (payload: {
+    testId: string;
+    questionId: string;
+    dataUrl: string;
+  }) => Promise<{ ok: boolean; url?: string; message?: string }>;
+  discardTemporaryCommunityImages: (payload: {
     testId: string;
     questionId: string;
     urls: string[];
@@ -246,6 +323,7 @@ const normalizePreferences = (
       mode: fallbackUi.mode,
       fontScale: fallbackUi.fontScale,
       acknowledgedKeyUpdates: {},
+      communitySolutionsEnabled: true,
     };
   }
 
@@ -258,12 +336,17 @@ const normalizePreferences = (
     typeof prefs.acknowledgedKeyUpdates === "object"
       ? (prefs.acknowledgedKeyUpdates as Record<string, string>)
       : {};
+  const communitySolutionsEnabled =
+    typeof prefs.communitySolutionsEnabled === "boolean"
+      ? prefs.communitySolutionsEnabled
+      : true;
 
   return {
     theme,
     mode,
     fontScale,
     acknowledgedKeyUpdates,
+    communitySolutionsEnabled,
   };
 };
 
@@ -387,6 +470,14 @@ const updateQuestionInTests = (
         },
   );
 
+const upsertCommunityThread = (
+  current: Record<string, QuestionCommunityThread | undefined>,
+  thread: QuestionCommunityThread,
+) => ({
+  ...current,
+  [thread.questionId]: thread,
+});
+
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
@@ -396,6 +487,11 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
     ui: loadUi(),
   }));
   const [currentUser, setCurrentUser] = useState<User | null>(() => loadUser());
+  const [questionCommunityByQuestionId, setQuestionCommunityByQuestionId] =
+    useState<Record<string, QuestionCommunityThread | undefined>>({});
+  const [communityCountsByTestId, setCommunityCountsByTestId] = useState<
+    Record<string, Record<string, number> | undefined>
+  >({});
   const [adminOverride, setAdminOverrideState] = useState(loadAdminOverride);
   const [showComparison, setShowComparisonState] = useState(loadShowComparison);
   const [isBootstrapped, setIsBootstrapped] = useState(false);
@@ -435,6 +531,8 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
     saveToken(null);
     saveUser(null);
     setCurrentUser(null);
+    setQuestionCommunityByQuestionId({});
+    setCommunityCountsByTestId({});
     setState((prev) => ({
       ...prev,
       externalAccounts: [],
@@ -1220,6 +1318,359 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
       }
     };
 
+  const applyCommunityThread = (testId: string, thread: QuestionCommunityThread) => {
+    setQuestionCommunityByQuestionId((prev) => upsertCommunityThread(prev, thread));
+    setCommunityCountsByTestId((prev) => ({
+      ...prev,
+      [testId]: {
+        ...(prev[testId] ?? {}),
+        [thread.questionId]: thread.solutionCount,
+      },
+    }));
+  };
+
+  const fetchQuestionCommunity: Store["fetchQuestionCommunity"] = async ({
+    testId,
+    questionId,
+  }) => {
+    const token = loadToken();
+    if (!token) {
+      return { ok: false, message: "Missing session token." };
+    }
+
+    try {
+      const thread = await requestJson<QuestionCommunityThread>(
+        `/api/tests/${testId}/questions/${questionId}/community`,
+        { token },
+      );
+      applyCommunityThread(testId, thread);
+      return { ok: true, thread };
+    } catch (error) {
+      const message =
+        error instanceof ApiError
+          ? error.message
+          : error instanceof Error
+            ? error.message
+            : "Unable to fetch community solutions.";
+      return { ok: false, message };
+    }
+  };
+
+  const fetchTestCommunityCounts: Store["fetchTestCommunityCounts"] = async (
+    testId,
+  ) => {
+    const token = loadToken();
+    if (!token) {
+      return { ok: false, message: "Missing session token." };
+    }
+
+    try {
+      const data = await requestJson<{ counts: Record<string, number> }>(
+        `/api/tests/${testId}/community-counts`,
+        { token },
+      );
+      setCommunityCountsByTestId((prev) => ({
+        ...prev,
+        [testId]: data.counts,
+      }));
+      return { ok: true, counts: data.counts };
+    } catch (error) {
+      const message =
+        error instanceof ApiError
+          ? error.message
+          : error instanceof Error
+            ? error.message
+            : "Unable to fetch community counts.";
+      return { ok: false, message };
+    }
+  };
+
+  const createQuestionCommunitySolution: Store["createQuestionCommunitySolution"] =
+    async ({ testId, questionId, contentMarkdown }) => {
+      const token = loadToken();
+      if (!token) {
+        return { ok: false, message: "Missing session token." };
+      }
+
+      try {
+        const thread = await requestJson<QuestionCommunityThread>(
+          `/api/tests/${testId}/questions/${questionId}/community-solutions`,
+          {
+            method: "POST",
+            token,
+            body: JSON.stringify({ contentMarkdown }),
+          },
+        );
+        applyCommunityThread(testId, thread);
+        return { ok: true, thread };
+      } catch (error) {
+        const message =
+          error instanceof ApiError
+            ? error.message
+            : error instanceof Error
+              ? error.message
+              : "Unable to create community solution.";
+        return { ok: false, message };
+      }
+    };
+
+  const updateQuestionCommunitySolution: Store["updateQuestionCommunitySolution"] =
+    async ({ testId, questionId, solutionId, contentMarkdown }) => {
+      const token = loadToken();
+      if (!token) {
+        return { ok: false, message: "Missing session token." };
+      }
+
+      try {
+        const thread = await requestJson<QuestionCommunityThread>(
+          `/api/tests/${testId}/questions/${questionId}/community-solutions/${solutionId}`,
+          {
+            method: "PATCH",
+            token,
+            body: JSON.stringify({ contentMarkdown }),
+          },
+        );
+        applyCommunityThread(testId, thread);
+        return { ok: true, thread };
+      } catch (error) {
+        const message =
+          error instanceof ApiError
+            ? error.message
+            : error instanceof Error
+              ? error.message
+              : "Unable to update community solution.";
+        return { ok: false, message };
+      }
+    };
+
+  const deleteQuestionCommunitySolution: Store["deleteQuestionCommunitySolution"] =
+    async ({ testId, questionId, solutionId }) => {
+      const token = loadToken();
+      if (!token) {
+        return { ok: false, message: "Missing session token." };
+      }
+
+      try {
+        const thread = await requestJson<QuestionCommunityThread>(
+          `/api/tests/${testId}/questions/${questionId}/community-solutions/${solutionId}`,
+          {
+            method: "DELETE" as RequestInit["method"],
+            token,
+          },
+        );
+        applyCommunityThread(testId, thread);
+        return { ok: true, thread };
+      } catch (error) {
+        const message =
+          error instanceof ApiError
+            ? error.message
+            : error instanceof Error
+              ? error.message
+              : "Unable to delete community solution.";
+        return { ok: false, message };
+      }
+    };
+
+  const voteQuestionCommunitySolution: Store["voteQuestionCommunitySolution"] =
+    async ({ testId, questionId, solutionId, value }) => {
+      const token = loadToken();
+      if (!token) {
+        return { ok: false, message: "Missing session token." };
+      }
+
+      try {
+        const thread = await requestJson<QuestionCommunityThread>(
+          `/api/tests/${testId}/questions/${questionId}/community-solutions/${solutionId}/vote`,
+          {
+            method: "POST",
+            token,
+            body: JSON.stringify({ value }),
+          },
+        );
+        applyCommunityThread(testId, thread);
+        return { ok: true, thread };
+      } catch (error) {
+        const message =
+          error instanceof ApiError
+            ? error.message
+            : error instanceof Error
+              ? error.message
+              : "Unable to vote on community solution.";
+        return { ok: false, message };
+      }
+    };
+
+  const pinQuestionCommunitySolution: Store["pinQuestionCommunitySolution"] =
+    async ({ testId, questionId, solutionId, pinned }) => {
+      const token = loadToken();
+      if (!token) {
+        return { ok: false, message: "Missing session token." };
+      }
+
+      try {
+        const thread = await requestJson<QuestionCommunityThread>(
+          `/api/tests/${testId}/questions/${questionId}/community-solutions/${solutionId}/pin`,
+          {
+            method: "PATCH",
+            token,
+            body: JSON.stringify({ pinned }),
+          },
+        );
+        applyCommunityThread(testId, thread);
+        return { ok: true, thread };
+      } catch (error) {
+        const message =
+          error instanceof ApiError
+            ? error.message
+            : error instanceof Error
+              ? error.message
+              : "Unable to update pin state.";
+        return { ok: false, message };
+      }
+    };
+
+  const createQuestionCommunityComment: Store["createQuestionCommunityComment"] =
+    async ({ testId, questionId, solutionId, contentMarkdown }) => {
+      const token = loadToken();
+      if (!token) {
+        return { ok: false, message: "Missing session token." };
+      }
+
+      try {
+        const thread = await requestJson<QuestionCommunityThread>(
+          `/api/tests/${testId}/questions/${questionId}/community-solutions/${solutionId}/comments`,
+          {
+            method: "POST",
+            token,
+            body: JSON.stringify({ contentMarkdown }),
+          },
+        );
+        applyCommunityThread(testId, thread);
+        return { ok: true, thread };
+      } catch (error) {
+        const message =
+          error instanceof ApiError
+            ? error.message
+            : error instanceof Error
+              ? error.message
+              : "Unable to create comment.";
+        return { ok: false, message };
+      }
+    };
+
+  const updateQuestionCommunityComment: Store["updateQuestionCommunityComment"] =
+    async ({ testId, questionId, solutionId, commentId, contentMarkdown }) => {
+      const token = loadToken();
+      if (!token) {
+        return { ok: false, message: "Missing session token." };
+      }
+
+      try {
+        const thread = await requestJson<QuestionCommunityThread>(
+          `/api/tests/${testId}/questions/${questionId}/community-solutions/${solutionId}/comments/${commentId}`,
+          {
+            method: "PATCH",
+            token,
+            body: JSON.stringify({ contentMarkdown }),
+          },
+        );
+        applyCommunityThread(testId, thread);
+        return { ok: true, thread };
+      } catch (error) {
+        const message =
+          error instanceof ApiError
+            ? error.message
+            : error instanceof Error
+              ? error.message
+              : "Unable to update comment.";
+        return { ok: false, message };
+      }
+    };
+
+  const deleteQuestionCommunityComment: Store["deleteQuestionCommunityComment"] =
+    async ({ testId, questionId, solutionId, commentId }) => {
+      const token = loadToken();
+      if (!token) {
+        return { ok: false, message: "Missing session token." };
+      }
+
+      try {
+        const thread = await requestJson<QuestionCommunityThread>(
+          `/api/tests/${testId}/questions/${questionId}/community-solutions/${solutionId}/comments/${commentId}`,
+          {
+            method: "DELETE" as RequestInit["method"],
+            token,
+          },
+        );
+        applyCommunityThread(testId, thread);
+        return { ok: true, thread };
+      } catch (error) {
+        const message =
+          error instanceof ApiError
+            ? error.message
+            : error instanceof Error
+              ? error.message
+              : "Unable to delete comment.";
+        return { ok: false, message };
+      }
+    };
+
+  const uploadTemporaryCommunityImage: Store["uploadTemporaryCommunityImage"] =
+    async ({ testId, questionId, dataUrl }) => {
+      const token = loadToken();
+      if (!token) {
+        return { ok: false, message: "Missing session token." };
+      }
+
+      try {
+        const data = await requestJson<{ url: string }>(
+          `/api/tests/${testId}/questions/${questionId}/community-assets/temp`,
+          {
+            method: "POST",
+            token,
+            body: JSON.stringify({ dataUrl }),
+          },
+        );
+        return { ok: true, url: data.url };
+      } catch (error) {
+        const message =
+          error instanceof ApiError
+            ? error.message
+            : error instanceof Error
+              ? error.message
+              : "Unable to upload image.";
+        return { ok: false, message };
+      }
+    };
+
+  const discardTemporaryCommunityImages: Store["discardTemporaryCommunityImages"] =
+    async ({ testId, questionId, urls }) => {
+      const token = loadToken();
+      if (!token) {
+        return { ok: false, message: "Missing session token." };
+      }
+
+      try {
+        await requestJson<{ ok: true }>(
+          `/api/tests/${testId}/questions/${questionId}/community-assets/temp/cleanup`,
+          {
+            method: "POST",
+            token,
+            body: JSON.stringify({ urls }),
+          },
+        );
+        return { ok: true };
+      } catch (error) {
+        const message =
+          error instanceof ApiError
+            ? error.message
+            : error instanceof Error
+              ? error.message
+              : "Unable to discard temporary images.";
+        return { ok: false, message };
+      }
+    };
+
   const updateMarkingScheme: Store["updateMarkingScheme"] = async ({
     testId,
     scheme,
@@ -1318,6 +1769,22 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
       ...prev,
       ui: { ...prev.ui, mode },
     }));
+  };
+
+  const setCommunitySolutionsEnabled: Store["setCommunitySolutionsEnabled"] = (
+    enabled,
+  ) => {
+    if (!currentUser) {
+      return;
+    }
+    if (!enabled) {
+      setQuestionCommunityByQuestionId({});
+      setCommunityCountsByTestId({});
+    }
+    void savePreferences({
+      ...currentUser.preferences,
+      communitySolutionsEnabled: enabled,
+    });
   };
 
   const setShowComparison: Store["setShowComparison"] = (show) => {
@@ -1559,12 +2026,15 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
   const value = {
     state,
     currentUser,
+    questionCommunityByQuestionId,
+    communityCountsByTestId,
     isAdmin,
     adminOverride,
     fontScale,
     showComparison,
     setAdminOverride,
     setFontScale,
+    setCommunitySolutionsEnabled,
     isBootstrapped,
     register,
     login,
@@ -1583,6 +2053,18 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
     updateQuestionContent,
     uploadTemporaryQuestionImage,
     discardTemporaryQuestionImages,
+    fetchQuestionCommunity,
+    fetchTestCommunityCounts,
+    createQuestionCommunitySolution,
+    updateQuestionCommunitySolution,
+    deleteQuestionCommunitySolution,
+    voteQuestionCommunitySolution,
+    pinQuestionCommunitySolution,
+    createQuestionCommunityComment,
+    updateQuestionCommunityComment,
+    deleteQuestionCommunityComment,
+    uploadTemporaryCommunityImage,
+    discardTemporaryCommunityImages,
     updateMarkingScheme,
     setTheme,
     setMode,
