@@ -1,9 +1,11 @@
 /* eslint-disable react-refresh/only-export-components */
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useEffectEvent,
+  useMemo,
   useRef,
   useState,
   type ReactNode,
@@ -12,6 +14,7 @@ import { ApiError, requestJson } from "./api";
 import type {
   AppState,
   ColorMode,
+  CommunitySolutionVoteValue,
   ExternalAccount,
   ThemeName,
   User,
@@ -20,6 +23,7 @@ import type {
   LeaderboardEntry,
   CustomLeaderboard,
   CustomLeaderboardEntry,
+  QuestionCommunityThread,
 } from "./types";
 
 const TOKEN_KEY = "testanalyser-token";
@@ -29,16 +33,29 @@ const ADMIN_OVERRIDE_KEY = "testanalyser-admin-override";
 const SHOW_COMPARISON_KEY = "testanalyser-show-comparison";
 
 type AuthResult = { ok: boolean; message?: string };
+type CommunityThreadResult = {
+  ok: boolean;
+  thread?: QuestionCommunityThread;
+  message?: string;
+};
+type CommunityCountsResult = {
+  ok: boolean;
+  counts?: Record<string, number>;
+  message?: string;
+};
 
 type Store = {
   state: AppState;
   currentUser: User | null;
+  questionCommunityByQuestionId: Record<string, QuestionCommunityThread | undefined>;
+  communityCountsByTestId: Record<string, Record<string, number> | undefined>;
   isAdmin: boolean;
   adminOverride: boolean;
   fontScale: number;
   showComparison: boolean;
   setAdminOverride: (enabled: boolean) => void;
   setFontScale: (scale: number) => void;
+  setCommunitySolutionsEnabled: (enabled: boolean) => void;
   isBootstrapped: boolean;
   register: (payload: {
     name: string;
@@ -106,6 +123,68 @@ type Store = {
     dataUrl: string;
   }) => Promise<{ ok: boolean; url?: string; message?: string }>;
   discardTemporaryQuestionImages: (payload: {
+    testId: string;
+    questionId: string;
+    urls: string[];
+  }) => Promise<AuthResult>;
+  fetchQuestionCommunity: (payload: {
+    testId: string;
+    questionId: string;
+  }) => Promise<CommunityThreadResult>;
+  fetchTestCommunityCounts: (testId: string) => Promise<CommunityCountsResult>;
+  createQuestionCommunitySolution: (payload: {
+    testId: string;
+    questionId: string;
+    contentMarkdown: string;
+  }) => Promise<CommunityThreadResult>;
+  updateQuestionCommunitySolution: (payload: {
+    testId: string;
+    questionId: string;
+    solutionId: string;
+    contentMarkdown: string;
+  }) => Promise<CommunityThreadResult>;
+  deleteQuestionCommunitySolution: (payload: {
+    testId: string;
+    questionId: string;
+    solutionId: string;
+  }) => Promise<CommunityThreadResult>;
+  voteQuestionCommunitySolution: (payload: {
+    testId: string;
+    questionId: string;
+    solutionId: string;
+    value: Exclude<CommunitySolutionVoteValue, 0>;
+  }) => Promise<CommunityThreadResult>;
+  pinQuestionCommunitySolution: (payload: {
+    testId: string;
+    questionId: string;
+    solutionId: string;
+    pinned: boolean;
+  }) => Promise<CommunityThreadResult>;
+  createQuestionCommunityComment: (payload: {
+    testId: string;
+    questionId: string;
+    solutionId: string;
+    contentMarkdown: string;
+  }) => Promise<CommunityThreadResult>;
+  updateQuestionCommunityComment: (payload: {
+    testId: string;
+    questionId: string;
+    solutionId: string;
+    commentId: string;
+    contentMarkdown: string;
+  }) => Promise<CommunityThreadResult>;
+  deleteQuestionCommunityComment: (payload: {
+    testId: string;
+    questionId: string;
+    solutionId: string;
+    commentId: string;
+  }) => Promise<CommunityThreadResult>;
+  uploadTemporaryCommunityImage: (payload: {
+    testId: string;
+    questionId: string;
+    dataUrl: string;
+  }) => Promise<{ ok: boolean; url?: string; message?: string }>;
+  discardTemporaryCommunityImages: (payload: {
     testId: string;
     questionId: string;
     urls: string[];
@@ -246,6 +325,7 @@ const normalizePreferences = (
       mode: fallbackUi.mode,
       fontScale: fallbackUi.fontScale,
       acknowledgedKeyUpdates: {},
+      communitySolutionsEnabled: true,
     };
   }
 
@@ -258,12 +338,17 @@ const normalizePreferences = (
     typeof prefs.acknowledgedKeyUpdates === "object"
       ? (prefs.acknowledgedKeyUpdates as Record<string, string>)
       : {};
+  const communitySolutionsEnabled =
+    typeof prefs.communitySolutionsEnabled === "boolean"
+      ? prefs.communitySolutionsEnabled
+      : true;
 
   return {
     theme,
     mode,
     fontScale,
     acknowledgedKeyUpdates,
+    communitySolutionsEnabled,
   };
 };
 
@@ -387,6 +472,14 @@ const updateQuestionInTests = (
         },
   );
 
+const upsertCommunityThread = (
+  current: Record<string, QuestionCommunityThread | undefined>,
+  thread: QuestionCommunityThread,
+) => ({
+  ...current,
+  [thread.questionId]: thread,
+});
+
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
@@ -396,15 +489,26 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
     ui: loadUi(),
   }));
   const [currentUser, setCurrentUser] = useState<User | null>(() => loadUser());
+  const [questionCommunityByQuestionId, setQuestionCommunityByQuestionId] =
+    useState<Record<string, QuestionCommunityThread | undefined>>({});
+  const [communityCountsByTestId, setCommunityCountsByTestId] = useState<
+    Record<string, Record<string, number> | undefined>
+  >({});
   const [adminOverride, setAdminOverrideState] = useState(loadAdminOverride);
   const [showComparison, setShowComparisonState] = useState(loadShowComparison);
   const [isBootstrapped, setIsBootstrapped] = useState(false);
-  const uiSnapshot = useRef(state.ui);
+  
+  const stateRef = useRef(state);
+  const currentUserRef = useRef(currentUser);
 
   useEffect(() => {
+    stateRef.current = state;
     saveUi(state.ui);
-    uiSnapshot.current = state.ui;
-  }, [state.ui]);
+  }, [state]);
+
+  useEffect(() => {
+    currentUserRef.current = currentUser;
+  }, [currentUser]);
 
   useEffect(() => {
     const theme = currentUser?.preferences.theme ?? state.ui.theme;
@@ -431,18 +535,20 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [currentUser, state.ui.fontScale, state.ui.mode, state.ui.theme]);
 
-  const clearSession = () => {
+  const clearSession = useCallback(() => {
     saveToken(null);
     saveUser(null);
     setCurrentUser(null);
+    setQuestionCommunityByQuestionId({});
+    setCommunityCountsByTestId({});
     setState((prev) => ({
       ...prev,
       externalAccounts: [],
       tests: [],
     }));
-  };
+  }, []);
 
-  const refreshAccounts = async (token: string) => {
+  const refreshAccounts = useCallback(async (token: string) => {
     const data = await requestJson<{ accounts: ExternalAccount[] }>(
       "/api/external",
       {
@@ -455,9 +561,9 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
       externalAccounts: normalized,
     }));
     return normalized;
-  };
+  }, []);
 
-  const refreshTests = async (token: string) => {
+  const refreshTests = useCallback(async (token: string) => {
     const data = await requestJson<{ tests: TestRecord[] }>("/api/tests", {
       token,
     });
@@ -465,7 +571,7 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
       ...prev,
       tests: data.tests,
     }));
-  };
+  }, []);
 
   useEffect(() => {
     const bootstrap = async () => {
@@ -485,7 +591,7 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
             preferences?: unknown;
           };
         }>("/api/auth/me", { token });
-        const normalized = normalizeUser(me.user, uiSnapshot.current);
+        const normalized = normalizeUser(me.user, stateRef.current.ui);
         setCurrentUser(normalized);
         saveUser(normalized);
         setState((prev) => ({
@@ -519,9 +625,9 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
     };
 
     void bootstrap();
-  }, []);
+  }, [clearSession, refreshAccounts, refreshTests]);
 
-  const register: Store["register"] = async ({ name, email, password }) => {
+  const register: Store["register"] = useCallback(async ({ name, email, password }) => {
     try {
       const data = await requestJson<{
         user: {
@@ -536,7 +642,7 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
         method: "POST",
         body: JSON.stringify({ name, email, password }),
       });
-      const normalized = normalizeUser(data.user, state.ui);
+      const normalized = normalizeUser(data.user, stateRef.current.ui);
       saveToken(data.token);
       saveUser(normalized);
       setCurrentUser(normalized);
@@ -560,9 +666,9 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
         message: error instanceof Error ? error.message : "Unable to register.",
       };
     }
-  };
+  }, [refreshAccounts, refreshTests]);
 
-  const login: Store["login"] = async ({ email, password }) => {
+  const login: Store["login"] = useCallback(async ({ email, password }) => {
     try {
       const data = await requestJson<{
         user: {
@@ -577,7 +683,7 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
         method: "POST",
         body: JSON.stringify({ email, password }),
       });
-      const normalized = normalizeUser(data.user, state.ui);
+      const normalized = normalizeUser(data.user, stateRef.current.ui);
       saveToken(data.token);
       saveUser(normalized);
       setCurrentUser(normalized);
@@ -601,14 +707,14 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
         message: error instanceof Error ? error.message : "Unable to sign in.",
       };
     }
-  };
+  }, [refreshAccounts, refreshTests]);
 
-  const logout = () => {
+  const logout = useCallback(() => {
     clearSession();
-  };
+  }, [clearSession]);
 
-  const updateProfile: Store["updateProfile"] = async ({ name, email }) => {
-    if (!currentUser) {
+  const updateProfile: Store["updateProfile"] = useCallback(async ({ name, email }) => {
+    if (!currentUserRef.current) {
       return { ok: false, message: "Not signed in." };
     }
     const token = loadToken();
@@ -630,7 +736,7 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
         token,
         body: JSON.stringify({ name, email }),
       });
-      const normalized = normalizeUser(data.user, state.ui);
+      const normalized = normalizeUser(data.user, stateRef.current.ui);
       setCurrentUser(normalized);
       saveUser(normalized);
       return { ok: true };
@@ -641,13 +747,13 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
           error instanceof Error ? error.message : "Unable to update profile.",
       };
     }
-  };
+  }, []);
 
-  const updatePassword: Store["updatePassword"] = async ({
+  const updatePassword: Store["updatePassword"] = useCallback(async ({
     currentPassword,
     nextPassword,
   }) => {
-    if (!currentUser) {
+    if (!currentUserRef.current) {
       return { ok: false, message: "Not signed in." };
     }
     const token = loadToken();
@@ -669,9 +775,9 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
           error instanceof Error ? error.message : "Unable to update password.",
       };
     }
-  };
+  }, []);
 
-  const upsertAccount = (next: ExternalAccount) => {
+  const upsertAccount = useCallback((next: ExternalAccount) => {
     setState((prev) => ({
       ...prev,
       externalAccounts: prev.externalAccounts.some(
@@ -682,9 +788,9 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
           )
         : [...prev.externalAccounts, next],
     }));
-  };
+  }, []);
 
-  const refreshMissingRemoteDisplayName = async (token: string) => {
+  const refreshMissingRemoteDisplayName = useCallback(async (token: string) => {
     try {
       const data = await requestJson<{ account: ExternalAccount }>(
         "/api/external/refresh-missing-name",
@@ -697,7 +803,7 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
     } catch (error) {
       console.error(error);
     }
-  };
+  }, [upsertAccount]);
 
   const triggerMissingRemoteDisplayNameRefresh = useEffectEvent((
     token: string,
@@ -710,10 +816,10 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
     void refreshMissingRemoteDisplayName(token);
   });
 
-  const connectExternalAccount: Store["connectExternalAccount"] = async (
+  const connectExternalAccount: Store["connectExternalAccount"] = useCallback(async (
     payload,
   ) => {
-    if (!currentUser) {
+    if (!currentUserRef.current) {
       return { ok: false, message: "Not signed in." };
     }
     const token = loadToken();
@@ -745,9 +851,10 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
             : "Unable to connect account.";
       return { ok: false, message };
     }
-  };
+  }, [upsertAccount]);
 
-  const resyncAllTests: Store["resyncAllTests"] = async () => {
+  const resyncAllTests: Store["resyncAllTests"] = useCallback(async () => {
+    const currentUser = currentUserRef.current;
     if (!currentUser) {
       return { ok: false, message: "Not signed in." };
     }
@@ -756,7 +863,7 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
       return { ok: false, message: "Missing session token." };
     }
 
-    const account = state.externalAccounts.find(
+    const account = stateRef.current.externalAccounts.find(
       (item) =>
         item.userId === currentUser.id && item.provider === "test.z7i.in",
     );
@@ -769,7 +876,7 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
 
     const forceAttemptExamIds = Array.from(
       new Set(
-        state.tests
+        stateRef.current.tests
           .map((test) => test.externalExamId)
           .filter((value): value is string => Boolean(value)),
       ),
@@ -803,9 +910,10 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
             : "Unable to resync tests.";
       return { ok: false, message };
     }
-  };
+  }, [upsertAccount, refreshTests]);
 
-  const syncExternalAccount: Store["syncExternalAccount"] = async () => {
+  const syncExternalAccount: Store["syncExternalAccount"] = useCallback(async () => {
+    const currentUser = currentUserRef.current;
     if (!currentUser) {
       return;
     }
@@ -814,7 +922,7 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
 
-    const account = state.externalAccounts.find(
+    const account = stateRef.current.externalAccounts.find(
       (item) =>
         item.userId === currentUser.id && item.provider === "test.z7i.in",
     );
@@ -878,9 +986,9 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
         await refreshTests(token);
       }
     }
-  };
+  }, [upsertAccount, refreshAccounts, refreshTests]);
 
-  const updateAnswerKey: Store["updateAnswerKey"] = async ({
+  const updateAnswerKey: Store["updateAnswerKey"] = useCallback(async ({
     testId,
     questionId,
     newKey,
@@ -915,9 +1023,9 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
             : "Unable to update answer key.";
       return { ok: false, message };
     }
-  };
+  }, []);
 
-  const resyncTest: Store["resyncTest"] = async (testId) => {
+  const resyncTest: Store["resyncTest"] = useCallback(async (testId) => {
     const token = loadToken();
     if (!token) {
       return;
@@ -944,9 +1052,9 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
     } catch (error) {
       console.error(error);
     }
-  };
+  }, []);
 
-  const resyncTestForAllUsers: Store["resyncTestForAllUsers"] = async (
+  const resyncTestForAllUsers: Store["resyncTestForAllUsers"] = useCallback(async (
     testId,
   ) => {
     const token = loadToken();
@@ -976,9 +1084,9 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
             : "Unable to force resync this exam.";
       return { ok: false, message };
     }
-  };
+  }, []);
 
-  const toggleQuestionBookmark: Store["toggleQuestionBookmark"] = async ({
+  const toggleQuestionBookmark: Store["toggleQuestionBookmark"] = useCallback(async ({
     testId,
     questionId,
     bookmarked,
@@ -1011,9 +1119,9 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
             : "Unable to update bookmark.";
       return { ok: false, message };
     }
-  };
+  }, []);
 
-  const updateQuestionTags: Store["updateQuestionTags"] = async ({
+  const updateQuestionTags: Store["updateQuestionTags"] = useCallback(async ({
     testId,
     questionId,
     tags,
@@ -1062,9 +1170,9 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
             : "Unable to update tags.";
       return { ok: false, message };
     }
-  };
+  }, []);
 
-  const updateGlobalQuestionTags: Store["updateGlobalQuestionTags"] = async ({
+  const updateGlobalQuestionTags: Store["updateGlobalQuestionTags"] = useCallback(async ({
     testId,
     questionId,
     tags,
@@ -1113,9 +1221,9 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
             : "Unable to update global tags.";
       return { ok: false, message };
     }
-  };
+  }, []);
 
-  const updateQuestionContent: Store["updateQuestionContent"] = async ({
+  const updateQuestionContent: Store["updateQuestionContent"] = useCallback(async ({
     testId,
     questionId,
     sharedPassageContent,
@@ -1162,10 +1270,10 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
             : "Unable to update question content.";
       return { ok: false, message };
     }
-  };
+  }, []);
 
   const uploadTemporaryQuestionImage: Store["uploadTemporaryQuestionImage"] =
-    async ({ testId, questionId, dataUrl }) => {
+    useCallback(async ({ testId, questionId, dataUrl }) => {
       const token = loadToken();
       if (!token) {
         return { ok: false, message: "Missing session token." };
@@ -1190,10 +1298,10 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
               : "Unable to upload image.";
         return { ok: false, message };
       }
-    };
+    }, []);
 
   const discardTemporaryQuestionImages: Store["discardTemporaryQuestionImages"] =
-    async ({ testId, questionId, urls }) => {
+    useCallback(async ({ testId, questionId, urls }) => {
       const token = loadToken();
       if (!token) {
         return { ok: false, message: "Missing session token." };
@@ -1218,9 +1326,362 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
               : "Unable to discard temporary images.";
         return { ok: false, message };
       }
-    };
+    }, []);
 
-  const updateMarkingScheme: Store["updateMarkingScheme"] = async ({
+  const applyCommunityThread = useCallback((testId: string, thread: QuestionCommunityThread) => {
+    setQuestionCommunityByQuestionId((prev) => upsertCommunityThread(prev, thread));
+    setCommunityCountsByTestId((prev) => ({
+      ...prev,
+      [testId]: {
+        ...(prev[testId] ?? {}),
+        [thread.questionId]: thread.solutionCount,
+      },
+    }));
+  }, []);
+
+  const fetchQuestionCommunity: Store["fetchQuestionCommunity"] = useCallback(async ({
+    testId,
+    questionId,
+  }) => {
+    const token = loadToken();
+    if (!token) {
+      return { ok: false, message: "Missing session token." };
+    }
+
+    try {
+      const thread = await requestJson<QuestionCommunityThread>(
+        `/api/tests/${testId}/questions/${questionId}/community`,
+        { token },
+      );
+      applyCommunityThread(testId, thread);
+      return { ok: true, thread };
+    } catch (error) {
+      const message =
+        error instanceof ApiError
+          ? error.message
+          : error instanceof Error
+            ? error.message
+            : "Unable to fetch community solutions.";
+      return { ok: false, message };
+    }
+  }, [applyCommunityThread]);
+
+  const fetchTestCommunityCounts: Store["fetchTestCommunityCounts"] = useCallback(async (
+    testId,
+  ) => {
+    const token = loadToken();
+    if (!token) {
+      return { ok: false, message: "Missing session token." };
+    }
+
+    try {
+      const data = await requestJson<{ counts: Record<string, number> }>(
+        `/api/tests/${testId}/community-counts`,
+        { token },
+      );
+      setCommunityCountsByTestId((prev) => ({
+        ...prev,
+        [testId]: data.counts,
+      }));
+      return { ok: true, counts: data.counts };
+    } catch (error) {
+      const message =
+        error instanceof ApiError
+          ? error.message
+          : error instanceof Error
+            ? error.message
+            : "Unable to fetch community counts.";
+      return { ok: false, message };
+    }
+  }, []);
+
+  const createQuestionCommunitySolution: Store["createQuestionCommunitySolution"] =
+    useCallback(async ({ testId, questionId, contentMarkdown }) => {
+      const token = loadToken();
+      if (!token) {
+        return { ok: false, message: "Missing session token." };
+      }
+
+      try {
+        const thread = await requestJson<QuestionCommunityThread>(
+          `/api/tests/${testId}/questions/${questionId}/community-solutions`,
+          {
+            method: "POST",
+            token,
+            body: JSON.stringify({ contentMarkdown }),
+          },
+        );
+        applyCommunityThread(testId, thread);
+        return { ok: true, thread };
+      } catch (error) {
+        const message =
+          error instanceof ApiError
+            ? error.message
+            : error instanceof Error
+              ? error.message
+              : "Unable to create community solution.";
+        return { ok: false, message };
+      }
+    }, [applyCommunityThread]);
+
+  const updateQuestionCommunitySolution: Store["updateQuestionCommunitySolution"] =
+    useCallback(async ({ testId, questionId, solutionId, contentMarkdown }) => {
+      const token = loadToken();
+      if (!token) {
+        return { ok: false, message: "Missing session token." };
+      }
+
+      try {
+        const thread = await requestJson<QuestionCommunityThread>(
+          `/api/tests/${testId}/questions/${questionId}/community-solutions/${solutionId}`,
+          {
+            method: "PATCH",
+            token,
+            body: JSON.stringify({ contentMarkdown }),
+          },
+        );
+        applyCommunityThread(testId, thread);
+        return { ok: true, thread };
+      } catch (error) {
+        const message =
+          error instanceof ApiError
+            ? error.message
+            : error instanceof Error
+              ? error.message
+              : "Unable to update community solution.";
+        return { ok: false, message };
+      }
+    }, [applyCommunityThread]);
+
+  const deleteQuestionCommunitySolution: Store["deleteQuestionCommunitySolution"] =
+    useCallback(async ({ testId, questionId, solutionId }) => {
+      const token = loadToken();
+      if (!token) {
+        return { ok: false, message: "Missing session token." };
+      }
+
+      try {
+        const thread = await requestJson<QuestionCommunityThread>(
+          `/api/tests/${testId}/questions/${questionId}/community-solutions/${solutionId}`,
+          {
+            method: "DELETE" as RequestInit["method"],
+            token,
+          },
+        );
+        applyCommunityThread(testId, thread);
+        return { ok: true, thread };
+      } catch (error) {
+        const message =
+          error instanceof ApiError
+            ? error.message
+            : error instanceof Error
+              ? error.message
+              : "Unable to delete community solution.";
+        return { ok: false, message };
+      }
+    }, [applyCommunityThread]);
+
+  const voteQuestionCommunitySolution: Store["voteQuestionCommunitySolution"] =
+    useCallback(async ({ testId, questionId, solutionId, value }) => {
+      const token = loadToken();
+      if (!token) {
+        return { ok: false, message: "Missing session token." };
+      }
+
+      try {
+        const thread = await requestJson<QuestionCommunityThread>(
+          `/api/tests/${testId}/questions/${questionId}/community-solutions/${solutionId}/vote`,
+          {
+            method: "POST",
+            token,
+            body: JSON.stringify({ value }),
+          },
+        );
+        applyCommunityThread(testId, thread);
+        return { ok: true, thread };
+      } catch (error) {
+        const message =
+          error instanceof ApiError
+            ? error.message
+            : error instanceof Error
+              ? error.message
+              : "Unable to vote on community solution.";
+        return { ok: false, message };
+      }
+    }, [applyCommunityThread]);
+
+  const pinQuestionCommunitySolution: Store["pinQuestionCommunitySolution"] =
+    useCallback(async ({ testId, questionId, solutionId, pinned }) => {
+      const token = loadToken();
+      if (!token) {
+        return { ok: false, message: "Missing session token." };
+      }
+
+      try {
+        const thread = await requestJson<QuestionCommunityThread>(
+          `/api/tests/${testId}/questions/${questionId}/community-solutions/${solutionId}/pin`,
+          {
+            method: "PATCH",
+            token,
+            body: JSON.stringify({ pinned }),
+          },
+        );
+        applyCommunityThread(testId, thread);
+        return { ok: true, thread };
+      } catch (error) {
+        const message =
+          error instanceof ApiError
+            ? error.message
+            : error instanceof Error
+              ? error.message
+              : "Unable to update pin state.";
+        return { ok: false, message };
+      }
+    }, [applyCommunityThread]);
+
+  const createQuestionCommunityComment: Store["createQuestionCommunityComment"] =
+    useCallback(async ({ testId, questionId, solutionId, contentMarkdown }) => {
+      const token = loadToken();
+      if (!token) {
+        return { ok: false, message: "Missing session token." };
+      }
+
+      try {
+        const thread = await requestJson<QuestionCommunityThread>(
+          `/api/tests/${testId}/questions/${questionId}/community-solutions/${solutionId}/comments`,
+          {
+            method: "POST",
+            token,
+            body: JSON.stringify({ contentMarkdown }),
+          },
+        );
+        applyCommunityThread(testId, thread);
+        return { ok: true, thread };
+      } catch (error) {
+        const message =
+          error instanceof ApiError
+            ? error.message
+            : error instanceof Error
+              ? error.message
+              : "Unable to create comment.";
+        return { ok: false, message };
+      }
+    }, [applyCommunityThread]);
+
+  const updateQuestionCommunityComment: Store["updateQuestionCommunityComment"] =
+    useCallback(async ({ testId, questionId, solutionId, commentId, contentMarkdown }) => {
+      const token = loadToken();
+      if (!token) {
+        return { ok: false, message: "Missing session token." };
+      }
+
+      try {
+        const thread = await requestJson<QuestionCommunityThread>(
+          `/api/tests/${testId}/questions/${questionId}/community-solutions/${solutionId}/comments/${commentId}`,
+          {
+            method: "PATCH",
+            token,
+            body: JSON.stringify({ contentMarkdown }),
+          },
+        );
+        applyCommunityThread(testId, thread);
+        return { ok: true, thread };
+      } catch (error) {
+        const message =
+          error instanceof ApiError
+            ? error.message
+            : error instanceof Error
+              ? error.message
+              : "Unable to update comment.";
+        return { ok: false, message };
+      }
+    }, [applyCommunityThread]);
+
+  const deleteQuestionCommunityComment: Store["deleteQuestionCommunityComment"] =
+    useCallback(async ({ testId, questionId, solutionId, commentId }) => {
+      const token = loadToken();
+      if (!token) {
+        return { ok: false, message: "Missing session token." };
+      }
+
+      try {
+        const thread = await requestJson<QuestionCommunityThread>(
+          `/api/tests/${testId}/questions/${questionId}/community-solutions/${solutionId}/comments/${commentId}`,
+          {
+            method: "DELETE" as RequestInit["method"],
+            token,
+          },
+        );
+        applyCommunityThread(testId, thread);
+        return { ok: true, thread };
+      } catch (error) {
+        const message =
+          error instanceof ApiError
+            ? error.message
+            : error instanceof Error
+              ? error.message
+              : "Unable to delete comment.";
+        return { ok: false, message };
+      }
+    }, [applyCommunityThread]);
+
+  const uploadTemporaryCommunityImage: Store["uploadTemporaryCommunityImage"] =
+    useCallback(async ({ testId, questionId, dataUrl }) => {
+      const token = loadToken();
+      if (!token) {
+        return { ok: false, message: "Missing session token." };
+      }
+
+      try {
+        const data = await requestJson<{ url: string }>(
+          `/api/tests/${testId}/questions/${questionId}/community-assets/temp`,
+          {
+            method: "POST",
+            token,
+            body: JSON.stringify({ dataUrl }),
+          },
+        );
+        return { ok: true, url: data.url };
+      } catch (error) {
+        const message =
+          error instanceof ApiError
+            ? error.message
+            : error instanceof Error
+              ? error.message
+              : "Unable to upload image.";
+        return { ok: false, message };
+      }
+    }, []);
+
+  const discardTemporaryCommunityImages: Store["discardTemporaryCommunityImages"] =
+    useCallback(async ({ testId, questionId, urls }) => {
+      const token = loadToken();
+      if (!token) {
+        return { ok: false, message: "Missing session token." };
+      }
+
+      try {
+        await requestJson<{ ok: true }>(
+          `/api/tests/${testId}/questions/${questionId}/community-assets/temp/cleanup`,
+          {
+            method: "POST",
+            token,
+            body: JSON.stringify({ urls }),
+          },
+        );
+        return { ok: true };
+      } catch (error) {
+        const message =
+          error instanceof ApiError
+            ? error.message
+            : error instanceof Error
+              ? error.message
+              : "Unable to discard temporary images.";
+        return { ok: false, message };
+      }
+    }, []);
+
+  const updateMarkingScheme: Store["updateMarkingScheme"] = useCallback(async ({
     testId,
     scheme,
     questionTypeMapping,
@@ -1253,9 +1714,10 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
             : "Unable to update marking scheme.";
       return { ok: false, message };
     }
-  };
+  }, []);
 
-  const savePreferences = async (preferences: UserPreferences) => {
+  const savePreferences = useCallback(async (preferences: UserPreferences) => {
+    const currentUser = currentUserRef.current;
     if (!currentUser) {
       return;
     }
@@ -1290,15 +1752,16 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
         token,
         body: JSON.stringify({ preferences }),
       });
-      const normalized = normalizeUser(data.user, state.ui);
+      const normalized = normalizeUser(data.user, stateRef.current.ui);
       setCurrentUser(normalized);
       saveUser(normalized);
     } catch (error) {
       console.error(error);
     }
-  };
+  }, []);
 
-  const setTheme: Store["setTheme"] = (theme) => {
+  const setTheme: Store["setTheme"] = useCallback((theme) => {
+    const currentUser = currentUserRef.current;
     if (currentUser) {
       void savePreferences({ ...currentUser.preferences, theme });
       return;
@@ -1307,9 +1770,10 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
       ...prev,
       ui: { ...prev.ui, theme },
     }));
-  };
+  }, [savePreferences]);
 
-  const setMode: Store["setMode"] = (mode) => {
+  const setMode: Store["setMode"] = useCallback((mode) => {
+    const currentUser = currentUserRef.current;
     if (currentUser) {
       void savePreferences({ ...currentUser.preferences, mode });
       return;
@@ -1318,14 +1782,32 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
       ...prev,
       ui: { ...prev.ui, mode },
     }));
-  };
+  }, [savePreferences]);
 
-  const setShowComparison: Store["setShowComparison"] = (show) => {
+  const setCommunitySolutionsEnabled: Store["setCommunitySolutionsEnabled"] = useCallback((
+    enabled,
+  ) => {
+    const currentUser = currentUserRef.current;
+    if (!currentUser) {
+      return;
+    }
+    if (!enabled) {
+      setQuestionCommunityByQuestionId({});
+      setCommunityCountsByTestId({});
+    }
+    void savePreferences({
+      ...currentUser.preferences,
+      communitySolutionsEnabled: enabled,
+    });
+  }, [savePreferences]);
+
+  const setShowComparison: Store["setShowComparison"] = useCallback((show) => {
     setShowComparisonState(show);
     saveShowComparison(show);
-  };
+  }, []);
 
-  const setFontScale: Store["setFontScale"] = (scale) => {
+  const setFontScale: Store["setFontScale"] = useCallback((scale) => {
+    const currentUser = currentUserRef.current;
     const nextScale = clampFontScale(scale);
     if (currentUser) {
       void savePreferences({
@@ -1338,20 +1820,21 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
       ...prev,
       ui: { ...prev.ui, fontScale: nextScale },
     }));
-  };
+  }, [savePreferences]);
 
-  const setAdminOverride: Store["setAdminOverride"] = (enabled) => {
+  const setAdminOverride: Store["setAdminOverride"] = useCallback((enabled) => {
     setAdminOverrideState(enabled);
     saveAdminOverride(enabled);
-  };
+  }, []);
 
-  const acknowledgeKeyUpdates: Store["acknowledgeKeyUpdates"] = async (
+  const acknowledgeKeyUpdates: Store["acknowledgeKeyUpdates"] = useCallback(async (
     testId,
   ) => {
+    const currentUser = currentUserRef.current;
     if (!currentUser) {
       return;
     }
-    const test = state.tests.find((item) => item.id === testId);
+    const test = stateRef.current.tests.find((item) => item.id === testId);
     if (!test) {
       return;
     }
@@ -1379,9 +1862,9 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
       },
     };
     await savePreferences(updated);
-  };
+  }, [savePreferences]);
 
-  const fetchTestLeaderboard: Store["fetchTestLeaderboard"] = async (testId) => {
+  const fetchTestLeaderboard: Store["fetchTestLeaderboard"] = useCallback(async (testId) => {
     const token = loadToken();
     if (!token) {
       return { ok: false, message: "Missing session token." };
@@ -1404,9 +1887,9 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
             : "Unable to fetch leaderboard.";
       return { ok: false, message };
     }
-  };
+  }, []);
 
-  const createLeaderboard: Store["createLeaderboard"] = async (payload) => {
+  const createLeaderboard: Store["createLeaderboard"] = useCallback(async (payload) => {
     const token = loadToken();
     if (!token) {
       return { ok: false, message: "Missing session token." };
@@ -1425,9 +1908,9 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
           error instanceof Error ? error.message : "Unable to create leaderboard.",
       };
     }
-  };
+  }, []);
 
-  const updateCustomLeaderboard: Store["updateCustomLeaderboard"] = async (id, payload) => {
+  const updateCustomLeaderboard: Store["updateCustomLeaderboard"] = useCallback(async (id, payload) => {
     const token = loadToken();
     if (!token) {
       return { ok: false, message: "Missing session token." };
@@ -1446,9 +1929,9 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
           error instanceof Error ? error.message : "Unable to update leaderboard.",
       };
     }
-  };
+  }, []);
 
-  const deleteCustomLeaderboard: Store["deleteCustomLeaderboard"] = async (id) => {
+  const deleteCustomLeaderboard: Store["deleteCustomLeaderboard"] = useCallback(async (id) => {
     const token = loadToken();
     if (!token) {
       return { ok: false, message: "Missing session token." };
@@ -1466,9 +1949,9 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
           error instanceof Error ? error.message : "Unable to delete leaderboard.",
       };
     }
-  };
+  }, []);
 
-  const fetchLeaderboards: Store["fetchLeaderboards"] = async () => {
+  const fetchLeaderboards: Store["fetchLeaderboards"] = useCallback(async () => {
     const token = loadToken();
     if (!token) {
       return { ok: false, message: "Missing session token.", leaderboards: [] };
@@ -1486,9 +1969,9 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
         leaderboards: [],
       };
     }
-  };
+  }, []);
 
-  const fetchCustomLeaderboard: Store["fetchCustomLeaderboard"] = async (id) => {
+  const fetchCustomLeaderboard: Store["fetchCustomLeaderboard"] = useCallback(async (id) => {
     const token = loadToken();
     if (!token) {
       return { ok: false, message: "Missing session token." };
@@ -1519,9 +2002,9 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
             : "Unable to fetch custom leaderboard.",
       };
     }
-  };
+  }, []);
 
-  const fetchCustomLeaderboardParticipant: Store["fetchCustomLeaderboardParticipant"] = async (leaderboardId, participantKey) => {
+  const fetchCustomLeaderboardParticipant: Store["fetchCustomLeaderboardParticipant"] = useCallback(async (leaderboardId, participantKey) => {
     const token = loadToken();
     if (!token) {
       return { ok: false, message: "Missing session token." };
@@ -1544,27 +2027,31 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
             : "Unable to fetch participant data.",
       };
     }
-  };
+  }, []);
 
   const adminEmails = [
     "spssabaris@gmail.com",
     "sbaniruddh1@gmail.com",
     "testing@gmail.com",
   ];
-  const isAdmin =
+  const isAdmin = useMemo(() =>
     currentUser?.role === "admin" ||
-    (currentUser?.email ? adminEmails.includes(currentUser.email) : false);
-  const fontScale = currentUser?.preferences.fontScale ?? state.ui.fontScale;
+    (currentUser?.email ? adminEmails.includes(currentUser.email) : false), [currentUser]);
 
-  const value = {
+  const fontScale = useMemo(() => currentUser?.preferences.fontScale ?? state.ui.fontScale, [currentUser, state.ui.fontScale]);
+
+  const value = useMemo(() => ({
     state,
     currentUser,
+    questionCommunityByQuestionId,
+    communityCountsByTestId,
     isAdmin,
     adminOverride,
     fontScale,
     showComparison,
     setAdminOverride,
     setFontScale,
+    setCommunitySolutionsEnabled,
     isBootstrapped,
     register,
     login,
@@ -1583,6 +2070,18 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
     updateQuestionContent,
     uploadTemporaryQuestionImage,
     discardTemporaryQuestionImages,
+    fetchQuestionCommunity,
+    fetchTestCommunityCounts,
+    createQuestionCommunitySolution,
+    updateQuestionCommunitySolution,
+    deleteQuestionCommunitySolution,
+    voteQuestionCommunitySolution,
+    pinQuestionCommunitySolution,
+    createQuestionCommunityComment,
+    updateQuestionCommunityComment,
+    deleteQuestionCommunityComment,
+    uploadTemporaryCommunityImage,
+    discardTemporaryCommunityImages,
     updateMarkingScheme,
     setTheme,
     setMode,
@@ -1595,7 +2094,61 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
     fetchLeaderboards,
     fetchCustomLeaderboard,
     fetchCustomLeaderboardParticipant,
-  };
+  }), [
+    state,
+    currentUser,
+    questionCommunityByQuestionId,
+    communityCountsByTestId,
+    isAdmin,
+    adminOverride,
+    fontScale,
+    showComparison,
+    setAdminOverride,
+    setFontScale,
+    setCommunitySolutionsEnabled,
+    isBootstrapped,
+    register,
+    login,
+    updateProfile,
+    updatePassword,
+    logout,
+    connectExternalAccount,
+    syncExternalAccount,
+    resyncAllTests,
+    resyncTest,
+    resyncTestForAllUsers,
+    toggleQuestionBookmark,
+    updateQuestionTags,
+    updateGlobalQuestionTags,
+    updateAnswerKey,
+    updateQuestionContent,
+    uploadTemporaryQuestionImage,
+    discardTemporaryQuestionImages,
+    fetchQuestionCommunity,
+    fetchTestCommunityCounts,
+    createQuestionCommunitySolution,
+    updateQuestionCommunitySolution,
+    deleteQuestionCommunitySolution,
+    voteQuestionCommunitySolution,
+    pinQuestionCommunitySolution,
+    createQuestionCommunityComment,
+    updateQuestionCommunityComment,
+    deleteQuestionCommunityComment,
+    uploadTemporaryCommunityImage,
+    discardTemporaryCommunityImages,
+    updateMarkingScheme,
+    setTheme,
+    setMode,
+    setShowComparison,
+    acknowledgeKeyUpdates,
+    fetchTestLeaderboard,
+    createLeaderboard,
+    updateCustomLeaderboard,
+    deleteCustomLeaderboard,
+    fetchLeaderboards,
+    fetchCustomLeaderboard,
+    fetchCustomLeaderboardParticipant,
+  ]);
 
   return (
     <StoreContext.Provider value={value}>{children}</StoreContext.Provider>

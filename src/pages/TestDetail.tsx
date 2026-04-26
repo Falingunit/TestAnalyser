@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { Bookmark, ChevronDown } from "lucide-react";
+import { Bookmark, ChevronDown, MessageSquare } from "lucide-react";
 import { useAppStore } from "@/lib/store";
 import {
   buildAnalysis,
@@ -157,6 +157,8 @@ export const TestDetail = () => {
     resyncTest,
     resyncTestForAllUsers,
     fetchTestLeaderboard,
+    fetchTestCommunityCounts,
+    communityCountsByTestId,
     showComparison,
   } = useAppStore();
   const isReadonlyView = searchParams.get("readonly") === "1";
@@ -194,6 +196,10 @@ export const TestDetail = () => {
     }
     return buildDisplayQuestions(test.questions);
   }, [test]);
+  const communitySolutionsEnabled =
+    currentUser?.preferences.communitySolutionsEnabled ?? true;
+  const communityCounts = test ? communityCountsByTestId[test.id] ?? {} : {};
+  const communityTestId = ownedTestId ?? test?.id ?? "";
 
   const firstQuestionId = displayQuestions[0]?.question.id ?? "";
   const [query, setQuery] = useState("");
@@ -251,6 +257,13 @@ export const TestDetail = () => {
   useEffect(() => {
     setOnlyBookmarked(bookmarkViewRequested);
   }, [bookmarkViewRequested]);
+
+  useEffect(() => {
+    if (!test || !communitySolutionsEnabled) {
+      return;
+    }
+    void fetchTestCommunityCounts(test.id);
+  }, [communitySolutionsEnabled, fetchTestCommunityCounts, test]);
 
   // FIXED: useEffect logic to prevent race conditions and overwrites
   useEffect(() => {
@@ -1621,6 +1634,32 @@ export const TestDetail = () => {
                                   {formatQuestionType(question.qtype)} -{" "}
                                   {formatSeconds(time)}
                                 </p>
+                                {communitySolutionsEnabled && communityTestId ? (
+                                  <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
+                                    {(communityCounts[question.id] ?? 0) > 0 ? (
+                                      <span className="inline-flex items-center gap-1 rounded-full border border-border/60 px-2 py-1">
+                                        <MessageSquare className="h-3.5 w-3.5" />
+                                        {communityCounts[question.id]} community
+                                      </span>
+                                    ) : null}
+                                    <button
+                                      type="button"
+                                      className="inline-flex items-center gap-1 text-foreground/80 underline-offset-4 hover:underline"
+                                      onMouseDown={(event) => event.stopPropagation()}
+                                      onClickCapture={(event) => event.stopPropagation()}
+                                      onClick={(event) => {
+                                        event.preventDefault();
+                                        event.stopPropagation();
+                                        navigate(
+                                          `/app/questions/${communityTestId}/${question.id}?panel=community`,
+                                        );
+                                      }}
+                                    >
+                                      <MessageSquare className="h-3.5 w-3.5" />
+                                      Open community
+                                    </button>
+                                  </div>
+                                ) : null}
                               </div>
                               <div className="flex items-center gap-2">
                                 {bonus ? (

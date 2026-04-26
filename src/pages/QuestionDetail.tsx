@@ -30,6 +30,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { MathHtml } from "@/components/MathHtml";
+import { QuestionCommunitySection } from "@/components/QuestionCommunitySection";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -231,6 +232,7 @@ export const QuestionDetail = () => {
     showComparison,
   } = useAppStore();
   const isReadonlyView = searchParams.get("readonly") === "1";
+  const showCommunityPanel = searchParams.get("panel") === "community";
   const isBookmarkView = searchParams.get("bookmarks") === "1";
   const previewParticipantName = searchParams.get("viewerName")?.trim() ?? "";
   const previewParticipantRemoteName =
@@ -257,6 +259,9 @@ export const QuestionDetail = () => {
   const test = isReadonlyView
     ? (previewTest ?? ownedTest)
     : (ownedTest ?? previewTest);
+  const communityEnabled =
+    currentUser?.preferences.communitySolutionsEnabled ?? true;
+  const communityTestId = ownedTest?.id ?? test?.id ?? "";
   const mode = currentUser?.preferences.mode ?? state.ui.mode;
   const displayQuestions = useMemo(() => {
     if (!test) {
@@ -319,6 +324,19 @@ export const QuestionDetail = () => {
   const [isSavingTags, setIsSavingTags] = useState(false);
   const [isSavingGlobalTags, setIsSavingGlobalTags] = useState(false);
   const [isBookmarking, setIsBookmarking] = useState(false);
+
+  useEffect(() => {
+    if (!showCommunityPanel || !communityEnabled) {
+      return;
+    }
+    const target = document.getElementById("question-community-solutions");
+    if (!target) {
+      return;
+    }
+    window.requestAnimationFrame(() => {
+      target.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }, [communityEnabled, questionId, showCommunityPanel]);
   const [isCopying, setIsCopying] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [contentDraft, setContentDraft] = useState<QuestionContentDraft>(
@@ -673,7 +691,7 @@ export const QuestionDetail = () => {
         urls,
       });
     };
-  }, [discardTemporaryQuestionImages, question?.id, test?.id]);
+  }, [question?.id, test?.id]);
 
   const handleEditDialogOpenChange = (open: boolean) => {
     if (open) {
@@ -797,10 +815,8 @@ export const QuestionDetail = () => {
     }
 
     setMessage("Question content updated.");
-    const pendingUrls = tempImageUrls;
     setTempImageUrls([]);
     setIsEditDialogOpen(false);
-    void cleanupTemporaryImages(pendingUrls);
   };
 
   const prev = currentIndex > 0 ? displayQuestions[currentIndex - 1] : null;
@@ -1768,6 +1784,15 @@ export const QuestionDetail = () => {
                       />
                     ) : null}
                   </div>
+                ) : null}
+
+                {communityEnabled && communityTestId ? (
+                  <QuestionCommunitySection
+                    key={question.id}
+                    enabled={communityEnabled}
+                    testId={communityTestId}
+                    questionId={question.id}
+                  />
                 ) : null}
               </div>
             </div>

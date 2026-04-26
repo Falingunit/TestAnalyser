@@ -1,127 +1,5 @@
 import { useEffect, useRef, type CSSProperties, type MouseEventHandler } from "react";
-
-declare global {
-  interface Window {
-    MathJax?: {
-      tex?: {
-        inlineMath?: string[][];
-        displayMath?: string[][];
-        processEscapes?: boolean;
-      };
-      svg?: {
-        fontCache?: string;
-      };
-      startup?: {
-        typeset?: boolean;
-        promise?: Promise<void>;
-      };
-      typesetClear?: (elements?: HTMLElement[]) => void;
-      typesetPromise?: (elements?: HTMLElement[]) => Promise<void>;
-    };
-    __mathJaxLoaderPromise__?: Promise<void>;
-  }
-}
-
-const MATHJAX_SCRIPT_ID = "mathjax-script";
-const MATHJAX_SRC =
-  "https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js";
-
-const waitForMathJaxReady = () =>
-  new Promise<void>((resolve, reject) => {
-    let attempts = 0;
-
-    const check = () => {
-      if (window.MathJax?.typesetPromise) {
-        const startupPromise = window.MathJax.startup?.promise;
-        if (startupPromise) {
-          void startupPromise.then(() => resolve(), reject);
-        } else {
-          resolve();
-        }
-        return;
-      }
-
-      attempts += 1;
-      if (attempts > 200) {
-        reject(new Error("MathJax did not become ready."));
-        return;
-      }
-
-      window.setTimeout(check, 25);
-    };
-
-    check();
-  });
-
-const ensureMathJax = () => {
-  if (typeof window === "undefined") {
-    return Promise.resolve();
-  }
-
-  if (window.MathJax?.typesetPromise) {
-    return window.MathJax.startup?.promise ?? Promise.resolve();
-  }
-
-  if (window.__mathJaxLoaderPromise__) {
-    return window.__mathJaxLoaderPromise__;
-  }
-
-  window.MathJax = {
-    tex: {
-      inlineMath: [
-        ["$", "$"],
-        ["\\(", "\\)"],
-      ],
-      displayMath: [
-        ["$$", "$$"],
-        ["\\[", "\\]"],
-      ],
-      processEscapes: true,
-    },
-    svg: {
-      fontCache: "global",
-    },
-    startup: {
-      typeset: false,
-    },
-  } as NonNullable<typeof window.MathJax>;
-
-  window.__mathJaxLoaderPromise__ = new Promise<void>((resolve, reject) => {
-    const existingScript = document.getElementById(
-      MATHJAX_SCRIPT_ID,
-    ) as HTMLScriptElement | null;
-
-    if (existingScript) {
-      void waitForMathJaxReady().then(resolve, reject);
-      existingScript.addEventListener(
-        "error",
-        () => reject(new Error("Failed to load MathJax.")),
-        { once: true },
-      );
-      return;
-    }
-
-    const script = document.createElement("script");
-    script.id = MATHJAX_SCRIPT_ID;
-    script.async = true;
-    script.src = MATHJAX_SRC;
-    script.addEventListener(
-      "load",
-      () => {
-        void waitForMathJaxReady().then(resolve, reject);
-      },
-      { once: true },
-    );
-    script.addEventListener(
-      "error",
-      () => reject(new Error("Failed to load MathJax.")),
-      { once: true },
-    );
-    document.head.appendChild(script);
-  });
-
-  return window.__mathJaxLoaderPromise__;
-};
+import { typesetMathInElement } from "@/lib/mathJax";
 
 type MathHtmlProps = {
   className?: string;
@@ -150,12 +28,10 @@ export const MathHtml = ({
       container.innerHTML = html;
 
       try {
-        await ensureMathJax();
-        if (cancelled || !window.MathJax?.typesetPromise) {
+        await typesetMathInElement(container);
+        if (cancelled) {
           return;
         }
-        window.MathJax.typesetClear?.([container]);
-        await window.MathJax.typesetPromise([container]);
       } catch (error) {
         console.error(error);
       }

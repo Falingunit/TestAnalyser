@@ -15,6 +15,9 @@ model User {
   preferences      String
   externalAccounts ExternalAccount[]
   attempts         Attempt[]
+  communitySolutions QuestionCommunitySolution[]
+  communitySolutionVotes QuestionCommunitySolutionVote[]
+  communitySolutionComments QuestionCommunitySolutionComment[]
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
 }
@@ -92,6 +95,7 @@ model Question {
   keyUpdate          String?
   lastKeyUpdateTime  DateTime?
   exam               Exam      @relation(fields: [examId], references: [id], onDelete: Cascade)
+  communitySolutions QuestionCommunitySolution[]
 
   @@unique([examId, questionNumber])
   @@index([examId])
@@ -121,4 +125,54 @@ model CustomLeaderboard {
   examIds     String   @default("[]") // JSON array of externalExamId strings
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+model QuestionCommunitySolution {
+  id            String                         @id @default(cuid())
+  questionId    String
+  userId        String
+  contentMarkdown String
+  score         Int                            @default(0)
+  upvoteCount   Int                            @default(0)
+  downvoteCount Int                            @default(0)
+  pinnedAt      DateTime?
+  createdAt     DateTime                       @default(now())
+  updatedAt     DateTime                       @updatedAt
+  question      Question                       @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  user          User                           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  votes         QuestionCommunitySolutionVote[]
+  comments      QuestionCommunitySolutionComment[]
+
+  @@unique([questionId, userId])
+  @@index([questionId])
+  @@index([userId])
+}
+
+model QuestionCommunitySolutionVote {
+  id         String                    @id @default(cuid())
+  solutionId String
+  userId     String
+  value      Int
+  createdAt  DateTime                  @default(now())
+  updatedAt  DateTime                  @updatedAt
+  solution   QuestionCommunitySolution @relation(fields: [solutionId], references: [id], onDelete: Cascade)
+  user       User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([solutionId, userId])
+  @@index([solutionId])
+  @@index([userId])
+}
+
+model QuestionCommunitySolutionComment {
+  id              String                    @id @default(cuid())
+  solutionId      String
+  userId          String
+  contentMarkdown String
+  createdAt       DateTime                  @default(now())
+  updatedAt       DateTime                  @updatedAt
+  solution        QuestionCommunitySolution @relation(fields: [solutionId], references: [id], onDelete: Cascade)
+  user            User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([solutionId])
+  @@index([userId])
 }
