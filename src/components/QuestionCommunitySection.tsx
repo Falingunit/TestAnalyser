@@ -141,7 +141,7 @@ const CommunityMarkdownEditor = ({
       }
       void discardTemporaryImagesEvent(urls);
     };
-  }, [discardTemporaryImagesEvent]);
+  }, []); // Only run on unmount
 
   const cleanupTemporaryImages = async () => {
     const pending = tempImageUrlsRef.current;

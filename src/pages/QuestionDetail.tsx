@@ -691,7 +691,7 @@ export const QuestionDetail = () => {
         urls,
       });
     };
-  }, [discardTemporaryQuestionImages, question?.id, test?.id]);
+  }, [question?.id, test?.id]);
 
   const handleEditDialogOpenChange = (open: boolean) => {
     if (open) {
@@ -815,10 +815,8 @@ export const QuestionDetail = () => {
     }
 
     setMessage("Question content updated.");
-    const pendingUrls = tempImageUrls;
     setTempImageUrls([]);
     setIsEditDialogOpen(false);
-    void cleanupTemporaryImages(pendingUrls);
   };
 
   const prev = currentIndex > 0 ? displayQuestions[currentIndex - 1] : null;
