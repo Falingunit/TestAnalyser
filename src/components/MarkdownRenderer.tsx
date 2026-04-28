@@ -14,6 +14,67 @@ type MarkdownRendererProps = {
   markdown: string;
 };
 
+const normalizeChatGptMathDelimiters = (markdown: string) => {
+  const lines = markdown.split(/\r?\n/);
+  let inFencedCodeBlock = false;
+  const normalizedLines: string[] = [];
+
+  const looksLikeMathBlock = (blockLines: string[]) => {
+    const content = blockLines.join("\n").trim();
+    if (!content) {
+      return false;
+    }
+
+    return (
+      /\\[a-zA-Z]+/.test(content) ||
+      /[=^_]/.test(content) ||
+      /\d/.test(content) ||
+      /[+\-*/<>]/.test(content)
+    );
+  };
+
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = lines[index];
+    const trimmedLine = line.trim();
+
+    if (/^(```|~~~)/.test(trimmedLine)) {
+      inFencedCodeBlock = !inFencedCodeBlock;
+      normalizedLines.push(line);
+      continue;
+    }
+
+    if (inFencedCodeBlock) {
+      normalizedLines.push(line);
+      continue;
+    }
+
+    if (trimmedLine === "[") {
+      let closingIndex = -1;
+      for (let candidateIndex = index + 1; candidateIndex < lines.length; candidateIndex += 1) {
+        if (lines[candidateIndex].trim() === "]") {
+          closingIndex = candidateIndex;
+          break;
+        }
+      }
+
+      if (closingIndex !== -1) {
+        const blockLines = lines.slice(index + 1, closingIndex);
+        if (looksLikeMathBlock(blockLines)) {
+          normalizedLines.push("\\[");
+          normalizedLines.push(...blockLines);
+          normalizedLines.push("\\]");
+          index = closingIndex;
+          continue;
+        }
+      }
+    }
+
+    normalizedLines.push(line);
+  }
+
+  return normalizedLines.join("\n");
+};
+
 export const MarkdownRenderer = memo(({
   className,
   imageZoomAlt,
@@ -22,6 +83,7 @@ export const MarkdownRenderer = memo(({
 }: MarkdownRendererProps) => {
   const ref = useRef<HTMLDivElement | null>(null);
   const [zoomedImageSrc, setZoomedImageSrc] = useState<string | null>(null);
+  const normalizedMarkdown = normalizeChatGptMathDelimiters(markdown);
 
   useEffect(() => {
     const container = ref.current;
@@ -48,7 +110,7 @@ export const MarkdownRenderer = memo(({
       cancelled = true;
       window.cancelAnimationFrame(rafId);
     };
-  }, [markdown]);
+  }, [normalizedMarkdown]);
 
   return (
     <>
@@ -175,7 +237,7 @@ export const MarkdownRenderer = memo(({
             ),
           }}
         >
-          {markdown}
+          {normalizedMarkdown}
         </ReactMarkdown>
       </div>
       <ImageZoomDialog

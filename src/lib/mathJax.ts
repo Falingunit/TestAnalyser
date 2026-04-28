@@ -73,7 +73,7 @@ export const ensureMathJax = () => {
         ["$$", "$$"],
         ["\\(", "\\)"],
       ],
-      displayMath: [],
+      displayMath: [["\\[", "\\]"]],
       processEscapes: true,
     },
     options: {
