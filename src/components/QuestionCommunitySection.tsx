@@ -4,6 +4,7 @@ import {
   ArrowBigDown,
   ArrowBigUp,
   ClipboardPaste,
+  Copy,
   ImagePlus,
   Loader2,
   Pencil,
@@ -11,6 +12,7 @@ import {
   Plus,
   Trash2,
 } from "lucide-react";
+import { toBlob } from "html-to-image";
 
 import { MarkdownRenderer } from "@/components/MarkdownRenderer";
 import { Badge } from "@/components/ui/badge";
@@ -26,6 +28,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { useAppStore } from "@/lib/store";
+import { typesetMathInElement } from "@/lib/mathJax";
 
 const fileToDataUrl = (file: File) =>
   new Promise<string>((resolve, reject) => {
@@ -515,15 +518,109 @@ export const QuestionCommunitySection = ({
     updateQuestionCommunityComment,
     updateQuestionCommunitySolution,
     voteQuestionCommunitySolution,
+    state,
   } = useAppStore();
   const thread = questionCommunityByQuestionId[questionId];
+  const mode = currentUser?.preferences.mode ?? state.ui.mode;
   const [activeSolutionId, setActiveSolutionId] = useState<string | null>(null);
   const [editorSolutionId, setEditorSolutionId] = useState<string | null>(null);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [isCopying, setIsCopying] = useState(false);
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [replyingSolutionId, setReplyingSolutionId] = useState<string | null>(null);
+  const activeSolutionRef = useRef<HTMLDivElement | null>(null);
+
+  const handleCopySolutionImage = async (node: HTMLElement | null) => {
+    if (!node) return;
+
+    setIsCopying(true);
+    setMessage(null);
+
+    const unwanted = node.querySelectorAll(
+      ".hide-in-copy",
+    ) as NodeListOf<HTMLElement>;
+    const styleTag = document.createElement("style");
+
+    try {
+      await typesetMathInElement(node);
+
+      // Hide broken images that cause capture to fail
+      const images = node.querySelectorAll("img");
+      images.forEach((img) => {
+        if (img.complete && img.naturalWidth === 0) {
+          img.style.display = "none";
+          (img as any)._hiddenByCapture = true;
+        }
+      });
+
+      unwanted.forEach((el) => {
+        (el as any)._prevDisplay = el.style.display;
+        el.style.display = "none";
+      });
+
+      const textColor = mode === "dark" ? "#f3f4f6" : "#111827";
+      const bgColor = mode === "dark" ? "#0a0a0a" : "#ffffff";
+
+      styleTag.innerHTML = `
+        mjx-container { color: ${textColor} !important; }
+        .markdown-body, .markdown-body *, .question-html, .question-html * { color: ${textColor} !important; }
+        svg { fill: currentColor !important; }
+      `;
+      node.appendChild(styleTag);
+
+      const paddingX = 32;
+      const paddingY = 32;
+      const width = node.clientWidth + paddingX * 2;
+      const height = node.scrollHeight + paddingY * 2;
+
+      const blob = await toBlob(node, {
+        backgroundColor: bgColor,
+        pixelRatio: 2,
+        width,
+        height,
+        style: {
+          zoom: "1",
+          padding: `${paddingY}px ${paddingX}px`,
+          margin: "0",
+          color: textColor,
+          backgroundColor: bgColor,
+        },
+        fontEmbedCSS: "",
+        filter: (domNode: Node) => {
+          if (domNode.nodeType !== 1) return true;
+          const el = domNode as HTMLElement;
+          if (el.classList?.contains("hide-in-copy")) return false;
+          return true;
+        },
+      });
+
+      if (blob) {
+        const data = [new window.ClipboardItem({ "image/png": blob })];
+        await navigator.clipboard.write(data);
+        setMessage("Solution image copied to clipboard.");
+      }
+    } catch (error) {
+      console.error("Copy failed", error);
+      setMessage("Unable to copy solution image.");
+    } finally {
+      if (styleTag.parentNode) {
+        node.removeChild(styleTag);
+      }
+      unwanted.forEach((el) => {
+        el.style.display = (el as any)._prevDisplay || "";
+      });
+      const images = node.querySelectorAll("img");
+      images.forEach((img) => {
+        if ((img as any)._hiddenByCapture) {
+          img.style.display = "";
+          delete (img as any)._hiddenByCapture;
+        }
+      });
+      setIsCopying(false);
+    }
+  };
 
   useEffect(() => {
     if (!enabled) {
@@ -661,7 +758,7 @@ export const QuestionCommunitySection = ({
         {thread?.solutions.map((solution) => (
           <Card
             key={solution.id}
-            className="border-border/60 transition-colors hover:border-foreground/30"
+            className="solution-card border-border/60 transition-colors hover:border-foreground/30"
           >
             <button
               type="button"
@@ -670,7 +767,7 @@ export const QuestionCommunitySection = ({
             >
               <CardContent className="space-y-4 p-4">
                 <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div className="space-y-1">
+                  <div className="hide-in-copy space-y-1">
                     <div className="flex flex-wrap items-center gap-2">
                       <p className="text-sm font-semibold text-foreground">
                         {solution.author.name}
@@ -692,8 +789,11 @@ export const QuestionCommunitySection = ({
                   <div className="flex flex-wrap items-center gap-2">
                     <Button
                       type="button"
-                      variant={solution.currentUserVote === 1 ? "default" : "outline"}
+                      variant={
+                        solution.currentUserVote === 1 ? "default" : "outline"
+                      }
                       size="sm"
+                      className="hide-in-copy"
                       onClick={async (event) => {
                         event.stopPropagation();
                         const result = await voteQuestionCommunitySolution({
@@ -712,8 +812,11 @@ export const QuestionCommunitySection = ({
                     </Button>
                     <Button
                       type="button"
-                      variant={solution.currentUserVote === -1 ? "default" : "outline"}
+                      variant={
+                        solution.currentUserVote === -1 ? "default" : "outline"
+                      }
                       size="sm"
+                      className="hide-in-copy"
                       onClick={async (event) => {
                         event.stopPropagation();
                         const result = await voteQuestionCommunitySolution({
@@ -730,18 +833,35 @@ export const QuestionCommunitySection = ({
                       <ArrowBigDown className="mr-1 h-4 w-4" />
                       {solution.downvoteCount}
                     </Button>
-                    <span className="rounded-full border border-border/60 px-3 py-1 text-xs font-semibold text-foreground">
+                    <span className="rounded-full border border-border/60 px-3 py-1 text-xs font-semibold text-foreground hide-in-copy">
                       Score {solution.score}
                     </span>
-                    <Badge variant="outline">
+                    <Badge variant="outline" className="hide-in-copy">
                       {solution.comments.length} comment
                       {solution.comments.length === 1 ? "" : "s"}
                     </Badge>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={isCopying}
+                      className="hide-in-copy"
+                      title="Copy solution as image"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        handleCopySolutionImage(
+                          event.currentTarget.closest(".solution-card"),
+                        );
+                      }}
+                    >
+                      <Copy className="h-4 w-4" />
+                    </Button>
                     {solution.canPin ? (
                       <Button
                         type="button"
                         variant="outline"
                         size="sm"
+                        className="hide-in-copy"
                         onClick={async (event) => {
                           event.stopPropagation();
                           const result = await pinQuestionCommunitySolution({
@@ -751,7 +871,9 @@ export const QuestionCommunitySection = ({
                             pinned: solution.pinnedAt === null,
                           });
                           if (!result.ok) {
-                            setMessage(result.message ?? "Unable to update pin.");
+                            setMessage(
+                              result.message ?? "Unable to update pin.",
+                            );
                           }
                         }}
                       >
@@ -763,6 +885,7 @@ export const QuestionCommunitySection = ({
                         type="button"
                         variant="outline"
                         size="sm"
+                        className="hide-in-copy"
                         onClick={(event) => {
                           event.stopPropagation();
                           openEditDialog(solution.id);
@@ -776,6 +899,7 @@ export const QuestionCommunitySection = ({
                         type="button"
                         variant="outline"
                         size="sm"
+                        className="hide-in-copy"
                         onClick={async (event) => {
                           event.stopPropagation();
                           if (!window.confirm("Delete this solution?")) {
@@ -787,7 +911,9 @@ export const QuestionCommunitySection = ({
                             solutionId: solution.id,
                           });
                           if (!result.ok) {
-                            setMessage(result.message ?? "Unable to delete solution.");
+                            setMessage(
+                              result.message ?? "Unable to delete solution.",
+                            );
                           }
                         }}
                       >
@@ -871,9 +997,12 @@ export const QuestionCommunitySection = ({
                 </DialogDescription>
               </DialogHeader>
 
-              <div className="min-h-0 flex-1 space-y-4 overflow-y-auto pr-2">
+              <div
+                ref={activeSolutionRef}
+                className="min-h-0 flex-1 space-y-4 overflow-y-auto pr-2"
+              >
                 <div className="flex flex-wrap items-start justify-between gap-3 rounded-xl border border-border/60 bg-muted/20 p-4">
-                  <div className="space-y-1">
+                  <div className="hide-in-copy space-y-1">
                     <div className="flex flex-wrap items-center gap-2">
                       <p className="text-base font-semibold text-foreground">
                         {activeSolution.author.name}
@@ -899,8 +1028,13 @@ export const QuestionCommunitySection = ({
                   <div className="flex flex-wrap items-center gap-2">
                     <Button
                       type="button"
-                      variant={activeSolution.currentUserVote === 1 ? "default" : "outline"}
+                      variant={
+                        activeSolution.currentUserVote === 1
+                          ? "default"
+                          : "outline"
+                      }
                       size="sm"
+                      className="hide-in-copy"
                       onClick={async () => {
                         const result = await voteQuestionCommunitySolution({
                           testId,
@@ -918,8 +1052,13 @@ export const QuestionCommunitySection = ({
                     </Button>
                     <Button
                       type="button"
-                      variant={activeSolution.currentUserVote === -1 ? "default" : "outline"}
+                      variant={
+                        activeSolution.currentUserVote === -1
+                          ? "default"
+                          : "outline"
+                      }
                       size="sm"
+                      className="hide-in-copy"
                       onClick={async () => {
                         const result = await voteQuestionCommunitySolution({
                           testId,
@@ -935,14 +1074,28 @@ export const QuestionCommunitySection = ({
                       <ArrowBigDown className="mr-1 h-4 w-4" />
                       {activeSolution.downvoteCount}
                     </Button>
-                    <span className="rounded-full border border-border/60 px-3 py-1 text-xs font-semibold text-foreground">
+                    <span className="rounded-full border border-border/60 px-3 py-1 text-xs font-semibold text-foreground hide-in-copy">
                       Score {activeSolution.score}
                     </span>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={isCopying}
+                      className="hide-in-copy"
+                      title="Copy solution as image"
+                      onClick={() =>
+                        handleCopySolutionImage(activeSolutionRef.current)
+                      }
+                    >
+                      <Copy className="h-4 w-4" />
+                    </Button>
                     {activeSolution.canPin ? (
                       <Button
                         type="button"
                         variant="outline"
                         size="sm"
+                        className="hide-in-copy"
                         onClick={async () => {
                           const result = await pinQuestionCommunitySolution({
                             testId,
@@ -951,7 +1104,9 @@ export const QuestionCommunitySection = ({
                             pinned: activeSolution.pinnedAt === null,
                           });
                           if (!result.ok) {
-                            setMessage(result.message ?? "Unable to update pin.");
+                            setMessage(
+                              result.message ?? "Unable to update pin.",
+                            );
                           }
                         }}
                       >
@@ -963,6 +1118,7 @@ export const QuestionCommunitySection = ({
                         type="button"
                         variant="outline"
                         size="sm"
+                        className="hide-in-copy"
                         onClick={() => openEditDialog(activeSolution.id)}
                       >
                         <Pencil className="h-4 w-4" />
@@ -973,6 +1129,7 @@ export const QuestionCommunitySection = ({
                         type="button"
                         variant="outline"
                         size="sm"
+                        className="hide-in-copy"
                         onClick={async () => {
                           if (!window.confirm("Delete this solution?")) {
                             return;
@@ -983,7 +1140,9 @@ export const QuestionCommunitySection = ({
                             solutionId: activeSolution.id,
                           });
                           if (!result.ok) {
-                            setMessage(result.message ?? "Unable to delete solution.");
+                            setMessage(
+                              result.message ?? "Unable to delete solution.",
+                            );
                             return;
                           }
                           setActiveSolutionId(null);
@@ -1002,7 +1161,7 @@ export const QuestionCommunitySection = ({
                   />
                 </div>
 
-                <div className="space-y-4 rounded-xl border border-border/60 bg-background p-4">
+                <div className="space-y-4 rounded-xl border border-border/60 bg-background p-4 hide-in-copy">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div>
                       <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
