@@ -1083,6 +1083,7 @@ export const QuestionDetail = () => {
 
   const handleCopyQuestionImage = async (withoutAnswers = false) => {
     const node = questionCopyRef.current;
+    console.log(node)
     if (!node) return;
 
     setIsCopying(true);
@@ -1091,8 +1092,8 @@ export const QuestionDetail = () => {
     // Identify elements to hide
     const unwanted = node.querySelectorAll(
       withoutAnswers
-        ? ".hide-in-copy, .hide-in-no-answer-copy"
-        : ".hide-in-copy",
+        ? ".hide-in-copy, .hide-in-no-answer-copy, #question-community-solutions"
+        : ".hide-in-copy, #question-community-solutions",
     ) as NodeListOf<HTMLElement>;
     // Create a temporary style tag to force MathJax colors in the clone
     const styleTag = document.createElement("style");
@@ -1169,6 +1170,19 @@ export const QuestionDetail = () => {
           backgroundColor: bgColor,
         },
         fontEmbedCSS: "",
+        filter: (domNode: Node) => {
+          if (domNode.nodeType !== 1) return true;
+          const el = domNode as HTMLElement;
+          if (el.classList?.contains("hide-in-copy")) return false;
+          if (
+            withoutAnswers &&
+            el.classList?.contains("hide-in-no-answer-copy")
+          ) {
+            return false;
+          }
+          if (el.id === "question-community-solutions") return false;
+          return true;
+        },
       });
 
       // 5. Write to Clipboard
