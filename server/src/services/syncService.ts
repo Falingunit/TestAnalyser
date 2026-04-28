@@ -97,6 +97,8 @@ const parseStoredJson = (value: string | null) => {
 
 const serializeJson = (value: unknown) => JSON.stringify(value ?? null)
 
+const jsonEquals = (a: unknown, b: unknown) => JSON.stringify(a ?? null) === JSON.stringify(b ?? null)
+
 const isMtqAnswerValue = (value: unknown): value is MtqAnswerValue =>
   Boolean(
     value &&
@@ -572,8 +574,10 @@ const upsertExam = async (report: ScrapedReport) => {
     usedExistingIds.add(existing.id)
 
     const existingCorrectAnswer = parseStoredJson(existing.correctAnswer)
-    const shouldSetKeyUpdate = existing.keyUpdate === null
-    const nextCorrectAnswer = existingCorrectAnswer ?? ensuredCorrectAnswer
+    const existingKeyUpdate = parseStoredJson(existing.keyUpdate)
+    const shouldSetKeyUpdate =
+      existing.keyUpdate === null || jsonEquals(existingCorrectAnswer, existingKeyUpdate)
+    const nextCorrectAnswer = ensuredCorrectAnswer
     const nextSharedPassageSourceContent = question.sharedPassageContent
     const nextSharedPassageContent = existing.sharedPassageOverridden
       ? existing.sharedPassageContent ?? null
