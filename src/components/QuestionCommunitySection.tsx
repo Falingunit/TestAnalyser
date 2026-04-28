@@ -54,25 +54,6 @@ const formatDateTime = (value: string) => {
   return parsed.toLocaleString();
 };
 
-const summarizeMarkdown = (markdown: string, limit = 260) => {
-  const normalized = markdown
-    .replace(/!\[[^\]]*]\(([^)]+)\)/g, " [image] ")
-    .replace(/\[[^\]]*]\(([^)]+)\)/g, " ")
-    .replace(/```[\s\S]*?```/g, " ")
-    .replace(/`[^`]*`/g, " ")
-    .replace(/[#>*_~\-|]/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-
-  if (!normalized) {
-    return "Contains markdown content.";
-  }
-  if (normalized.length <= limit) {
-    return normalized;
-  }
-  return `${normalized.slice(0, limit).trimEnd()}...`;
-};
-
 type EditorResult = {
   ok: boolean;
   message?: string;
@@ -337,6 +318,52 @@ const CommunityMarkdownEditor = ({
     }
   };
 
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if ((event.ctrlKey || event.metaKey) && event.key === "m") {
+      event.preventDefault();
+      const textarea = textareaRef.current;
+      if (!textarea) {
+        return;
+      }
+
+      const { selectionStart, selectionEnd, value: currentValue } = textarea;
+      const selectedText = currentValue.slice(selectionStart, selectionEnd);
+
+      let newValue: string;
+      let newCursorPos: number;
+
+      if (selectionStart !== selectionEnd) {
+        // Wrap selected text
+        newValue =
+          currentValue.slice(0, selectionStart) +
+          "$" +
+          selectedText +
+          "$" +
+          currentValue.slice(selectionEnd);
+        newCursorPos = selectionEnd + 1; // Put cursor after the closing $
+      } else {
+        // Insert $$ and move cursor to middle
+        newValue =
+          currentValue.slice(0, selectionStart) +
+          "$$" +
+          currentValue.slice(selectionEnd);
+        newCursorPos = selectionStart + 1;
+      }
+
+      setDraft(newValue);
+
+      window.requestAnimationFrame(() => {
+        const target = textareaRef.current;
+        if (!target) {
+          return;
+        }
+        target.focus();
+        target.selectionStart = newCursorPos;
+        target.selectionEnd = newCursorPos;
+      });
+    }
+  };
+
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-center gap-2">
@@ -389,6 +416,7 @@ const CommunityMarkdownEditor = ({
             value={draft}
             disabled={isSubmitting}
             onChange={(event) => setDraft(event.target.value)}
+            onKeyDown={handleKeyDown}
             onPaste={(event) => void handleTextareaPaste(event)}
             placeholder={placeholder}
             className="min-h-[180px] resize-y"
@@ -443,7 +471,7 @@ const CommunityMarkdownEditor = ({
           {message}
         </div>
       ) : null}
-
+{/* 
       {tempImageUrls.length > 0 ? (
         <div className="space-y-2">
           <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
@@ -460,7 +488,7 @@ const CommunityMarkdownEditor = ({
             ))}
           </div>
         </div>
-      ) : null}
+      ) : null} */}
     </div>
   );
 };
@@ -593,10 +621,6 @@ export const QuestionCommunitySection = ({
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <Badge variant="outline" className="gap-1">
-            <MessageSquare className="h-3.5 w-3.5" />
-            Discussion
-          </Badge>
           {ownSolution ? (
             <Button
               type="button"
@@ -774,14 +798,11 @@ export const QuestionCommunitySection = ({
                   </div>
                 </div>
 
-                <div className="space-y-3">
+                <div className="rounded-xl border border-border/60 bg-background p-4">
                   <MarkdownRenderer
                     markdown={solution.contentMarkdown}
-                    className="max-h-48 overflow-hidden space-y-3 text-sm leading-7 text-foreground"
+                    className="space-y-3 text-sm leading-7 text-foreground"
                   />
-                  <p className="text-xs text-muted-foreground">
-                    {summarizeMarkdown(solution.contentMarkdown)}
-                  </p>
                 </div>
               </CardContent>
             </button>

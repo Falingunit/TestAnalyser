@@ -22,7 +22,7 @@ declare global {
 
 const MATHJAX_SCRIPT_ID = "mathjax-script";
 const MATHJAX_SRC =
-  "https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js";
+  "https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js";
 
 const waitForMathJaxReady = () =>
   new Promise<void>((resolve, reject) => {
@@ -65,24 +65,27 @@ export const ensureMathJax = () => {
   }
 
   window.MathJax = {
+    loader: { load: ["[tex]/mhchem"] },
     tex: {
+      packages: { "[+]": ["mhchem"] },
       inlineMath: [
         ["$", "$"],
+        ["$$", "$$"],
         ["\\(", "\\)"],
       ],
-      displayMath: [
-        ["$$", "$$"],
-        ["\\[", "\\]"],
-      ],
+      displayMath: [],
       processEscapes: true,
     },
-    svg: {
-      fontCache: "global",
+    options: {
+      processHtmlClass: "tex2jax_process",
+    },
+    chtml: {
+      displayAlign: "left",
     },
     startup: {
       typeset: false,
     },
-  } as NonNullable<typeof window.MathJax>;
+  } as any;
 
   window.__mathJaxLoaderPromise__ = new Promise<void>((resolve, reject) => {
     const existingScript = document.getElementById(

@@ -140,15 +140,30 @@
     font-size: calc(1rem * var(--reader-font-scale));
   }
 
-  .question-html mjx-container[jax="SVG"] {
-    display: inline-block;
-    margin: 0;
+  .question-html mjx-container {
+    display: inline-block !important;
+    margin: 0 !important;
+    vertical-align: middle;
+    outline: none;
+  }
+
+  .question-html mjx-container[display="true"] {
+    display: inline-block !important;
+    margin: 0.25em 0 !important;
+    width: 100%;
+    text-align: left;
+  }
+
+  /* Ensure math containers in markdown also follow inline rules */
+  .markdown-body mjx-container {
+    display: inline-block !important;
+    margin: 0 !important;
     vertical-align: middle;
   }
 
-  .question-html mjx-container[jax="SVG"][display="true"] {
-    display: block;
-    margin: 1em 0;
+  .markdown-body mjx-container[display="true"] {
+    display: inline-block !important;
+    margin: 0.25em 0 !important;
   }
 
   .question-html--blend-dark img {

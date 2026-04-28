@@ -33,3 +33,6 @@ server/prisma/dev.db
 *.sw?
 .env
 dev-dist/
+
+# Uploads
+server/uploads/

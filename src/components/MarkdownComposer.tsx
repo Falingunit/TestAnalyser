@@ -166,6 +166,52 @@ export const MarkdownComposer = ({
     }
   };
 
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if ((event.ctrlKey || event.metaKey) && event.key === "m") {
+      event.preventDefault();
+      const textarea = textareaRef.current;
+      if (!textarea) {
+        return;
+      }
+
+      const { selectionStart, selectionEnd, value: currentValue } = textarea;
+      const selectedText = currentValue.slice(selectionStart, selectionEnd);
+
+      let newValue: string;
+      let newCursorPos: number;
+
+      if (selectionStart !== selectionEnd) {
+        // Wrap selected text
+        newValue =
+          currentValue.slice(0, selectionStart) +
+          "$" +
+          selectedText +
+          "$" +
+          currentValue.slice(selectionEnd);
+        newCursorPos = selectionEnd + 1; // Put cursor after the closing $
+      } else {
+        // Insert $$ and move cursor to middle
+        newValue =
+          currentValue.slice(0, selectionStart) +
+          "$$" +
+          currentValue.slice(selectionEnd);
+        newCursorPos = selectionStart + 1;
+      }
+
+      onChange(newValue);
+
+      window.requestAnimationFrame(() => {
+        const target = textareaRef.current;
+        if (!target) {
+          return;
+        }
+        target.focus();
+        target.selectionStart = newCursorPos;
+        target.selectionEnd = newCursorPos;
+      });
+    }
+  };
+
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-center gap-2">
@@ -219,6 +265,7 @@ export const MarkdownComposer = ({
             value={value}
             disabled={disabled}
             onChange={(event) => onChange(event.target.value)}
+            onKeyDown={handleKeyDown}
             onPaste={(event) => void handlePaste(event)}
             placeholder={placeholder}
             className="min-h-[180px] resize-y"
