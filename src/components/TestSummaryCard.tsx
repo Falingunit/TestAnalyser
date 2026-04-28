@@ -2,7 +2,7 @@ import { useMemo, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { ChevronDown } from "lucide-react";
 import { useAppStore } from "@/lib/store";
-import { getQuestionStatus, type buildAnalysis } from "@/lib/analysis";
+import { getQuestionMaxMarks, getQuestionStatus, type buildAnalysis } from "@/lib/analysis";
 import type { TestRecord } from "@/lib/types";
 import { SegmentedProgressBar } from "@/components/SegmentedProgressBar";
 import { Badge } from "@/components/ui/badge";
@@ -29,7 +29,7 @@ const subjectOrder = [
   { id: "MATHEMATICS", label: "Mathematics" },
 ];
 
-const questionTypes = ["MCQ", "MAQ", "NAT", "VMAQ"] as const;
+const questionTypes = ["MCQ", "MAQ", "NAT", "VMAQ", "MTQ"] as const;
 
 const formatDate = (value: string) =>
   new Date(value).toLocaleDateString(undefined, {
@@ -156,12 +156,12 @@ export const TestSummaryCard = ({
     return stats;
   }, [test]);
   const totalScore = test.questions.reduce(
-    (sum, question) => sum + question.correctMarking,
+    (sum, question) => sum + getQuestionMaxMarks(question),
     0
   );
   const subjectTotals = test.questions.reduce((map, question) => {
     const current = map.get(question.subject) ?? 0;
-    map.set(question.subject, current + question.correctMarking);
+    map.set(question.subject, current + getQuestionMaxMarks(question));
     return map;
   }, new Map<string, number>());
   const subjectSummary = subjectOrder.map((subject) => {

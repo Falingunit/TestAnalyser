@@ -6,6 +6,7 @@ import {
   buildAnalysis,
   formatAnswerValue,
   getAnswerForQuestion,
+  getQuestionMaxMarks,
   getQuestionMark,
   getQuestionStatus,
   getTimeForQuestion,
@@ -73,7 +74,7 @@ const formatSeconds = (value: number) => {
 };
 
 const subjects = ["ALL", "PHYSICS", "CHEMISTRY", "MATHEMATICS"] as const;
-const questionTypes = ["MCQ", "MAQ", "NAT", "VMAQ"] as const;
+const questionTypes = ["MCQ", "MAQ", "NAT", "VMAQ", "MTQ"] as const;
 const statuses = [
   "ALL",
   "Correct",
@@ -122,6 +123,7 @@ const buildEmptyMarkingDraft = (): MarkingDraft => ({
   MAQ: { correct: "", incorrect: "", unattempted: "" },
   NAT: { correct: "", incorrect: "", unattempted: "" },
   VMAQ: { correct: "", incorrect: "", unattempted: "" },
+  MTQ: { correct: "", incorrect: "", unattempted: "" },
 });
 
 const createMappingRow = (
@@ -724,7 +726,7 @@ export const TestDetail = () => {
           0,
         );
         const total = subjectQuestions.reduce(
-          (sum, question) => sum + question.correctMarking,
+          (sum, question) => sum + getQuestionMaxMarks(question),
           0,
         );
         return {

@@ -28,6 +28,7 @@ export const Profile = () => {
     setMode,
     setShowComparison,
     setCommunitySolutionsEnabled,
+    setMtqShowContent,
     showComparison,
   } = useAppStore();
   const [profileMessage, setProfileMessage] = useState<string | null>(null);
@@ -44,6 +45,7 @@ export const Profile = () => {
   const isDark = mode === "dark";
   const communitySolutionsEnabled =
     currentUser?.preferences.communitySolutionsEnabled ?? true;
+  const mtqShowContent = currentUser?.preferences.mtqShowContent ?? true;
 
   const handleProfileSave = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -242,6 +244,20 @@ export const Profile = () => {
               <Switch
                 checked={communitySolutionsEnabled}
                 onCheckedChange={setCommunitySolutionsEnabled}
+              />
+            </div>
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-sm font-medium text-foreground">
+                  MTQ full content
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Show option and statement content inside MTQ matrices.
+                </p>
+              </div>
+              <Switch
+                checked={mtqShowContent}
+                onCheckedChange={setMtqShowContent}
               />
             </div>
           </CardContent>

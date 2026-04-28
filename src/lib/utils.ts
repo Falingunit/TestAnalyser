@@ -9,6 +9,7 @@ const QUESTION_TYPE_LABELS: Record<string, string> = {
   MAQ: 'Multiple Correct',
   NAT: 'Numerical',
   VMAQ: 'Comprehension',
+  MTQ: 'Match the Following',
 }
 
 export const formatQuestionType = (value: string) =>
