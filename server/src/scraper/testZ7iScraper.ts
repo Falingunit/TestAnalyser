@@ -231,6 +231,9 @@ const normalizeQuestionType = (value: unknown): ScrapedQuestionType | null => {
   if (trimmed.includes('VMAQ')) {
     return 'VMAQ'
   }
+  if (trimmed.includes('MTQ')) {
+    return 'MTQ'
+  }
   if (trimmed.includes('MAQ') || trimmed.includes('MSQ') || trimmed.includes('MULT')) {
     return 'MAQ'
   }
@@ -257,11 +260,14 @@ const isNumericAnswer = (value: string) => {
 const inferQuestionType = (payload: {
   metaTypeText: string | null
   hasOptions: boolean
-  correctAnswerRaw: string | null
+  correctAnswerRaw: unknown | null
 }): ScrapedQuestionType => {
   const meta = payload.metaTypeText?.toLowerCase() ?? ''
   if (meta.includes('vmaq')) {
     return 'VMAQ'
+  }
+  if (meta.includes('mtq')) {
+    return 'MTQ'
   }
   if (meta.includes('maq') || meta.includes('multiple')) {
     return 'MAQ'
@@ -275,10 +281,17 @@ const inferQuestionType = (payload: {
   if (!payload.hasOptions) {
     return 'NAT'
   }
-  if (payload.correctAnswerRaw && payload.correctAnswerRaw.includes(',')) {
+  if (
+    payload.correctAnswerRaw &&
+    typeof payload.correctAnswerRaw === 'object' &&
+    !Array.isArray(payload.correctAnswerRaw)
+  ) {
+    return 'MTQ'
+  }
+  if (typeof payload.correctAnswerRaw === 'string' && payload.correctAnswerRaw.includes(',')) {
     return 'MAQ'
   }
-  if (payload.correctAnswerRaw && isNumericAnswer(payload.correctAnswerRaw)) {
+  if (typeof payload.correctAnswerRaw === 'string' && isNumericAnswer(payload.correctAnswerRaw)) {
     return 'NAT'
   }
   return 'MCQ'
@@ -288,6 +301,8 @@ const getMarkingForType = (qtype: ScrapedQuestionType) => {
   switch (qtype) {
     case 'VMAQ':
       return { correct: 3, incorrect: -1, unattempted: 0 }
+    case 'MTQ':
+      return { correct: 2, incorrect: -1, unattempted: 0 }
     case 'MAQ':
       return { correct: 4, incorrect: -2, unattempted: 0 }
     case 'NAT':
@@ -625,7 +640,11 @@ const parseQuestionwisePayload = (
       optionContentB: optionB,
       optionContentC: optionC,
       optionContentD: optionD,
-      hasPartial: qtype === 'MAQ',
+      mtqStatementP: null,
+      mtqStatementQ: null,
+      mtqStatementR: null,
+      mtqStatementS: null,
+      hasPartial: qtype === 'MAQ' || qtype === 'MTQ',
       correctMarking: marking.correct,
       incorrectMarking: marking.incorrect,
       unattemptedMarking: marking.unattempted,
@@ -781,7 +800,11 @@ const parseSolutionQuestions = (html: string, subject: ScrapedSubject) => {
       optionContentB: optionContents[1],
       optionContentC: optionContents[2],
       optionContentD: optionContents[3],
-      hasPartial: qtype === 'MAQ',
+      mtqStatementP: null,
+      mtqStatementQ: null,
+      mtqStatementR: null,
+      mtqStatementS: null,
+      hasPartial: qtype === 'MAQ' || qtype === 'MTQ',
       correctMarking: marking.correct,
       incorrectMarking: marking.incorrect,
       unattemptedMarking: marking.unattempted,

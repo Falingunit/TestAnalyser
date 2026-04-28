@@ -16,12 +16,13 @@ import {
   buildAnalysis,
   formatAnswerValue,
   getAnswerForQuestion,
+  getQuestionMaxMarks,
   getQuestionMark,
   getQuestionStatus,
   getTimeForQuestion,
   isBonusKey,
 } from "@/lib/analysis";
-import type { QuestionType, Subject } from "@/lib/types";
+import type { MtqAnswerValue, MtqColKey, MtqRowKey, QuestionType, Subject } from "@/lib/types";
 import {
   buildDisplayQuestions,
   subjectDisplayOrder,
@@ -148,6 +149,10 @@ type ContentDraftField =
   | "optionContentB"
   | "optionContentC"
   | "optionContentD"
+  | "mtqStatementP"
+  | "mtqStatementQ"
+  | "mtqStatementR"
+  | "mtqStatementS"
   | "solutionContent";
 
 type QuestionContentDraft = Record<ContentDraftField, string>;
@@ -199,6 +204,10 @@ const buildQuestionContentDraft = (
     optionContentB: string | null;
     optionContentC: string | null;
     optionContentD: string | null;
+    mtqStatementP?: string | null;
+    mtqStatementQ?: string | null;
+    mtqStatementR?: string | null;
+    mtqStatementS?: string | null;
     solutionContent?: string | null;
   } | null,
 ): QuestionContentDraft => ({
@@ -208,11 +217,72 @@ const buildQuestionContentDraft = (
   optionContentB: question?.optionContentB ?? "",
   optionContentC: question?.optionContentC ?? "",
   optionContentD: question?.optionContentD ?? "",
+  mtqStatementP: question?.mtqStatementP ?? "",
+  mtqStatementQ: question?.mtqStatementQ ?? "",
+  mtqStatementR: question?.mtqStatementR ?? "",
+  mtqStatementS: question?.mtqStatementS ?? "",
   solutionContent: question?.solutionContent ?? "",
 });
 
 const keyOptionLabels = ["A", "B", "C", "D"] as const;
-const questionTypes: QuestionType[] = ["MCQ", "MAQ", "NAT", "VMAQ"];
+const mtqRowLabels = ["P", "Q", "R", "S"] as const;
+
+const buildEmptyMtqAnswer = (): MtqAnswerValue => ({
+  A: [],
+  B: [],
+  C: [],
+  D: [],
+});
+
+const normalizeMtqAnswerValue = (value: unknown): MtqAnswerValue | null => {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return null;
+  }
+  const root = value as Record<string, unknown>;
+  const next = buildEmptyMtqAnswer();
+  let hasAny = false;
+  keyOptionLabels.forEach((col) => {
+    const raw = root[col] ?? root[col.toLowerCase()];
+    if (!Array.isArray(raw)) {
+      return;
+    }
+    next[col] = Array.from(
+      new Set(
+        raw
+          .map((item) => String(item).trim().toUpperCase())
+          .filter((item): item is MtqRowKey =>
+            mtqRowLabels.includes(item as MtqRowKey),
+          ),
+      ),
+    ).sort((a, b) => mtqRowLabels.indexOf(a) - mtqRowLabels.indexOf(b));
+    if (next[col].length > 0) {
+      hasAny = true;
+    }
+  });
+  return hasAny ? next : null;
+};
+
+const getMtqStatementValue = (
+  question: {
+    mtqStatementP?: string | null;
+    mtqStatementQ?: string | null;
+    mtqStatementR?: string | null;
+    mtqStatementS?: string | null;
+  },
+  key: MtqRowKey,
+) => {
+  switch (key) {
+    case "P":
+      return question.mtqStatementP ?? "";
+    case "Q":
+      return question.mtqStatementQ ?? "";
+    case "R":
+      return question.mtqStatementR ?? "";
+    case "S":
+      return question.mtqStatementS ?? "";
+  }
+};
+const questionTypes: QuestionType[] = ["MCQ", "MAQ", "NAT", "VMAQ", "MTQ"];
 
 export const QuestionDetail = () => {
   const { testId, questionId } = useParams();
@@ -261,6 +331,7 @@ export const QuestionDetail = () => {
     : (ownedTest ?? previewTest);
   const communityEnabled =
     currentUser?.preferences.communitySolutionsEnabled ?? true;
+  const mtqShowContent = currentUser?.preferences.mtqShowContent ?? true;
   const communityTestId = ownedTest?.id ?? test?.id ?? "";
   const mode = currentUser?.preferences.mode ?? state.ui.mode;
   const displayQuestions = useMemo(() => {
@@ -320,6 +391,9 @@ export const QuestionDetail = () => {
   const [keyAnswerGroups, setKeyAnswerGroups] = useState<KeyAnswerGroup[]>([
     buildKeyGroup(),
   ]);
+  const [mtqKeyDraft, setMtqKeyDraft] = useState<MtqAnswerValue>(
+    buildEmptyMtqAnswer(),
+  );
   const [notes, setNotes] = useState("");
   const [isSavingTags, setIsSavingTags] = useState(false);
   const [isSavingGlobalTags, setIsSavingGlobalTags] = useState(false);
@@ -372,7 +446,7 @@ export const QuestionDetail = () => {
 
   const analysis = test ? buildAnalysis(test) : null;
   const totalScore = test
-    ? test.questions.reduce((sum, question) => sum + question.correctMarking, 0)
+    ? test.questions.reduce((sum, question) => sum + getQuestionMaxMarks(question), 0)
     : 0;
   const scoreLabel = analysis
     ? `${analysis.scoreCurrent}/${totalScore}`
@@ -480,6 +554,22 @@ export const QuestionDetail = () => {
     );
   };
 
+  const toggleMtqDraftCell = (colKey: MtqColKey, rowKey: MtqRowKey) => {
+    setMtqKeyDraft((prev) => {
+      const current = prev[colKey];
+      const exists = current.includes(rowKey);
+      const nextRow = exists
+        ? current.filter((item) => item !== rowKey)
+        : [...current, rowKey].sort(
+            (a, b) => mtqRowLabels.indexOf(a) - mtqRowLabels.indexOf(b),
+          );
+      return {
+        ...prev,
+        [colKey]: nextRow,
+      };
+    });
+  };
+
   const sortOptions = (values: string[]) => {
     if (values.length === 0) {
       return values;
@@ -496,6 +586,11 @@ export const QuestionDetail = () => {
   const buildKeyUpdateValue = () => {
     if (!question) {
       return null;
+    }
+
+    if (questionTypeDraft === "MTQ") {
+      const hasAny = keyOptionLabels.some((key) => mtqKeyDraft[key].length > 0);
+      return hasAny ? mtqKeyDraft : null;
     }
 
     if (questionTypeDraft === "NAT") {
@@ -790,6 +885,10 @@ export const QuestionDetail = () => {
       optionContentB: contentDraft.optionContentB || null,
       optionContentC: contentDraft.optionContentC || null,
       optionContentD: contentDraft.optionContentD || null,
+      mtqStatementP: contentDraft.mtqStatementP || null,
+      mtqStatementQ: contentDraft.mtqStatementQ || null,
+      mtqStatementR: contentDraft.mtqStatementR || null,
+      mtqStatementS: contentDraft.mtqStatementS || null,
       solutionContent: contentDraft.solutionContent || null,
     });
     setIsSavingContent(false);
@@ -812,6 +911,8 @@ export const QuestionDetail = () => {
   const selectedOptions = toOptionArray(answer);
   const correctOptions = question ? toOptionArray(question.keyUpdate) : [];
   const isMultiSelect = question?.qtype === "MAQ";
+  const selectedMtq = normalizeMtqAnswerValue(answer);
+  const correctMtq = question ? normalizeMtqAnswerValue(question.keyUpdate) : null;
   const notesKey =
     !isReadonlyView && test && question
       ? `testanalyser-question-notes-${test.id}-${question.id}`
@@ -874,6 +975,7 @@ export const QuestionDetail = () => {
   useEffect(() => {
     if (!question) {
       setKeyAnswerGroups([buildKeyGroup()]);
+      setMtqKeyDraft(buildEmptyMtqAnswer());
       setKeyUpdateBonus(false);
       setQuestionTypeDraft("MCQ");
       setMarkingDraft({ correct: "", incorrect: "", unattempted: "" });
@@ -889,13 +991,16 @@ export const QuestionDetail = () => {
     setKeyUpdateBonus(bonusActive);
     if (bonusActive) {
       setKeyAnswerGroups([buildKeyGroup()]);
+      setMtqKeyDraft(buildEmptyMtqAnswer());
       return;
     }
 
     const nextGroups: KeyAnswerGroup[] = [];
     const rawKey = question.keyUpdate ?? question.correctAnswer;
 
-    if (question.qtype === "NAT") {
+    if (question.qtype === "MTQ") {
+      setMtqKeyDraft(normalizeMtqAnswerValue(rawKey) ?? buildEmptyMtqAnswer());
+    } else if (question.qtype === "NAT") {
       if (typeof rawKey === "number") {
         nextGroups.push({ ...buildKeyGroup(), min: String(rawKey), max: "" });
       } else if (
@@ -948,6 +1053,9 @@ export const QuestionDetail = () => {
     }
 
     setKeyAnswerGroups(nextGroups.length > 0 ? nextGroups : [buildKeyGroup()]);
+    if (question.qtype !== "MTQ") {
+      setMtqKeyDraft(buildEmptyMtqAnswer());
+    }
   }, [question]);
 
   useEffect(() => {
@@ -1500,7 +1608,11 @@ export const QuestionDetail = () => {
 
                 <div className="space-y-3">
                   <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground hide-in-no-answer-copy">
-                    {question.qtype === "NAT" ? "Answer" : "Options"}
+                    {question.qtype === "NAT"
+                      ? "Answer"
+                      : question.qtype === "MTQ"
+                        ? "Match Matrix"
+                        : "Options"}
                   </p>
                   {question.qtype === "NAT" ? (
                     <div className="relative hide-in-no-answer-copy">
@@ -1521,6 +1633,119 @@ export const QuestionDetail = () => {
                       >
                         Correct: {formatAnswerValue(question.keyUpdate)}
                       </span>
+                    </div>
+                  ) : question.qtype === "MTQ" ? (
+                    <div className="space-y-4 hide-in-no-answer-copy">
+                      <div className="overflow-hidden rounded-lg border border-border/60">
+                        <div className="grid grid-cols-[minmax(220px,1.5fr)_repeat(4,minmax(88px,1fr))_88px] gap-3 bg-muted/50 px-3 py-2 text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+                          <span>Option</span>
+                          {mtqRowLabels.map((label) => (
+                            <div key={label} className="space-y-1 text-center">
+                              <span className="block font-semibold text-foreground/90">
+                                {label}
+                              </span>
+                              {mtqShowContent ? (
+                                <MathHtml
+                                  className={cn(
+                                    "question-html text-left text-[11px] normal-case leading-snug",
+                                    mode === "dark"
+                                      ? "question-html--blend-dark"
+                                      : "question-html--blend-light",
+                                  )}
+                                  style={{ fontSize: Math.max(0.78, zoomLevel * 0.78) + "rem" }}
+                                  html={getMtqStatementValue(question, label)}
+                                  onClick={handleRichContentClick}
+                                />
+                              ) : null}
+                            </div>
+                          ))}
+                          <span className="text-right">Marks</span>
+                        </div>
+                        <div className="divide-y divide-border/60">
+                          {keyOptionLabels.map((label) => {
+                            const html = question[`optionContent${label}` as const] ?? "";
+                            const selectedRow = selectedMtq?.[label] ?? [];
+                            const correctRow = correctMtq?.[label] ?? [];
+                            const rowState =
+                              selectedRow.length === 0
+                                ? "Blank"
+                                : JSON.stringify(selectedRow) === JSON.stringify(correctRow)
+                                  ? "Correct"
+                                  : correctRow.every((value) => selectedRow.includes(value))
+                                    ? "Partial"
+                                    : "Wrong";
+                            const rowMark =
+                              selectedRow.length === 0
+                                ? question.unattemptedMarking
+                                : rowState === "Correct"
+                                  ? question.correctMarking
+                                  : question.incorrectMarking;
+                            return (
+                              <div
+                                key={label}
+                                className="grid grid-cols-[minmax(220px,1.5fr)_repeat(4,minmax(88px,1fr))_88px] gap-3 px-3 py-3 text-sm"
+                              >
+                                <div className="space-y-1">
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-bold text-foreground">{label}</span>
+                                    <span className="block text-[11px] text-muted-foreground">
+                                      {rowState}
+                                    </span>
+                                  </div>
+                                  {mtqShowContent ? (
+                                    <MathHtml
+                                      className={cn(
+                                        "question-html min-w-0 leading-relaxed",
+                                        mode === "dark"
+                                          ? "question-html--blend-dark"
+                                          : "question-html--blend-light",
+                                      )}
+                                      style={{ fontSize: zoomLevel * 1.05 + "rem" }}
+                                      html={html}
+                                      onClick={handleRichContentClick}
+                                    />
+                                  ) : null}
+                                </div>
+                                {mtqRowLabels.map((rowKey) => {
+                                  const isSelected = selectedRow.includes(rowKey);
+                                  const isCorrect = correctRow.includes(rowKey);
+                                  return (
+                                    <div
+                                      key={`${label}-${rowKey}`}
+                                      className="flex items-center justify-center"
+                                    >
+                                      <div
+                                        className={cn(
+                                          "flex h-10 w-10 items-center justify-center rounded-md border text-sm font-bold",
+                                          isSelected && isCorrect &&
+                                            "border-emerald-500 bg-emerald-500/20 text-emerald-400",
+                                          isSelected && !isCorrect &&
+                                            "border-rose-500 bg-rose-500/20 text-rose-400",
+                                          !isSelected && isCorrect &&
+                                            "border-emerald-500 border-dashed bg-emerald-500/10 text-emerald-500",
+                                          !isSelected && !isCorrect &&
+                                            "border-border bg-background text-muted-foreground",
+                                        )}
+                                      >
+                                        {isSelected
+                                          ? isCorrect
+                                            ? "✓"
+                                            : "✕"
+                                          : isCorrect
+                                            ? "○"
+                                            : ""}
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                                <span className="text-right font-semibold text-foreground">
+                                  {rowMark > 0 ? `+${rowMark}` : String(rowMark)}
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
                     </div>
                   ) : (
                     <div className="grid gap-3 hide-in-no-answer-copy">
@@ -1612,7 +1837,9 @@ export const QuestionDetail = () => {
                       </span>
                     </div>
                   ) : null}
-                  {showComparison && hasPeerAnswerStats && question.qtype === "NAT" ? (
+                  {showComparison &&
+                  hasPeerAnswerStats &&
+                  (question.qtype === "NAT" || question.qtype === "MTQ") ? (
                     <div className="hide-in-no-answer-copy flex items-center justify-end gap-4 text-[10px] uppercase tracking-wide text-muted-foreground">
                       <span>Correct</span>
                       <span className="text-xs font-black text-foreground">
@@ -1935,6 +2162,36 @@ export const QuestionDetail = () => {
                             </div>
                           ))}
                         </div>
+                        <div className="grid gap-4 sm:grid-cols-2">
+                          {(
+                            [
+                              ["mtqStatementP", "Statement P"],
+                              ["mtqStatementQ", "Statement Q"],
+                              ["mtqStatementR", "Statement R"],
+                              ["mtqStatementS", "Statement S"],
+                            ] as const
+                          ).map(([field, label]) => (
+                            <div key={field} className="space-y-2">
+                              <label className="text-xs text-muted-foreground">
+                                {label}
+                              </label>
+                              <Textarea
+                                ref={(node) => {
+                                  draftFieldRefs.current[field] = node;
+                                }}
+                                value={contentDraft[field]}
+                                onChange={(event) =>
+                                  updateContentDraftField(
+                                    field,
+                                    event.target.value,
+                                  )
+                                }
+                                onPaste={handleDraftImagePaste(field)}
+                                className="min-h-24 font-mono text-xs"
+                              />
+                            </div>
+                          ))}
+                        </div>
                         <div className="space-y-2">
                           <label className="text-xs text-muted-foreground">
                             Solution HTML
@@ -1995,7 +2252,9 @@ export const QuestionDetail = () => {
                             Answer options
                           </p>
                           <p className="text-xs text-muted-foreground">
-                            Add multiple answers to represent OR alternatives.
+                            {questionTypeDraft === "MTQ"
+                              ? "Select the statements matched by each option row."
+                              : "Add multiple answers to represent OR alternatives."}
                           </p>
                         </div>
                         <div
@@ -2004,7 +2263,50 @@ export const QuestionDetail = () => {
                             keyUpdateBonus && "opacity-60",
                           )}
                         >
-                          {keyAnswerGroups.map((group, index) => (
+                          {questionTypeDraft === "MTQ" ? (
+                            <div className="overflow-hidden rounded-lg border border-border/60">
+                              <div className="grid grid-cols-[72px_repeat(4,minmax(0,1fr))] gap-3 bg-muted/50 px-3 py-2 text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+                                <span>Option</span>
+                                {mtqRowLabels.map((rowKey) => (
+                                  <span key={rowKey} className="text-center">
+                                    {rowKey}
+                                  </span>
+                                ))}
+                              </div>
+                              <div className="divide-y divide-border/60">
+                                {keyOptionLabels.map((colKey) => (
+                                  <div
+                                    key={colKey}
+                                    className="grid grid-cols-[72px_repeat(4,minmax(0,1fr))] gap-3 px-3 py-3 text-sm"
+                                  >
+                                    <span className="font-semibold text-foreground">
+                                      {colKey}
+                                    </span>
+                                    {mtqRowLabels.map((rowKey) => (
+                                      <label
+                                        key={`${colKey}-${rowKey}`}
+                                        className={cn(
+                                          "flex items-center justify-center rounded-md border px-3 py-2 text-xs",
+                                          mtqKeyDraft[colKey].includes(rowKey)
+                                            ? "border-primary/60 bg-primary/10 text-foreground"
+                                            : "border-border text-muted-foreground",
+                                          keyUpdateBonus && "pointer-events-none",
+                                        )}
+                                      >
+                                        <input
+                                          type="checkbox"
+                                          className="h-3 w-3"
+                                          checked={mtqKeyDraft[colKey].includes(rowKey)}
+                                          onChange={() => toggleMtqDraftCell(colKey, rowKey)}
+                                          disabled={keyUpdateBonus}
+                                        />
+                                      </label>
+                                    ))}
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          ) : keyAnswerGroups.map((group, index) => (
                             <div
                               key={group.id}
                               className="space-y-3 rounded-lg border border-border/60 p-3"
@@ -2151,15 +2453,17 @@ export const QuestionDetail = () => {
                           ))}
                         </div>
                       </div>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={addKeyAnswerGroup}
-                        disabled={keyUpdateBonus}
-                      >
-                        Add another answer (OR)
-                      </Button>
+                      {questionTypeDraft !== "MTQ" ? (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={addKeyAnswerGroup}
+                          disabled={keyUpdateBonus}
+                        >
+                          Add another answer (OR)
+                        </Button>
+                      ) : null}
                       <div className="flex items-center justify-between gap-3 rounded-lg border border-border/60 px-3 py-2 text-xs text-muted-foreground">
                         <div>
                           <p className="font-medium text-foreground">
@@ -2191,6 +2495,7 @@ export const QuestionDetail = () => {
                             onValueChange={(value) => {
                               setQuestionTypeDraft(value as QuestionType);
                               setKeyAnswerGroups([buildKeyGroup()]);
+                              setMtqKeyDraft(buildEmptyMtqAnswer());
                               setKeyUpdateBonus(false);
                             }}
                           >

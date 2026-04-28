@@ -1,11 +1,17 @@
 import type {
   AnswerValue,
   BonusKey,
+  MtqAnswerValue,
+  MtqColKey,
+  MtqRowKey,
   NumericRange,
   QuestionRecord,
   QuestionType,
   TestRecord,
 } from './types'
+
+const MTQ_COL_KEYS: MtqColKey[] = ['A', 'B', 'C', 'D']
+const MTQ_ROW_KEYS: MtqRowKey[] = ['P', 'Q', 'R', 'S']
 
 const round = (value: number, digits = 1) =>
   Number(value.toFixed(digits))
@@ -134,6 +140,86 @@ const getKeyNumericAlternatives = (
   return normalized === null ? [] : [normalized]
 }
 
+const isMtqAnswerValue = (value: unknown): value is MtqAnswerValue =>
+  Boolean(
+    value &&
+      typeof value === 'object' &&
+      !Array.isArray(value) &&
+      MTQ_COL_KEYS.every((key) => Array.isArray((value as Record<string, unknown>)[key])),
+  )
+
+const normalizeMtqAnswerValue = (value: AnswerValue): MtqAnswerValue | null => {
+  if (isBonusKey(value) || !value || typeof value !== 'object' || Array.isArray(value)) {
+    return null
+  }
+  const root = value as Record<string, unknown>
+  const normalized: MtqAnswerValue = {
+    A: [],
+    B: [],
+    C: [],
+    D: [],
+  }
+  let hasAny = false
+  MTQ_COL_KEYS.forEach((colKey) => {
+    const raw = root[colKey] ?? root[colKey.toLowerCase()]
+    if (!Array.isArray(raw)) {
+      return
+    }
+    normalized[colKey] = Array.from(
+      new Set(
+        raw
+          .map((item) => String(item).trim().toUpperCase())
+          .filter((item): item is MtqRowKey =>
+            MTQ_ROW_KEYS.includes(item as MtqRowKey),
+          ),
+      ),
+    ).sort((a, b) => MTQ_ROW_KEYS.indexOf(a) - MTQ_ROW_KEYS.indexOf(b))
+    if (normalized[colKey].length > 0) {
+      hasAny = true
+    }
+  })
+  return hasAny ? normalized : null
+}
+
+const getNormalizedMtqValue = (value: AnswerValue) =>
+  isMtqAnswerValue(value) ? value : normalizeMtqAnswerValue(value)
+
+const isExactMtqRow = (
+  key: MtqAnswerValue | null,
+  selected: MtqAnswerValue | null,
+  rowKey: MtqColKey,
+) => {
+  const keyRow = key?.[rowKey] ?? []
+  const selectedRow = selected?.[rowKey] ?? []
+  return (
+    keyRow.length === selectedRow.length &&
+    keyRow.every((value, index) => value === selectedRow[index])
+  )
+}
+
+const scoreMtqQuestion = (
+  question: QuestionRecord,
+  selected: AnswerValue,
+  key: AnswerValue,
+) => {
+  const normalizedKey = getNormalizedMtqValue(key)
+  const normalizedSelected = getNormalizedMtqValue(selected)
+  return MTQ_COL_KEYS.reduce((sum, rowKey) => {
+    const selectedRow = normalizedSelected?.[rowKey] ?? []
+    if (selectedRow.length === 0) {
+      return sum + question.unattemptedMarking
+    }
+    return sum + (isExactMtqRow(normalizedKey, normalizedSelected, rowKey)
+      ? question.correctMarking
+      : question.incorrectMarking)
+  }, 0)
+}
+
+export const getQuestionMaxMarks = (question: Pick<QuestionRecord, 'qtype' | 'correctMarking'>) =>
+  question.qtype === 'MTQ'
+    ? question.correctMarking * MTQ_COL_KEYS.length
+    : question.correctMarking
+
 export const getAnswerForQuestion = (
   test: TestRecord,
   question: QuestionRecord,
@@ -150,6 +236,10 @@ const isUnattempted = (value: AnswerValue, qtype: QuestionType) => {
   }
   if (qtype === 'MAQ' && Array.isArray(value) && value.length === 0) {
     return true
+  }
+  if (qtype === 'MTQ') {
+    const mtq = getNormalizedMtqValue(value)
+    return !mtq || MTQ_COL_KEYS.every((rowKey) => mtq[rowKey].length === 0)
   }
   return false
 }
@@ -182,6 +272,17 @@ const matchesKey = (payload: {
       }
       return selectedNumeric >= option.min && selectedNumeric <= option.max
     })
+  }
+
+  if (qtype === 'MTQ') {
+    const normalizedKey = getNormalizedMtqValue(key)
+    const normalizedSelected = getNormalizedMtqValue(selected)
+    if (!normalizedKey || !normalizedSelected) {
+      return false
+    }
+    return MTQ_COL_KEYS.every((rowKey) =>
+      isExactMtqRow(normalizedKey, normalizedSelected, rowKey),
+    )
   }
 
   if (qtype === 'MAQ') {
@@ -273,10 +374,16 @@ export const getQuestionMark = (
   const selected = getAnswerForQuestion(test, question)
   const key = useOriginalKey ? question.correctAnswer : question.keyUpdate
   if (isBonusKey(key)) {
-    return question.correctMarking
+    return getQuestionMaxMarks(question)
   }
   if (isUnattempted(selected, question.qtype)) {
-    return question.unattemptedMarking
+    return question.qtype === 'MTQ'
+      ? question.unattemptedMarking * MTQ_COL_KEYS.length
+      : question.unattemptedMarking
+  }
+
+  if (question.qtype === 'MTQ') {
+    return scoreMtqQuestion(question, selected, key)
   }
 
   if (question.qtype === 'MAQ') {
@@ -301,6 +408,36 @@ export const getQuestionStatus = (
   }
 
   const key = question.keyUpdate
+  if (question.qtype === 'MTQ') {
+    const normalizedKey = getNormalizedMtqValue(key)
+    const normalizedSelected = getNormalizedMtqValue(selected)
+    if (!normalizedSelected) {
+      return 'Unattempted'
+    }
+    let exactRows = 0
+    let attemptedRows = 0
+    MTQ_COL_KEYS.forEach((rowKey) => {
+      const row = normalizedSelected[rowKey]
+      if (row.length === 0) {
+        return
+      }
+      attemptedRows += 1
+      if (isExactMtqRow(normalizedKey, normalizedSelected, rowKey)) {
+        exactRows += 1
+      }
+    })
+    if (attemptedRows === 0) {
+      return 'Unattempted'
+    }
+    if (exactRows === MTQ_COL_KEYS.length) {
+      return 'Correct'
+    }
+    if (exactRows > 0) {
+      return 'Partial'
+    }
+    return 'Incorrect'
+  }
+
   if (matchesKey({ selected, key, qtype: question.qtype })) {
     return 'Correct'
   }
@@ -324,6 +461,9 @@ export const formatAnswerValue = (value: AnswerValue) => {
   }
   if (Array.isArray(value)) {
     return value.join(',') || '-'
+  }
+  if (isMtqAnswerValue(value)) {
+    return MTQ_COL_KEYS.map((key) => `${key}:${value[key].join(',') || '-'}`).join(' | ')
   }
   if (isRangeValue(value)) {
     if (value.min === value.max) {

@@ -24,10 +24,19 @@ type ExistingQuestion = {
   optionContentB: string | null
   optionContentC: string | null
   optionContentD: string | null
+  mtqStatementP?: string | null
+  mtqStatementQ?: string | null
+  mtqStatementR?: string | null
+  mtqStatementS?: string | null
   correctAnswer: string | null
   keyUpdate: string | null
   markingOverridden?: boolean
 }
+
+const MTQ_COL_KEYS = ['A', 'B', 'C', 'D'] as const
+const MTQ_ROW_KEYS = ['P', 'Q', 'R', 'S'] as const
+
+type MtqAnswerValue = Record<(typeof MTQ_COL_KEYS)[number], Array<(typeof MTQ_ROW_KEYS)[number]>>
 
 const normalizeDate = (value: string) => {
   const trimmed = value.trim()
@@ -88,12 +97,61 @@ const parseStoredJson = (value: string | null) => {
 
 const serializeJson = (value: unknown) => JSON.stringify(value ?? null)
 
+const jsonEquals = (a: unknown, b: unknown) => JSON.stringify(a ?? null) === JSON.stringify(b ?? null)
+
+const isMtqAnswerValue = (value: unknown): value is MtqAnswerValue =>
+  Boolean(
+    value &&
+      typeof value === 'object' &&
+      !Array.isArray(value) &&
+      MTQ_COL_KEYS.every((key) => Array.isArray((value as Record<string, unknown>)[key])),
+  )
+
+const normalizeMtqAnswerValue = (value: unknown): MtqAnswerValue | null => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return null
+  }
+
+  const root = value as Record<string, unknown>
+  const normalized: MtqAnswerValue = {
+    A: [],
+    B: [],
+    C: [],
+    D: [],
+  }
+
+  let hasAny = false
+  MTQ_COL_KEYS.forEach((colKey) => {
+    const raw = root[colKey] ?? root[colKey.toLowerCase()]
+    if (!Array.isArray(raw)) {
+      return
+    }
+    normalized[colKey] = Array.from(
+      new Set(
+        raw
+          .map((item) => String(item).trim().toUpperCase())
+          .filter((item): item is (typeof MTQ_ROW_KEYS)[number] =>
+            MTQ_ROW_KEYS.includes(item as (typeof MTQ_ROW_KEYS)[number]),
+          ),
+      ),
+    ).sort((a, b) => MTQ_ROW_KEYS.indexOf(a) - MTQ_ROW_KEYS.indexOf(b))
+    if (normalized[colKey].length > 0) {
+      hasAny = true
+    }
+  })
+
+  return hasAny ? normalized : null
+}
+
 const isUnattemptedAnswer = (value: unknown, qtype: string) => {
   if (value === null || value === undefined) {
     return true
   }
   if (qtype === 'MAQ' && Array.isArray(value) && value.length === 0) {
     return true
+  }
+  if (qtype === 'MTQ' && isMtqAnswerValue(value)) {
+    return MTQ_COL_KEYS.every((key) => value[key].length === 0)
   }
   return false
 }
@@ -111,7 +169,7 @@ const hasAttemptedQuestion = (
   return questions.some((question) => !isUnattemptedAnswer(answers[question.id], question.qtype))
 }
 
-const QUESTION_TYPES: ScrapedQuestionType[] = ['MCQ', 'MAQ', 'NAT', 'VMAQ']
+const QUESTION_TYPES: ScrapedQuestionType[] = ['MCQ', 'MAQ', 'NAT', 'VMAQ', 'MTQ']
 
 const isQuestionType = (value: unknown): value is ScrapedQuestionType =>
   typeof value === 'string' && QUESTION_TYPES.includes(value as ScrapedQuestionType)
@@ -174,6 +232,8 @@ const getDefaultMarkingForType = (qtype: ScrapedQuestionType) => {
   switch (qtype) {
     case 'VMAQ':
       return { correct: 3, incorrect: -1, unattempted: 0 }
+    case 'MTQ':
+      return { correct: 2, incorrect: -1, unattempted: 0 }
     case 'MAQ':
       return { correct: 4, incorrect: -2, unattempted: 0 }
     case 'NAT':
@@ -228,15 +288,23 @@ const parseNumericValue = (value: string) => {
 }
 
 const parseAnswerValue = (
-  value: string | null,
+  value: unknown | null,
   qtype: ScrapedQuestionType,
 ) => {
   if (!value) {
     return null
   }
 
+  if (qtype === 'MTQ') {
+    return normalizeMtqAnswerValue(value)
+  }
+
   if (qtype === 'NAT') {
-    return parseNumericValue(value)
+    return typeof value === 'string' ? parseNumericValue(value) : null
+  }
+
+  if (typeof value !== 'string') {
+    return null
   }
 
   const tokens = parseOptionTokens(value)
@@ -260,6 +328,14 @@ const ensureAnswerValue = (
   }
   if (qtype === 'MAQ') {
     return []
+  }
+  if (qtype === 'MTQ') {
+    return {
+      A: [],
+      B: [],
+      C: [],
+      D: [],
+    }
   }
   if (qtype === 'NAT') {
     return 0
@@ -297,6 +373,10 @@ const buildQuestionSignature = (payload: {
   optionContentB?: string | null
   optionContentC?: string | null
   optionContentD?: string | null
+  mtqStatementP?: string | null
+  mtqStatementQ?: string | null
+  mtqStatementR?: string | null
+  mtqStatementS?: string | null
 }) =>
   [
     payload.subject,
@@ -307,6 +387,10 @@ const buildQuestionSignature = (payload: {
     normalizeSignatureText(payload.optionContentB),
     normalizeSignatureText(payload.optionContentC),
     normalizeSignatureText(payload.optionContentD),
+    normalizeSignatureText(payload.mtqStatementP),
+    normalizeSignatureText(payload.mtqStatementQ),
+    normalizeSignatureText(payload.mtqStatementR),
+    normalizeSignatureText(payload.mtqStatementS),
   ].join('|')
 
 const getSignatureSharedPassageContent = (question: {
@@ -319,7 +403,7 @@ const upsertExam = async (report: ScrapedReport) => {
   if (!normalized.externalExamId) {
     throw new Error('Missing external exam id.')
   }
-  const answerKeyBySourceNumber = new Map<number, string | null>()
+  const answerKeyBySourceNumber = new Map<number, unknown | null>()
   for (const answer of normalized.answers) {
     if (answer.correctAnswerRaw) {
       answerKeyBySourceNumber.set(answer.sourceNumber, answer.correctAnswerRaw)
@@ -361,6 +445,10 @@ const upsertExam = async (report: ScrapedReport) => {
       optionContentB: question.optionContentB,
       optionContentC: question.optionContentC,
       optionContentD: question.optionContentD,
+      mtqStatementP: question.mtqStatementP,
+      mtqStatementQ: question.mtqStatementQ,
+      mtqStatementR: question.mtqStatementR,
+      mtqStatementS: question.mtqStatementS,
     })
     const current = existingBySignature.get(signature) ?? []
     current.push(question)
@@ -397,6 +485,12 @@ const upsertExam = async (report: ScrapedReport) => {
             optionContentC: question.optionContentC,
             optionContentD: question.optionContentD,
           }
+    const mtqStatements = {
+      mtqStatementP: question.mtqStatementP,
+      mtqStatementQ: question.mtqStatementQ,
+      mtqStatementR: question.mtqStatementR,
+      mtqStatementS: question.mtqStatementS,
+    }
     const typeMarking =
       examSettings.markingScheme[storedQtype] ?? getDefaultMarkingForType(storedQtype)
     const fallbackCorrectAnswer =
@@ -426,6 +520,10 @@ const upsertExam = async (report: ScrapedReport) => {
         optionContentB: question.optionContentB,
         optionContentC: question.optionContentC,
         optionContentD: question.optionContentD,
+        mtqStatementP: question.mtqStatementP,
+        mtqStatementQ: question.mtqStatementQ,
+        mtqStatementR: question.mtqStatementR,
+        mtqStatementS: question.mtqStatementS,
       })
       const candidates = existingBySignature.get(signature) ?? []
       const candidate = candidates.find((item) => !usedExistingIds.has(item.id))
@@ -450,7 +548,8 @@ const upsertExam = async (report: ScrapedReport) => {
           sharedPassageOverridden: false,
           questionContent: question.questionContent,
           ...storedOptions,
-          hasPartial: storedQtype === 'MAQ',
+          ...mtqStatements,
+          hasPartial: storedQtype === 'MAQ' || storedQtype === 'MTQ',
           correctMarking: typeMarking.correct,
           incorrectMarking: typeMarking.incorrect,
           unattemptedMarking: typeMarking.unattempted,
@@ -475,8 +574,10 @@ const upsertExam = async (report: ScrapedReport) => {
     usedExistingIds.add(existing.id)
 
     const existingCorrectAnswer = parseStoredJson(existing.correctAnswer)
-    const shouldSetKeyUpdate = existing.keyUpdate === null
-    const nextCorrectAnswer = existingCorrectAnswer ?? ensuredCorrectAnswer
+    const existingKeyUpdate = parseStoredJson(existing.keyUpdate)
+    const shouldSetKeyUpdate =
+      existing.keyUpdate === null || jsonEquals(existingCorrectAnswer, existingKeyUpdate)
+    const nextCorrectAnswer = ensuredCorrectAnswer
     const nextSharedPassageSourceContent = question.sharedPassageContent
     const nextSharedPassageContent = existing.sharedPassageOverridden
       ? existing.sharedPassageContent ?? null
@@ -493,7 +594,8 @@ const upsertExam = async (report: ScrapedReport) => {
         sharedPassageSourceContent: nextSharedPassageSourceContent,
         questionContent: question.questionContent,
         ...storedOptions,
-        hasPartial: storedQtype === 'MAQ',
+        ...mtqStatements,
+        hasPartial: storedQtype === 'MAQ' || storedQtype === 'MTQ',
         ...(!existing.markingOverridden
           ? {
               correctMarking: typeMarking.correct,

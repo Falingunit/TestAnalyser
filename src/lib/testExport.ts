@@ -3,6 +3,7 @@ import type { QuestionRecord, TestRecord } from "@/lib/types";
 import {
   formatAnswerValue,
   getAnswerForQuestion,
+  getQuestionMaxMarks,
   getQuestionMark,
   getQuestionStatus,
   getTimeForQuestion,
@@ -103,7 +104,7 @@ const buildExportQuestions = (test: TestRecord) =>
       type: question.qtype,
       typeLabel: formatQuestionType(question.qtype),
       marks: {
-        correct: question.correctMarking,
+        correct: getQuestionMaxMarks(question),
         incorrect: question.incorrectMarking,
         unattempted: question.unattemptedMarking,
         hasPartial: question.hasPartial,
@@ -126,6 +127,15 @@ const buildExportQuestions = (test: TestRecord) =>
         picked: selectedOptionLabels.has(option.label),
         correct: correctOptionLabels.has(option.label),
       })),
+      mtqStatements:
+        question.qtype === "MTQ"
+          ? {
+              P: question.mtqStatementP,
+              Q: question.mtqStatementQ,
+              R: question.mtqStatementR,
+              S: question.mtqStatementS,
+            }
+          : null,
     };
   });
 
@@ -160,11 +170,32 @@ const buildQuestionPaperHtml = (test: TestRecord) => {
           `,
         )
         .join("");
+      const mtqStatements =
+        question.qtype === "MTQ"
+          ? (
+              [
+                ["P", question.mtqStatementP],
+                ["Q", question.mtqStatementQ],
+                ["R", question.mtqStatementR],
+                ["S", question.mtqStatementS],
+              ] as const
+            )
+              .filter(([, html]) => htmlHasVisibleContent(html))
+              .map(
+                ([label, html]) => `
+                  <div class="option-row">
+                    <div class="option-label">${label}.</div>
+                    <div class="option-body question-html">${html ?? ""}</div>
+                  </div>
+                `,
+              )
+              .join("")
+          : "";
 
       const meta = [
         question.subject,
         formatQuestionType(question.qtype),
-        `+${question.correctMarking}`,
+        `+${getQuestionMaxMarks(question)}`,
         String(question.incorrectMarking),
       ].join(" | ");
       const answerMeta = [
@@ -185,6 +216,7 @@ const buildQuestionPaperHtml = (test: TestRecord) => {
           </div>
           ${sharedPassage}
           <div class="question-body question-html">${question.questionContent}</div>
+          ${mtqStatements ? `<div class="options-grid">${mtqStatements}</div>` : ""}
           ${options ? `<div class="options-grid">${options}</div>` : ""}
           <div class="answer-strip">
             <strong>Answer key</strong>

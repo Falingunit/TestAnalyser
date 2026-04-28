@@ -170,6 +170,10 @@ export const finalizeQuestionContentAssets = async (payload: {
   optionContentB: string | null
   optionContentC: string | null
   optionContentD: string | null
+  mtqStatementP: string | null
+  mtqStatementQ: string | null
+  mtqStatementR: string | null
+  mtqStatementS: string | null
   solutionContent: string | null
   previousHtmlValues: Array<string | null | undefined>
 }) => {
@@ -180,6 +184,10 @@ export const finalizeQuestionContentAssets = async (payload: {
     optionContentB: payload.optionContentB,
     optionContentC: payload.optionContentC,
     optionContentD: payload.optionContentD,
+    mtqStatementP: payload.mtqStatementP,
+    mtqStatementQ: payload.mtqStatementQ,
+    mtqStatementR: payload.mtqStatementR,
+    mtqStatementS: payload.mtqStatementS,
     solutionContent: payload.solutionContent,
   }
   const tempPrefix = `${MANAGED_UPLOAD_PREFIX}${TEMP_SEGMENT}/${payload.userId}/`
@@ -228,6 +236,10 @@ export const finalizeQuestionContentAssets = async (payload: {
     fields.optionContentB,
     fields.optionContentC,
     fields.optionContentD,
+    fields.mtqStatementP,
+    fields.mtqStatementQ,
+    fields.mtqStatementR,
+    fields.mtqStatementS,
     fields.solutionContent,
   ])
 

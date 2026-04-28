@@ -10,6 +10,7 @@ export type UserPreferences = {
   fontScale: number
   acknowledgedKeyUpdates: Record<string, string>
   communitySolutionsEnabled: boolean
+  mtqShowContent: boolean
 }
 
 export type User = {
@@ -41,7 +42,7 @@ export type ExternalAccount = {
 
 export type Subject = 'PHYSICS' | 'CHEMISTRY' | 'MATHEMATICS'
 
-export type QuestionType = 'MCQ' | 'MAQ' | 'VMAQ' | 'NAT'
+export type QuestionType = 'MCQ' | 'MAQ' | 'VMAQ' | 'NAT' | 'MTQ'
 
 export type NumericRange = {
   min: number
@@ -52,11 +53,23 @@ export type BonusKey = {
   bonus: true
 }
 
+export type MtqRowKey = 'P' | 'Q' | 'R' | 'S'
+
+export type MtqColKey = 'A' | 'B' | 'C' | 'D'
+
+export type MtqAnswerValue = {
+  A: MtqRowKey[]
+  B: MtqRowKey[]
+  C: MtqRowKey[]
+  D: MtqRowKey[]
+}
+
 export type AnswerValue =
   | string
   | number
   | NumericRange
   | string[]
+  | MtqAnswerValue
   | BonusKey
   | null
 
@@ -92,6 +105,10 @@ export type QuestionRecord = {
   optionContentB: string | null
   optionContentC: string | null
   optionContentD: string | null
+  mtqStatementP: string | null
+  mtqStatementQ: string | null
+  mtqStatementR: string | null
+  mtqStatementS: string | null
   hasPartial: boolean
   correctMarking: number
   incorrectMarking: number

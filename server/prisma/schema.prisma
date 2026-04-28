@@ -86,6 +86,10 @@ model Question {
   optionContentB     String?
   optionContentC     String?
   optionContentD     String?
+  mtqStatementP      String?
+  mtqStatementQ      String?
+  mtqStatementR      String?
+  mtqStatementS      String?
   hasPartial         Boolean   @default(false)
   correctMarking     Int
   incorrectMarking   Int

@@ -56,6 +56,7 @@ type Store = {
   setAdminOverride: (enabled: boolean) => void;
   setFontScale: (scale: number) => void;
   setCommunitySolutionsEnabled: (enabled: boolean) => void;
+  setMtqShowContent: (enabled: boolean) => void;
   isBootstrapped: boolean;
   register: (payload: {
     name: string;
@@ -99,7 +100,7 @@ type Store = {
     testId: string;
     questionId: string;
     newKey: unknown;
-    qtype?: "MCQ" | "MAQ" | "NAT" | "VMAQ";
+    qtype?: "MCQ" | "MAQ" | "NAT" | "VMAQ" | "MTQ";
     markingScheme?: {
       correct: number;
       incorrect: number;
@@ -115,6 +116,10 @@ type Store = {
     optionContentB?: string | null;
     optionContentC?: string | null;
     optionContentD?: string | null;
+    mtqStatementP?: string | null;
+    mtqStatementQ?: string | null;
+    mtqStatementR?: string | null;
+    mtqStatementS?: string | null;
     solutionContent?: string | null;
   }) => Promise<AuthResult>;
   uploadTemporaryQuestionImage: (payload: {
@@ -326,6 +331,7 @@ const normalizePreferences = (
       fontScale: fallbackUi.fontScale,
       acknowledgedKeyUpdates: {},
       communitySolutionsEnabled: true,
+      mtqShowContent: true,
     };
   }
 
@@ -342,6 +348,10 @@ const normalizePreferences = (
     typeof prefs.communitySolutionsEnabled === "boolean"
       ? prefs.communitySolutionsEnabled
       : true;
+  const mtqShowContent =
+    typeof prefs.mtqShowContent === "boolean"
+      ? prefs.mtqShowContent
+      : true;
 
   return {
     theme,
@@ -349,6 +359,7 @@ const normalizePreferences = (
     fontScale,
     acknowledgedKeyUpdates,
     communitySolutionsEnabled,
+    mtqShowContent,
   };
 };
 
@@ -1232,6 +1243,10 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
     optionContentB,
     optionContentC,
     optionContentD,
+    mtqStatementP,
+    mtqStatementQ,
+    mtqStatementR,
+    mtqStatementS,
     solutionContent,
   }) => {
     const token = loadToken();
@@ -1252,6 +1267,10 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
             optionContentB,
             optionContentC,
             optionContentD,
+            mtqStatementP,
+            mtqStatementQ,
+            mtqStatementR,
+            mtqStatementS,
             solutionContent,
           }),
         },
@@ -1801,6 +1820,17 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
     });
   }, [savePreferences]);
 
+  const setMtqShowContent: Store["setMtqShowContent"] = useCallback((enabled) => {
+    const currentUser = currentUserRef.current;
+    if (!currentUser) {
+      return;
+    }
+    void savePreferences({
+      ...currentUser.preferences,
+      mtqShowContent: enabled,
+    });
+  }, [savePreferences]);
+
   const setShowComparison: Store["setShowComparison"] = useCallback((show) => {
     setShowComparisonState(show);
     saveShowComparison(show);
@@ -2052,6 +2082,7 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
     setAdminOverride,
     setFontScale,
     setCommunitySolutionsEnabled,
+    setMtqShowContent,
     isBootstrapped,
     register,
     login,
@@ -2106,6 +2137,7 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
     setAdminOverride,
     setFontScale,
     setCommunitySolutionsEnabled,
+    setMtqShowContent,
     isBootstrapped,
     register,
     login,

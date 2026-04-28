@@ -1,19 +1,23 @@
 export type ScrapedSubject = 'PHYSICS' | 'CHEMISTRY' | 'MATHEMATICS'
 
-export type ScrapedQuestionType = 'MCQ' | 'MAQ' | 'VMAQ' | 'NAT'
+export type ScrapedQuestionType = 'MCQ' | 'MAQ' | 'VMAQ' | 'NAT' | 'MTQ'
 
 export type ScrapedQuestion = {
   sourceNumber: number
   sourceQtypeRaw: string | null
   subject: ScrapedSubject
   qtype: ScrapedQuestionType
-  correctAnswerRaw: string | null
+  correctAnswerRaw: unknown | null
   sharedPassageContent: string | null
   questionContent: string
   optionContentA: string | null
   optionContentB: string | null
   optionContentC: string | null
   optionContentD: string | null
+  mtqStatementP: string | null
+  mtqStatementQ: string | null
+  mtqStatementR: string | null
+  mtqStatementS: string | null
   hasPartial: boolean
   correctMarking: number
   incorrectMarking: number
@@ -22,8 +26,8 @@ export type ScrapedQuestion = {
 
 export type ScrapedAnswer = {
   sourceNumber: number
-  selectedAnswerRaw: string | null
-  correctAnswerRaw: string | null
+  selectedAnswerRaw: unknown | null
+  correctAnswerRaw: unknown | null
   timeSpentSec?: number
 }
 

@@ -92,6 +92,9 @@ const tryParseJsonPayload = (text: string) => {
 
 const collapseText = (value: string) => value.replace(/\s+/g, ' ').trim()
 
+const MTQ_COL_KEYS = ['A', 'B', 'C', 'D'] as const
+const MTQ_ROW_KEYS = ['P', 'Q', 'R', 'S'] as const
+
 const normalizeOptionalText = (value: unknown) => {
   if (typeof value !== 'string') {
     return ''
@@ -156,6 +159,9 @@ const normalizeQuestionType = (value: unknown): ScrapedQuestionType | null => {
   if (trimmed.includes('VMAQ')) {
     return 'VMAQ'
   }
+  if (trimmed.includes('MTQ')) {
+    return 'MTQ'
+  }
   if (trimmed.includes('MAQ') || trimmed.includes('MSQ') || trimmed.includes('MULT')) {
     return 'MAQ'
   }
@@ -200,6 +206,43 @@ const normalizeAnswer = (value: string | null) => {
   return trimmed
 }
 
+const normalizeMtqAnswer = (value: unknown) => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return null
+  }
+
+  const root = value as Record<string, unknown>
+  const result: Record<(typeof MTQ_COL_KEYS)[number], Array<(typeof MTQ_ROW_KEYS)[number]>> = {
+    A: [],
+    B: [],
+    C: [],
+    D: [],
+  }
+
+  let hasAny = false
+  for (const colKey of MTQ_COL_KEYS) {
+    const raw = root[colKey.toLowerCase()] ?? root[colKey]
+    if (!Array.isArray(raw)) {
+      continue
+    }
+    const normalized = Array.from(
+      new Set(
+        raw
+          .map((item) => String(item).trim().toUpperCase())
+          .filter((item): item is (typeof MTQ_ROW_KEYS)[number] =>
+            MTQ_ROW_KEYS.includes(item as (typeof MTQ_ROW_KEYS)[number]),
+          ),
+      ),
+    ).sort((a, b) => MTQ_ROW_KEYS.indexOf(a) - MTQ_ROW_KEYS.indexOf(b))
+    result[colKey] = normalized
+    if (normalized.length > 0) {
+      hasAny = true
+    }
+  }
+
+  return hasAny ? result : null
+}
+
 const isNumericAnswer = (value: string) => {
   const trimmed = value.trim()
   if (!trimmed) {
@@ -214,11 +257,14 @@ const isNumericAnswer = (value: string) => {
 const inferQuestionType = (payload: {
   metaTypeText: string | null
   hasOptions: boolean
-  correctAnswerRaw: string | null
+  correctAnswerRaw: unknown | null
 }): ScrapedQuestionType => {
   const meta = payload.metaTypeText?.toLowerCase() ?? ''
   if (meta.includes('vmaq')) {
     return 'VMAQ'
+  }
+  if (meta.includes('mtq')) {
+    return 'MTQ'
   }
   if (meta.includes('maq') || meta.includes('multiple')) {
     return 'MAQ'
@@ -232,10 +278,23 @@ const inferQuestionType = (payload: {
   if (!payload.hasOptions) {
     return 'NAT'
   }
-  if (payload.correctAnswerRaw && payload.correctAnswerRaw.includes(',')) {
+  if (
+    payload.correctAnswerRaw &&
+    typeof payload.correctAnswerRaw === 'object' &&
+    !Array.isArray(payload.correctAnswerRaw)
+  ) {
+    return 'MTQ'
+  }
+  if (
+    typeof payload.correctAnswerRaw === 'string' &&
+    payload.correctAnswerRaw.includes(',')
+  ) {
     return 'MAQ'
   }
-  if (payload.correctAnswerRaw && isNumericAnswer(payload.correctAnswerRaw)) {
+  if (
+    typeof payload.correctAnswerRaw === 'string' &&
+    isNumericAnswer(payload.correctAnswerRaw)
+  ) {
     return 'NAT'
   }
   return 'MCQ'
@@ -245,6 +304,8 @@ const getMarkingForType = (qtype: ScrapedQuestionType) => {
   switch (qtype) {
     case 'VMAQ':
       return { correct: 3, incorrect: -1, unattempted: 0 }
+    case 'MTQ':
+      return { correct: 2, incorrect: -1, unattempted: 0 }
     case 'MAQ':
       return { correct: 4, incorrect: -2, unattempted: 0 }
     case 'NAT':
@@ -353,12 +414,14 @@ const parseQuestionwisePayload = (
       typeof row.question_type === 'string' && row.question_type.trim()
         ? row.question_type.trim()
         : null
+    const rawCorrectAnswer = includeCorrectAnswer ? row.ans : null
     const correctAnswerRaw = includeCorrectAnswer
-      ? normalizeAnswer(
-          typeof row.ans === 'string'
-            ? row.ans
-            : typeof row.ans === 'number'
-              ? String(row.ans)
+      ? normalizeMtqAnswer(rawCorrectAnswer) ??
+        normalizeAnswer(
+          typeof rawCorrectAnswer === 'string'
+            ? rawCorrectAnswer
+            : typeof rawCorrectAnswer === 'number'
+              ? String(rawCorrectAnswer)
               : null,
         )
       : null
@@ -391,7 +454,11 @@ const parseQuestionwisePayload = (
       optionContentB: optionB,
       optionContentC: optionC,
       optionContentD: optionD,
-      hasPartial: qtype === 'MAQ',
+      mtqStatementP: typeof row.pques === 'string' ? row.pques : null,
+      mtqStatementQ: typeof row.qques === 'string' ? row.qques : null,
+      mtqStatementR: typeof row.rques === 'string' ? row.rques : null,
+      mtqStatementS: typeof row.sques === 'string' ? row.sques : null,
+      hasPartial: qtype === 'MAQ' || qtype === 'MTQ',
       correctMarking: marking.correct,
       incorrectMarking: marking.incorrect,
       unattemptedMarking: marking.unattempted,
@@ -401,7 +468,8 @@ const parseQuestionwisePayload = (
     const isUnattempted = ansStatus.toLowerCase().includes('unattempt')
     const studentAnswerRaw = isUnattempted
       ? null
-      : normalizeAnswer(
+      : normalizeMtqAnswer(row.std_ans) ??
+        normalizeAnswer(
           typeof row.std_ans === 'string'
             ? row.std_ans
             : typeof row.std_ans === 'number'

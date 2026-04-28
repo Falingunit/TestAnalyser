@@ -5,6 +5,7 @@ import {
   serializeAttempt,
   parseStoredJson,
   getQuestionMarkForAnswer,
+  getQuestionMaxMarks,
   buildExternalParticipantNameMeta,
   buildParticipantKeyByUserId,
 } from './tests.js'
@@ -229,7 +230,7 @@ router.get('/:id', requireAuth, async (req: AuthRequest, res, next) => {
         const subj = question.subject
         if (!subjectMap[subj]) subjectMap[subj] = { score: 0, total: 0 }
         subjectMap[subj].score += mark
-        subjectMap[subj].total += question.correctMarking
+        subjectMap[subj].total += getQuestionMaxMarks(question)
         
         return sum + mark
       }, 0)
@@ -238,7 +239,7 @@ router.get('/:id', requireAuth, async (req: AuthRequest, res, next) => {
       subjectScoresByAttemptId.set(item.id, subjectMap)
 
       if (!totalScoreByExamId.has(item.examId)) {
-        const total = item.exam.questions.reduce((sum, q) => sum + q.correctMarking, 0)
+        const total = item.exam.questions.reduce((sum, q) => sum + getQuestionMaxMarks(q), 0)
         totalScoreByExamId.set(item.examId, total)
       }
     })
