@@ -20,6 +20,11 @@ import {
 
 const router = Router()
 
+const MTQ_COL_KEYS = ['A', 'B', 'C', 'D'] as const
+const MTQ_ROW_KEYS = ['P', 'Q', 'R', 'S'] as const
+
+type MtqAnswerValue = Record<(typeof MTQ_COL_KEYS)[number], Array<(typeof MTQ_ROW_KEYS)[number]>>
+
 export const parseStoredJson = (value: string | null) => {
   if (value === null) {
     return null
@@ -53,6 +58,137 @@ const getKeyOptionGroups = (value: unknown): string[][] => {
   return []
 }
 
+const isMtqAnswerValue = (value: unknown): value is MtqAnswerValue =>
+  Boolean(
+    value &&
+      typeof value === 'object' &&
+      !Array.isArray(value) &&
+      MTQ_COL_KEYS.every((key) => Array.isArray((value as Record<string, unknown>)[key])),
+  )
+
+export const normalizeMtqAnswerValue = (value: unknown): MtqAnswerValue | null => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return null
+  }
+
+  const root = value as Record<string, unknown>
+  const normalized: MtqAnswerValue = {
+    A: [],
+    B: [],
+    C: [],
+    D: [],
+  }
+  let hasAny = false
+
+  MTQ_COL_KEYS.forEach((colKey) => {
+    const raw = root[colKey] ?? root[colKey.toLowerCase()]
+    if (!Array.isArray(raw)) {
+      return
+    }
+    normalized[colKey] = Array.from(
+      new Set(
+        raw
+          .map((item) => String(item).trim().toUpperCase())
+          .filter((item): item is (typeof MTQ_ROW_KEYS)[number] =>
+            MTQ_ROW_KEYS.includes(item as (typeof MTQ_ROW_KEYS)[number]),
+          ),
+      ),
+    ).sort((a, b) => MTQ_ROW_KEYS.indexOf(a) - MTQ_ROW_KEYS.indexOf(b))
+    if (normalized[colKey].length > 0) {
+      hasAny = true
+    }
+  })
+
+  return hasAny ? normalized : null
+}
+
+const getNormalizedMtqValue = (value: unknown) =>
+  isMtqAnswerValue(value) ? value : normalizeMtqAnswerValue(value)
+
+export const isMtqRowBlank = (value: unknown, rowKey: (typeof MTQ_COL_KEYS)[number]) => {
+  const mtq = getNormalizedMtqValue(value)
+  return !mtq || mtq[rowKey].length === 0
+}
+
+export const scoreMtqRow = (
+  question: {
+    correctMarking: number
+    incorrectMarking: number
+    unattemptedMarking: number
+  },
+  key: unknown,
+  selected: unknown,
+  rowKey: (typeof MTQ_COL_KEYS)[number],
+) => {
+  const normalizedKey = getNormalizedMtqValue(key)
+  const normalizedSelected = getNormalizedMtqValue(selected)
+  const keyRow = normalizedKey?.[rowKey] ?? []
+  const selectedRow = normalizedSelected?.[rowKey] ?? []
+
+  if (selectedRow.length === 0) {
+    return question.unattemptedMarking
+  }
+  if (keyRow.length === selectedRow.length && keyRow.every((value, index) => value === selectedRow[index])) {
+    return question.correctMarking
+  }
+  return question.incorrectMarking
+}
+
+export const scoreMtqQuestion = (
+  question: {
+    correctMarking: number
+    incorrectMarking: number
+    unattemptedMarking: number
+  },
+  key: unknown,
+  selected: unknown,
+) =>
+  MTQ_COL_KEYS.reduce(
+    (sum, rowKey) => sum + scoreMtqRow(question, key, selected, rowKey),
+    0,
+  )
+
+export const getMtqQuestionMaxMarks = (question: { correctMarking: number }) =>
+  question.correctMarking * MTQ_COL_KEYS.length
+
+export const getMtqQuestionStatus = (key: unknown, selected: unknown) => {
+  const normalizedKey = getNormalizedMtqValue(key)
+  const normalizedSelected = getNormalizedMtqValue(selected)
+  if (!normalizedSelected) {
+    return 'Unattempted'
+  }
+
+  let exactRows = 0
+  let attemptedRows = 0
+  MTQ_COL_KEYS.forEach((rowKey) => {
+    const selectedRow = normalizedSelected[rowKey]
+    if (selectedRow.length === 0) {
+      return
+    }
+    attemptedRows += 1
+    const keyRow = normalizedKey?.[rowKey] ?? []
+    if (keyRow.length === selectedRow.length && keyRow.every((value, index) => value === selectedRow[index])) {
+      exactRows += 1
+    }
+  })
+
+  if (attemptedRows === 0) {
+    return 'Unattempted'
+  }
+  if (exactRows === MTQ_COL_KEYS.length) {
+    return 'Correct'
+  }
+  if (exactRows > 0) {
+    return 'Partial'
+  }
+  return 'Incorrect'
+}
+
+export const getQuestionMaxMarks = (question: { qtype: string; correctMarking: number }) =>
+  question.qtype === 'MTQ'
+    ? getMtqQuestionMaxMarks(question)
+    : question.correctMarking
+
 export const getQuestionMarkForAnswer = (
   question: {
     qtype: string
@@ -66,10 +202,16 @@ export const getQuestionMarkForAnswer = (
 ) => {
   const key = resolveQuestionKey(question)
   if (isBonusKey(key)) {
-    return question.correctMarking
+    return getQuestionMaxMarks(question)
   }
   if (isUnattemptedAnswer(selected, question.qtype)) {
-    return question.unattemptedMarking
+    return question.qtype === 'MTQ'
+      ? question.unattemptedMarking * MTQ_COL_KEYS.length
+      : question.unattemptedMarking
+  }
+
+  if (question.qtype === 'MTQ') {
+    return scoreMtqQuestion(question, key, selected)
   }
 
   if (question.qtype === 'NAT') {
@@ -279,6 +421,10 @@ export const serializeAttempt = (
         optionContentB: string | null
         optionContentC: string | null
         optionContentD: string | null
+        mtqStatementP?: string | null
+        mtqStatementQ?: string | null
+        mtqStatementR?: string | null
+        mtqStatementS?: string | null
         hasPartial: boolean
         correctMarking: number
         incorrectMarking: number
@@ -347,6 +493,10 @@ export const serializeAttempt = (
       optionContentB: question.optionContentB,
       optionContentC: question.optionContentC,
       optionContentD: question.optionContentD,
+      mtqStatementP: question.mtqStatementP ?? null,
+      mtqStatementQ: question.mtqStatementQ ?? null,
+      mtqStatementR: question.mtqStatementR ?? null,
+      mtqStatementS: question.mtqStatementS ?? null,
       hasPartial: question.hasPartial,
       correctMarking: question.correctMarking,
       incorrectMarking: question.incorrectMarking,
@@ -508,6 +658,10 @@ const isUnattemptedAnswer = (value: unknown, qtype: string) => {
   if (qtype === 'MAQ' && Array.isArray(value) && value.length === 0) {
     return true
   }
+  if (qtype === 'MTQ') {
+    const mtq = getNormalizedMtqValue(value)
+    return !mtq || MTQ_COL_KEYS.every((rowKey) => mtq[rowKey].length === 0)
+  }
   return false
 }
 
@@ -630,12 +784,37 @@ const buildPeerAnswerStatsByExam = (
           stats[question.id] = entry
           return
         }
-        const selections = toOptionArray(value)
-        selections.forEach((option) => {
-          entry.options[option] = (entry.options[option] ?? 0) + 1
-        })
-        if (question.qtype === 'NAT') {
+        if (question.qtype !== 'MTQ') {
+          const selections = toOptionArray(value)
+          selections.forEach((option) => {
+            entry.options[option] = (entry.options[option] ?? 0) + 1
+          })
+        }
+        if (question.qtype === 'MTQ') {
+          if (getMtqQuestionStatus(question.key, value) === 'Correct') {
+            entry.correct += 1
+          } else {
+            entry.incorrect += 1
+          }
+        } else if (question.qtype === 'NAT') {
           if (isNumericCorrect(value, question.key)) {
+            entry.correct += 1
+          } else {
+            entry.incorrect += 1
+          }
+        } else {
+          const mark = getQuestionMarkForAnswer(
+            {
+              qtype: question.qtype,
+              correctAnswer: serializeJson(question.key),
+              keyUpdate: null,
+              correctMarking: question.correctMarking,
+              incorrectMarking: question.incorrectMarking,
+              unattemptedMarking: question.unattemptedMarking,
+            },
+            value,
+          )
+          if (mark === question.correctMarking) {
             entry.correct += 1
           } else {
             entry.incorrect += 1
@@ -1142,7 +1321,7 @@ const toFiniteInteger = (value: unknown) => {
   return parsed
 }
 
-const QUESTION_TYPES = ['MCQ', 'MAQ', 'NAT', 'VMAQ'] as const
+const QUESTION_TYPES = ['MCQ', 'MAQ', 'NAT', 'VMAQ', 'MTQ'] as const
 
 const isQuestionType = (value: unknown): value is (typeof QUESTION_TYPES)[number] =>
   typeof value === 'string' && QUESTION_TYPES.includes(value as (typeof QUESTION_TYPES)[number])
@@ -1151,6 +1330,8 @@ const getDefaultMarkingForType = (qtype: (typeof QUESTION_TYPES)[number]) => {
   switch (qtype) {
     case 'VMAQ':
       return { correct: 3, incorrect: -1, unattempted: 0 }
+    case 'MTQ':
+      return { correct: 2, incorrect: -1, unattempted: 0 }
     case 'MAQ':
       return { correct: 4, incorrect: -2, unattempted: 0 }
     case 'NAT':
@@ -1456,7 +1637,7 @@ router.get('/:id/leaderboard', requireAuth, async (req: AuthRequest, res, next) 
 
     const scoreByAttemptId = new Map<string, number>()
     const totalScore = attempt.exam.questions.reduce(
-      (sum, question) => sum + question.correctMarking,
+      (sum, question) => sum + getQuestionMaxMarks(question),
       0,
     )
     examAttempts.forEach((item) => {
@@ -2493,6 +2674,10 @@ router.post(
         optionContentB: normalizeHtmlField(req.body?.optionContentB),
         optionContentC: normalizeHtmlField(req.body?.optionContentC),
         optionContentD: normalizeHtmlField(req.body?.optionContentD),
+        mtqStatementP: normalizeHtmlField(req.body?.mtqStatementP),
+        mtqStatementQ: normalizeHtmlField(req.body?.mtqStatementQ),
+        mtqStatementR: normalizeHtmlField(req.body?.mtqStatementR),
+        mtqStatementS: normalizeHtmlField(req.body?.mtqStatementS),
         solutionContent: normalizeHtmlField(req.body?.solutionContent),
         previousHtmlValues: [
           (examQuestion as { sharedPassageContent?: string | null }).sharedPassageContent ??
@@ -2502,6 +2687,10 @@ router.post(
           examQuestion.optionContentB,
           examQuestion.optionContentC,
           examQuestion.optionContentD,
+          (examQuestion as { mtqStatementP?: string | null }).mtqStatementP ?? null,
+          (examQuestion as { mtqStatementQ?: string | null }).mtqStatementQ ?? null,
+          (examQuestion as { mtqStatementR?: string | null }).mtqStatementR ?? null,
+          (examQuestion as { mtqStatementS?: string | null }).mtqStatementS ?? null,
           (examQuestion as { solutionContent?: string | null }).solutionContent ??
             null,
         ],
@@ -2520,6 +2709,26 @@ router.post(
         : null
       const currentSolutionContent =
         (examQuestion as { solutionContent?: string | null }).solutionContent ?? null
+      const nextMtqStatementP = hasVisibleHtmlContent(finalized.mtqStatementP)
+        ? finalized.mtqStatementP
+        : null
+      const nextMtqStatementQ = hasVisibleHtmlContent(finalized.mtqStatementQ)
+        ? finalized.mtqStatementQ
+        : null
+      const nextMtqStatementR = hasVisibleHtmlContent(finalized.mtqStatementR)
+        ? finalized.mtqStatementR
+        : null
+      const nextMtqStatementS = hasVisibleHtmlContent(finalized.mtqStatementS)
+        ? finalized.mtqStatementS
+        : null
+      const currentMtqStatementP =
+        (examQuestion as { mtqStatementP?: string | null }).mtqStatementP ?? null
+      const currentMtqStatementQ =
+        (examQuestion as { mtqStatementQ?: string | null }).mtqStatementQ ?? null
+      const currentMtqStatementR =
+        (examQuestion as { mtqStatementR?: string | null }).mtqStatementR ?? null
+      const currentMtqStatementS =
+        (examQuestion as { mtqStatementS?: string | null }).mtqStatementS ?? null
       const nextSharedPassageOverridden =
         nextSharedPassageContent !== currentSharedPassageSourceContent
 
@@ -2530,6 +2739,10 @@ router.post(
         examQuestion.optionContentB !== finalized.optionContentB ||
         examQuestion.optionContentC !== finalized.optionContentC ||
         examQuestion.optionContentD !== finalized.optionContentD ||
+        nextMtqStatementP !== currentMtqStatementP ||
+        nextMtqStatementQ !== currentMtqStatementQ ||
+        nextMtqStatementR !== currentMtqStatementR ||
+        nextMtqStatementS !== currentMtqStatementS ||
         nextSolutionContent !== currentSolutionContent ||
         nextSharedPassageOverridden !==
           ((examQuestion as { sharedPassageOverridden?: boolean }).sharedPassageOverridden ??
@@ -2546,6 +2759,10 @@ router.post(
             "optionContentB" = ${finalized.optionContentB},
             "optionContentC" = ${finalized.optionContentC},
             "optionContentD" = ${finalized.optionContentD},
+            "mtqStatementP" = ${nextMtqStatementP},
+            "mtqStatementQ" = ${nextMtqStatementQ},
+            "mtqStatementR" = ${nextMtqStatementR},
+            "mtqStatementS" = ${nextMtqStatementS},
             "solutionContent" = ${nextSolutionContent}
           WHERE "id" = ${examQuestion.id}
         `
@@ -2635,9 +2852,14 @@ router.post('/:id/answer-key', requireAuth, async (req: AuthRequest, res, next) 
       return res.status(404).json({ error: 'Question not found.' })
     }
 
-    const normalizedKey =
-      typeof newKey === 'string' ? newKey.trim().toUpperCase() : newKey
     const nextQtype = isQuestionType(qtype) ? qtype : null
+    const effectiveQtype = nextQtype ?? (examQuestion.qtype as (typeof QUESTION_TYPES)[number])
+    const normalizedKey =
+      effectiveQtype === 'MTQ'
+        ? normalizeMtqAnswerValue(newKey)
+        : typeof newKey === 'string'
+          ? newKey.trim().toUpperCase()
+          : newKey
     const hasKeyUpdate = normalizedKey !== undefined && normalizedKey !== null
     const hasQtypeUpdate = nextQtype !== null
     const nextCorrect = toFiniteInteger(markingScheme?.correct)
@@ -2703,7 +2925,7 @@ router.post('/:id/answer-key', requireAuth, async (req: AuthRequest, res, next) 
         ...(qtypeChanged && nextQtype
           ? {
               qtype: nextQtype,
-              hasPartial: nextQtype === 'MAQ',
+              hasPartial: nextQtype === 'MAQ' || nextQtype === 'MTQ',
               ...(!hasMarkingUpdate ? getDefaultMarkingForType(nextQtype) : {}),
             }
           : {}),
@@ -3183,7 +3405,7 @@ router.post('/:id/marking-scheme', requireAuth, async (req: AuthRequest, res, ne
           where: { id: question.id },
           data: {
             qtype: nextQtype,
-            hasPartial: nextQtype === 'MAQ',
+            hasPartial: nextQtype === 'MAQ' || nextQtype === 'MTQ',
             ...(!question.markingOverridden
               ? (mergedMarkingScheme[nextQtype] ?? getDefaultMarkingForType(nextQtype))
               : {}),

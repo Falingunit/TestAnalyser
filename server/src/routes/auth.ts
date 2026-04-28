@@ -12,6 +12,7 @@ const defaultPreferences = {
   fontScale: 1,
   acknowledgedKeyUpdates: {},
   communitySolutionsEnabled: true,
+  mtqShowContent: true,
 }
 
 const sanitizeEmail = (email: string) => email.trim().toLowerCase()
@@ -42,6 +43,9 @@ const normalizePreferences = (value: unknown, existing: Record<string, unknown>)
     if (typeof prefs.communitySolutionsEnabled === 'boolean') {
       next.communitySolutionsEnabled = prefs.communitySolutionsEnabled
     }
+    if (typeof prefs.mtqShowContent === 'boolean') {
+      next.mtqShowContent = prefs.mtqShowContent
+    }
   }
   if (!next.theme) {
     next.theme = defaultPreferences.theme
@@ -57,6 +61,9 @@ const normalizePreferences = (value: unknown, existing: Record<string, unknown>)
   }
   if (typeof next.communitySolutionsEnabled !== 'boolean') {
     next.communitySolutionsEnabled = defaultPreferences.communitySolutionsEnabled
+  }
+  if (typeof next.mtqShowContent !== 'boolean') {
+    next.mtqShowContent = defaultPreferences.mtqShowContent
   }
   return next
 }
