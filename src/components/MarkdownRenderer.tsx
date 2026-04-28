@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, memo } from "react";
 import ReactMarkdown from "react-markdown";
+import remarkBreaks from "remark-breaks";
 import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
 import { ImageZoomDialog } from "@/components/ImageZoomDialog";
@@ -13,7 +14,7 @@ type MarkdownRendererProps = {
   markdown: string;
 };
 
-export const MarkdownRenderer = ({
+export const MarkdownRenderer = memo(({
   className,
   imageZoomAlt,
   imageZoomInvertOnDark = false,
@@ -29,28 +30,45 @@ export const MarkdownRenderer = ({
     }
 
     let cancelled = false;
-    void (async () => {
-      try {
-        await typesetMathInElement(container);
-      } catch (error) {
-        if (!cancelled) {
-          console.error(error);
+    // Use requestAnimationFrame to ensure the DOM has been painted and is stable
+    const rafId = window.requestAnimationFrame(() => {
+      void (async () => {
+        try {
+          if (cancelled) return;
+          await typesetMathInElement(container);
+        } catch (error) {
+          if (!cancelled) {
+            console.error(error);
+          }
         }
-      }
-    })();
+      })();
+    });
 
     return () => {
       cancelled = true;
+      window.cancelAnimationFrame(rafId);
     };
   }, [markdown]);
 
   return (
     <>
-      <div ref={ref} className={cn("markdown-body", className)}>
+      <div ref={ref} className={cn("markdown-body tex2jax_process", className)}>
         <ReactMarkdown
           skipHtml
-          remarkPlugins={[remarkGfm, remarkMath]}
+          remarkPlugins={[remarkGfm, remarkMath, remarkBreaks]}
           components={{
+            span: ({ className, children }) => {
+              if (String(className ?? "").includes("math-inline")) {
+                return <span className={className}>${children}$</span>;
+              }
+              return <span className={className}>{children}</span>;
+            },
+            div: ({ className, children }) => {
+              if (String(className ?? "").includes("math-display")) {
+                return <span className={className}>$${children}$$</span>;
+              }
+              return <div className={className}>{children}</div>;
+            },
             a: ({ className: linkClassName, ...props }) => (
               <a
                 {...props}
@@ -81,7 +99,28 @@ export const MarkdownRenderer = ({
               />
             ),
             code: ({ className: codeClassName, children, ...props }) => {
-              const isInline = !String(codeClassName ?? "").includes("language-");
+              const classNameString = String(codeClassName ?? "");
+              const isInline = !classNameString.includes("language-");
+              const isMath =
+                classNameString.includes("language-math") ||
+                classNameString.includes("math-inline") ||
+                classNameString.includes("math-display");
+
+              if (isMath) {
+                const isDisplay =
+                  classNameString.includes("math-display") || !isInline;
+                const content = String(children).trim();
+                return isDisplay ? (
+                  <span className="math-display">
+                    $${content}$$
+                  </span>
+                ) : (
+                  <span className="math-inline">
+                    ${content}$
+                  </span>
+                );
+              }
+
               if (isInline) {
                 return (
                   <code
@@ -152,4 +191,6 @@ export const MarkdownRenderer = ({
       />
     </>
   );
-};
+});
+
+MarkdownRenderer.displayName = "MarkdownRenderer";

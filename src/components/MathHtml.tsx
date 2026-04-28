@@ -1,5 +1,6 @@
 import { useEffect, useRef, type CSSProperties, type MouseEventHandler } from "react";
 import { typesetMathInElement } from "@/lib/mathJax";
+import { cn } from "@/lib/utils";
 
 type MathHtmlProps = {
   className?: string;
@@ -47,7 +48,7 @@ export const MathHtml = ({
   return (
     <div
       ref={ref}
-      className={className}
+      className={cn("tex2jax_process", className)}
       style={style}
       onClick={onClick}
     />
