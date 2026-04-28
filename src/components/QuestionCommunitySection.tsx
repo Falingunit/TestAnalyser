@@ -6,7 +6,6 @@ import {
   ClipboardPaste,
   ImagePlus,
   Loader2,
-  MessageSquare,
   Pencil,
   Pin,
   Plus,
