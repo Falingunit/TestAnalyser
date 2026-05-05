@@ -1,4 +1,4 @@
-import { useId, useRef, useState, type ClipboardEvent } from "react";
+import { useEffect, useId, useRef, useState, type ClipboardEvent } from "react";
 import { ImagePlus, Loader2, ClipboardPaste } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -55,7 +55,9 @@ export const MarkdownComposer = ({
   const [activeTab, setActiveTab] = useState("write");
   const [isUploading, setIsUploading] = useState(false);
 
-  valueRef.current = value;
+  useEffect(() => {
+    valueRef.current = value;
+  }, [value]);
 
   const insertImageMarkdown = (imageUrl: string, altText = "image") => {
     const textarea = textareaRef.current;

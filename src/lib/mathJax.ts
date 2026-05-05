@@ -1,10 +1,20 @@
 declare global {
   interface Window {
     MathJax?: {
+      loader?: {
+        load?: string[];
+      };
       tex?: {
         inlineMath?: string[][];
         displayMath?: string[][];
         processEscapes?: boolean;
+        packages?: Record<string, string[]>;
+      };
+      options?: {
+        processHtmlClass?: string;
+      };
+      chtml?: {
+        displayAlign?: string;
       };
       svg?: {
         fontCache?: string;
@@ -85,7 +95,7 @@ export const ensureMathJax = () => {
     startup: {
       typeset: false,
     },
-  } as any;
+  };
 
   window.__mathJaxLoaderPromise__ = new Promise<void>((resolve, reject) => {
     const existingScript = document.getElementById(

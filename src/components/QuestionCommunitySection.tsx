@@ -1,4 +1,4 @@
-import { useEffect, useEffectEvent, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ClipboardEvent } from "react";
 import {
   ArrowBigDown,
@@ -95,18 +95,20 @@ const CommunityMarkdownEditor = ({
   const tempImageUrlsRef = useRef<string[]>([]);
   const shouldCleanupOnUnmountRef = useRef(true);
 
-  const discardTemporaryImagesEvent = useEffectEvent(async (urls: string[]) => {
+  const discardTemporaryImages = useCallback(async (urls: string[]) => {
     await discardTemporaryCommunityImages({
       testId,
       questionId,
       urls,
     });
-  });
+  }, [discardTemporaryCommunityImages, questionId, testId]);
 
   useEffect(() => {
-    setDraft(defaultValue);
-    setMessage(null);
-    setActiveTab("write");
+    queueMicrotask(() => {
+      setDraft(defaultValue);
+      setMessage(null);
+      setActiveTab("write");
+    });
   }, [defaultValue]);
 
   useEffect(() => {
@@ -122,9 +124,9 @@ const CommunityMarkdownEditor = ({
       if (urls.length === 0) {
         return;
       }
-      void discardTemporaryImagesEvent(urls);
+      void discardTemporaryImages(urls);
     };
-  }, []); // Only run on unmount
+  }, [discardTemporaryImages]); // Only run on unmount
 
   const cleanupTemporaryImages = async () => {
     const pending = tempImageUrlsRef.current;
@@ -133,7 +135,7 @@ const CommunityMarkdownEditor = ({
     }
     tempImageUrlsRef.current = [];
     setTempImageUrls([]);
-    await discardTemporaryImagesEvent(pending);
+    await discardTemporaryImages(pending);
   };
 
   const handleCancel = async () => {
@@ -551,12 +553,12 @@ export const QuestionCommunitySection = ({
       images.forEach((img) => {
         if (img.complete && img.naturalWidth === 0) {
           img.style.display = "none";
-          (img as any)._hiddenByCapture = true;
+          img.dataset.hiddenByCapture = "true";
         }
       });
 
       unwanted.forEach((el) => {
-        (el as any)._prevDisplay = el.style.display;
+        el.dataset.capturePrevDisplay = el.style.display;
         el.style.display = "none";
       });
 
@@ -609,13 +611,14 @@ export const QuestionCommunitySection = ({
         node.removeChild(styleTag);
       }
       unwanted.forEach((el) => {
-        el.style.display = (el as any)._prevDisplay || "";
+        el.style.display = el.dataset.capturePrevDisplay ?? "";
+        delete el.dataset.capturePrevDisplay;
       });
       const images = node.querySelectorAll("img");
       images.forEach((img) => {
-        if ((img as any)._hiddenByCapture) {
+        if (img.dataset.hiddenByCapture) {
           img.style.display = "";
-          delete (img as any)._hiddenByCapture;
+          delete img.dataset.hiddenByCapture;
         }
       });
       setIsCopying(false);
@@ -628,7 +631,11 @@ export const QuestionCommunitySection = ({
     }
 
     let cancelled = false;
-    setIsLoading(true);
+    queueMicrotask(() => {
+      if (!cancelled) {
+        setIsLoading(true);
+      }
+    });
 
     void (async () => {
       const result = await fetchQuestionCommunity({ testId, questionId });
@@ -671,13 +678,17 @@ export const QuestionCommunitySection = ({
   );
 
   useEffect(() => {
-    setEditingCommentId(null);
-    setReplyingSolutionId(null);
+    queueMicrotask(() => {
+      setEditingCommentId(null);
+      setReplyingSolutionId(null);
+    });
   }, [activeSolutionId]);
 
   useEffect(() => {
     if (activeSolutionId && !activeSolution) {
-      setActiveSolutionId(null);
+      queueMicrotask(() => {
+        setActiveSolutionId(null);
+      });
     }
   }, [activeSolution, activeSolutionId]);
 

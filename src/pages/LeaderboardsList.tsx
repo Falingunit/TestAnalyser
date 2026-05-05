@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useCallback, useEffect, useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { useAppStore } from "@/lib/store";
 import { Button } from "@/components/ui/button";
@@ -44,19 +44,21 @@ export const LeaderboardsList = () => {
   const [description, setDescription] = useState("");
   const [selectedTests, setSelectedTests] = useState<Set<string>>(new Set());
 
-  const loadLeaderboards = async () => {
+  const loadLeaderboards = useCallback(async () => {
     const result = await fetchLeaderboards();
     if (result.ok) {
       setLeaderboards(result.leaderboards);
     }
     setLoading(false);
-  };
+  }, [fetchLeaderboards]);
 
   useEffect(() => {
     if (showComparison) {
-      loadLeaderboards();
+      queueMicrotask(() => {
+        void loadLeaderboards();
+      });
     }
-  }, [showComparison]);
+  }, [loadLeaderboards, showComparison]);
 
   const visibleLeaderboards = useMemo(() => {
     return leaderboards.filter((lb) => {

@@ -17,9 +17,16 @@ const dateFormatter = new Intl.DateTimeFormat(undefined, {
 });
 
 const sanitizeFileName = (value: string) =>
-  value
-    .trim()
-    .replace(/[<>:"/\\|?*\u0000-\u001F]+/g, "-")
+  Array.from(value.trim())
+    .map((char) => {
+      const code = char.charCodeAt(0);
+      if (code >= 0 && code <= 31) {
+        return "-";
+      }
+      return char;
+    })
+    .join("")
+    .replace(/[<>:"/\\|?*]+/g, "-")
     .replace(/\s+/g, "-")
     .replace(/-+/g, "-")
     .replace(/^-|-$/g, "")

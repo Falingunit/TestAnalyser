@@ -4,7 +4,6 @@ import {
   useCallback,
   useContext,
   useEffect,
-  useEffectEvent,
   useMemo,
   useRef,
   useState,
@@ -31,6 +30,11 @@ const USER_KEY = "testanalyser-user";
 const UI_KEY = "testanalyser-ui";
 const ADMIN_OVERRIDE_KEY = "testanalyser-admin-override";
 const SHOW_COMPARISON_KEY = "testanalyser-show-comparison";
+const ADMIN_EMAILS = [
+  "spssabaris@gmail.com",
+  "sbaniruddh1@gmail.com",
+  "testing@gmail.com",
+];
 
 type AuthResult = { ok: boolean; message?: string };
 type CommunityThreadResult = {
@@ -591,6 +595,34 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
     }));
   }, []);
 
+  const upsertAccount = useCallback((next: ExternalAccount) => {
+    setState((prev) => ({
+      ...prev,
+      externalAccounts: prev.externalAccounts.some(
+        (item) => item.id === next.id,
+      )
+        ? prev.externalAccounts.map((item) =>
+            item.id === next.id ? next : item,
+          )
+        : [...prev.externalAccounts, next],
+    }));
+  }, []);
+
+  const refreshMissingRemoteDisplayName = useCallback(async (token: string) => {
+    try {
+      const data = await requestJson<{ account: ExternalAccount }>(
+        "/api/external/refresh-missing-name",
+        {
+          method: "POST",
+          token,
+        },
+      );
+      upsertAccount(normalizeAccount(data.account));
+    } catch (error) {
+      console.error(error);
+    }
+  }, [upsertAccount]);
+
   useEffect(() => {
     const bootstrap = async () => {
       const token = loadToken();
@@ -634,7 +666,10 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
           refreshAccounts(token),
           refreshTests(token),
         ]);
-        triggerMissingRemoteDisplayNameRefresh(token, accounts);
+        const account = accounts.find((item) => item.provider === "test.z7i.in");
+        if (account && !account.remoteDisplayName) {
+          void refreshMissingRemoteDisplayName(token);
+        }
       } catch (error) {
         console.error(error);
       } finally {
@@ -643,7 +678,7 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
     };
 
     void bootstrap();
-  }, [clearSession, refreshAccounts, refreshTests]);
+  }, [clearSession, refreshAccounts, refreshMissingRemoteDisplayName, refreshTests]);
 
   const register: Store["register"] = useCallback(async ({ name, email, password }) => {
     try {
@@ -676,7 +711,10 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
         refreshAccounts(data.token),
         refreshTests(data.token),
       ]);
-      triggerMissingRemoteDisplayNameRefresh(data.token, accounts);
+      const account = accounts.find((item) => item.provider === "test.z7i.in");
+      if (account && !account.remoteDisplayName) {
+        void refreshMissingRemoteDisplayName(data.token);
+      }
       return { ok: true };
     } catch (error) {
       return {
@@ -684,7 +722,7 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
         message: error instanceof Error ? error.message : "Unable to register.",
       };
     }
-  }, [refreshAccounts, refreshTests]);
+  }, [refreshAccounts, refreshMissingRemoteDisplayName, refreshTests]);
 
   const login: Store["login"] = useCallback(async ({ email, password }) => {
     try {
@@ -717,7 +755,10 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
         refreshAccounts(data.token),
         refreshTests(data.token),
       ]);
-      triggerMissingRemoteDisplayNameRefresh(data.token, accounts);
+      const account = accounts.find((item) => item.provider === "test.z7i.in");
+      if (account && !account.remoteDisplayName) {
+        void refreshMissingRemoteDisplayName(data.token);
+      }
       return { ok: true };
     } catch (error) {
       return {
@@ -725,7 +766,7 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
         message: error instanceof Error ? error.message : "Unable to sign in.",
       };
     }
-  }, [refreshAccounts, refreshTests]);
+  }, [refreshAccounts, refreshMissingRemoteDisplayName, refreshTests]);
 
   const logout = useCallback(() => {
     clearSession();
@@ -794,45 +835,6 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
       };
     }
   }, []);
-
-  const upsertAccount = useCallback((next: ExternalAccount) => {
-    setState((prev) => ({
-      ...prev,
-      externalAccounts: prev.externalAccounts.some(
-        (item) => item.id === next.id,
-      )
-        ? prev.externalAccounts.map((item) =>
-            item.id === next.id ? next : item,
-          )
-        : [...prev.externalAccounts, next],
-    }));
-  }, []);
-
-  const refreshMissingRemoteDisplayName = useCallback(async (token: string) => {
-    try {
-      const data = await requestJson<{ account: ExternalAccount }>(
-        "/api/external/refresh-missing-name",
-        {
-          method: "POST",
-          token,
-        },
-      );
-      upsertAccount(normalizeAccount(data.account));
-    } catch (error) {
-      console.error(error);
-    }
-  }, [upsertAccount]);
-
-  const triggerMissingRemoteDisplayNameRefresh = useEffectEvent((
-    token: string,
-    accounts: ExternalAccount[],
-  ) => {
-    const account = accounts.find((item) => item.provider === "test.z7i.in");
-    if (!account || account.remoteDisplayName) {
-      return;
-    }
-    void refreshMissingRemoteDisplayName(token);
-  });
 
   const connectExternalAccount: Store["connectExternalAccount"] = useCallback(async (
     payload,
@@ -2006,7 +2008,7 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
       return { ok: false, message: "Missing session token.", leaderboards: [] };
     }
     try {
-      const data = await requestJson<{ leaderboards: any[] }>("/api/leaderboards", {
+      const data = await requestJson<{ leaderboards: CustomLeaderboard[] }>("/api/leaderboards", {
         token,
       });
       return { ok: true, leaderboards: data.leaderboards };
@@ -2078,14 +2080,9 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
     }
   }, []);
 
-  const adminEmails = [
-    "spssabaris@gmail.com",
-    "sbaniruddh1@gmail.com",
-    "testing@gmail.com",
-  ];
   const isAdmin = useMemo(() =>
     currentUser?.role === "admin" ||
-    (currentUser?.email ? adminEmails.includes(currentUser.email) : false), [currentUser]);
+    (currentUser?.email ? ADMIN_EMAILS.includes(currentUser.email) : false), [currentUser]);
 
   const fontScale = useMemo(() => currentUser?.preferences.fontScale ?? state.ui.fontScale, [currentUser, state.ui.fontScale]);
 

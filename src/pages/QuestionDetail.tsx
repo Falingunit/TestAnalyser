@@ -1,4 +1,5 @@
 import {
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -512,10 +513,12 @@ export const QuestionDetail = () => {
   const keyOptionOrder: readonly string[] = keyOptionLabels;
 
   useEffect(() => {
-    setContentDraft(buildQuestionContentDraft(question));
-    setTempImageUrls([]);
-    setIsEditDialogOpen(false);
-    setIsSolutionOpen(false);
+    queueMicrotask(() => {
+      setContentDraft(buildQuestionContentDraft(question));
+      setTempImageUrls([]);
+      setIsEditDialogOpen(false);
+      setIsSolutionOpen(false);
+    });
   }, [question]);
 
   const addKeyAnswerGroup = () => {
@@ -708,7 +711,7 @@ export const QuestionDetail = () => {
     setKeyUpdateBonus(false);
   };
 
-  const handleBookmarkToggle = async () => {
+  const handleBookmarkToggle = useCallback(async () => {
     if (!test || !question || isBookmarking || isReadonlyView) {
       return;
     }
@@ -722,7 +725,14 @@ export const QuestionDetail = () => {
       setMessage(result.message ?? "Unable to update bookmark.");
     }
     setIsBookmarking(false);
-  };
+  }, [
+    isBookmarked,
+    isBookmarking,
+    isReadonlyView,
+    question,
+    test,
+    toggleQuestionBookmark,
+  ]);
 
   const handleQuestionTagsChange = async (nextTags: string[]) => {
     if (!test || !question || isReadonlyView) {
@@ -782,7 +792,7 @@ export const QuestionDetail = () => {
         urls,
       });
     };
-  }, [question?.id, test?.id]);
+  }, [discardTemporaryQuestionImages, question?.id, test?.id]);
 
   const handleEditDialogOpenChange = (open: boolean) => {
     if (open) {
@@ -855,8 +865,8 @@ export const QuestionDetail = () => {
         setContentDraft((prev) => ({ ...prev, [field]: nextValue }));
         setMessage(null);
 
+        const target = textarea;
         window.requestAnimationFrame(() => {
-          const target = draftFieldRefs.current[field];
           if (!target) {
             return;
           }
@@ -959,14 +969,17 @@ export const QuestionDetail = () => {
     previewParticipantUsername,
   ]);
   const resolvedTestId = test?.id ?? testId ?? "";
-  const questionLink = (targetQuestionId: string) =>
-    `/app/questions/${resolvedTestId}/${targetQuestionId}${readonlySearch}`;
-  const navigateToQuestion = (targetQuestionId: string | undefined) => {
+  const questionLink = useCallback(
+    (targetQuestionId: string) =>
+      `/app/questions/${resolvedTestId}/${targetQuestionId}${readonlySearch}`,
+    [readonlySearch, resolvedTestId],
+  );
+  const navigateToQuestion = useCallback((targetQuestionId: string | undefined) => {
     if (!targetQuestionId) {
       return;
     }
     navigate(questionLink(targetQuestionId));
-  };
+  }, [navigate, questionLink]);
 
   useEffect(() => {
     if (!question && isBookmarkView && displayQuestions.length > 0) {
@@ -976,33 +989,43 @@ export const QuestionDetail = () => {
 
   useEffect(() => {
     if (!notesKey) {
-      setNotes("");
+      queueMicrotask(() => {
+        setNotes("");
+      });
       return;
     }
     const saved = localStorage.getItem(notesKey);
-    setNotes(saved ?? "");
+    queueMicrotask(() => {
+      setNotes(saved ?? "");
+    });
   }, [notesKey]);
 
   useEffect(() => {
     if (!question) {
-      setKeyAnswerGroups([buildKeyGroup()]);
-      setMtqKeyDraft(buildEmptyMtqAnswer());
-      setKeyUpdateBonus(false);
-      setQuestionTypeDraft("MCQ");
-      setMarkingDraft({ correct: "", incorrect: "", unattempted: "" });
+      queueMicrotask(() => {
+        setKeyAnswerGroups([buildKeyGroup()]);
+        setMtqKeyDraft(buildEmptyMtqAnswer());
+        setKeyUpdateBonus(false);
+        setQuestionTypeDraft("MCQ");
+        setMarkingDraft({ correct: "", incorrect: "", unattempted: "" });
+      });
       return;
     }
-    setQuestionTypeDraft(question.qtype);
-    setMarkingDraft({
-      correct: String(question.correctMarking),
-      incorrect: String(question.incorrectMarking),
-      unattempted: String(question.unattemptedMarking),
-    });
     const bonusActive = isBonusKey(question.keyUpdate);
-    setKeyUpdateBonus(bonusActive);
+    queueMicrotask(() => {
+      setQuestionTypeDraft(question.qtype);
+      setMarkingDraft({
+        correct: String(question.correctMarking),
+        incorrect: String(question.incorrectMarking),
+        unattempted: String(question.unattemptedMarking),
+      });
+      setKeyUpdateBonus(bonusActive);
+    });
     if (bonusActive) {
-      setKeyAnswerGroups([buildKeyGroup()]);
-      setMtqKeyDraft(buildEmptyMtqAnswer());
+      queueMicrotask(() => {
+        setKeyAnswerGroups([buildKeyGroup()]);
+        setMtqKeyDraft(buildEmptyMtqAnswer());
+      });
       return;
     }
 
@@ -1010,7 +1033,9 @@ export const QuestionDetail = () => {
     const rawKey = question.keyUpdate ?? question.correctAnswer;
 
     if (question.qtype === "MTQ") {
-      setMtqKeyDraft(normalizeMtqAnswerValue(rawKey) ?? buildEmptyMtqAnswer());
+      queueMicrotask(() => {
+        setMtqKeyDraft(normalizeMtqAnswerValue(rawKey) ?? buildEmptyMtqAnswer());
+      });
     } else if (question.qtype === "NAT") {
       if (typeof rawKey === "number") {
         nextGroups.push({ ...buildKeyGroup(), min: String(rawKey), max: "" });
@@ -1020,7 +1045,7 @@ export const QuestionDetail = () => {
         "min" in rawKey &&
         "max" in rawKey
       ) {
-        nextGroups.push({
+      nextGroups.push({
           ...buildKeyGroup(),
           min: String(rawKey.min ?? ""),
           max: String(rawKey.max ?? ""),
@@ -1063,10 +1088,12 @@ export const QuestionDetail = () => {
       nextGroups.push({ ...buildKeyGroup(), single: selection });
     }
 
-    setKeyAnswerGroups(nextGroups.length > 0 ? nextGroups : [buildKeyGroup()]);
-    if (question.qtype !== "MTQ") {
-      setMtqKeyDraft(buildEmptyMtqAnswer());
-    }
+    queueMicrotask(() => {
+      setKeyAnswerGroups(nextGroups.length > 0 ? nextGroups : [buildKeyGroup()]);
+      if (question.qtype !== "MTQ") {
+        setMtqKeyDraft(buildEmptyMtqAnswer());
+      }
+    });
   }, [question]);
 
   useEffect(() => {
@@ -1092,9 +1119,8 @@ export const QuestionDetail = () => {
     }
   };
 
-  const handleCopyQuestionImage = async (withoutAnswers = false) => {
+  const handleCopyQuestionImage = useCallback(async (withoutAnswers = false) => {
     const node = questionCopyRef.current;
-    console.log(node)
     if (!node) return;
 
     setIsCopying(true);
@@ -1120,7 +1146,7 @@ export const QuestionDetail = () => {
 
       // 2. Prepare node: Hide unwanted UI elements
       unwanted.forEach((el) => {
-        (el as any)._prevDisplay = el.style.display;
+        el.dataset.capturePrevDisplay = el.style.display;
         el.style.display = "none";
       });
 
@@ -1221,11 +1247,12 @@ export const QuestionDetail = () => {
         node.removeChild(styleTag);
       }
       unwanted.forEach((el) => {
-        el.style.display = (el as any)._prevDisplay || "";
+        el.style.display = el.dataset.capturePrevDisplay ?? "";
+        delete el.dataset.capturePrevDisplay;
       });
       setIsCopying(false);
     }
-  };
+  }, [mode]);
 
   useEffect(() => {
     const isEditableTarget = (target: EventTarget | null) => {
@@ -1308,14 +1335,14 @@ export const QuestionDetail = () => {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [
+    handleBookmarkToggle,
+    handleCopyQuestionImage,
     isBookmarking,
     isCopying,
     isReadonlyView,
+    navigateToQuestion,
     next,
     prev,
-    navigate,
-    readonlySearch,
-    resolvedTestId,
   ]);
 
   if (!test || !question) {

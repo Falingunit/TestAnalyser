@@ -88,7 +88,7 @@ export const TagInput = ({
     const remainder =
       trailingSpace || !allowPartial ? "" : (parts[parts.length - 1] ?? "");
 
-    let next = [...value];
+    const next = [...value];
     complete.forEach((part) => {
       const normalized = normalizeTag(part);
       if (!normalized) {

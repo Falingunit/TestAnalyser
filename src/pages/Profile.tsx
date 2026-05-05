@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useAppStore } from "@/lib/store";
 import { Badge } from "@/components/ui/badge";
@@ -35,9 +35,11 @@ export const Profile = () => {
   const [profileMessage, setProfileMessage] = useState<string | null>(null);
   const [passwordMessage, setPasswordMessage] = useState<string | null>(null);
   const [connectMessage, setConnectMessage] = useState<string | null>(null);
-  const [isConnectOpen, setIsConnectOpen] = useState(false);
-  const [isConnecting, setIsConnecting] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
+  const [isConnectOpen, setIsConnectOpen] = useState(
+    () => searchParams.get("connect") === "1",
+  );
+  const [isConnecting, setIsConnecting] = useState(false);
 
   const account = state.externalAccounts.find(
     (item) => item.userId === currentUser?.id
@@ -109,12 +111,6 @@ export const Profile = () => {
     setIsConnectOpen(false);
     clearConnectParam();
   };
-
-  useEffect(() => {
-    if (searchParams.get("connect") === "1") {
-      setIsConnectOpen(true);
-    }
-  }, [searchParams]);
 
   return (
     <div className="space-y-6">

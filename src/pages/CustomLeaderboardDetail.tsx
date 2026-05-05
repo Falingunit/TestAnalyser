@@ -149,9 +149,13 @@ export const CustomLeaderboardDetail = () => {
       return;
     }
 
-    setLoading(true);
-    setError(null);
-    fetchCustomLeaderboard(id)
+    queueMicrotask(() => {
+      if (active) {
+        setLoading(true);
+        setError(null);
+      }
+    });
+    void fetchCustomLeaderboard(id)
       .then((data) => {
         if (!active) {
           return;
@@ -182,7 +186,9 @@ export const CustomLeaderboardDetail = () => {
   }, [id, fetchCustomLeaderboard, state.tests, showComparison]);
 
   useEffect(() => {
-    setIsSelectedTestsCollapsed(true);
+    queueMicrotask(() => {
+      setIsSelectedTestsCollapsed(true);
+    });
   }, [selectedLeaderboardKey]);
 
   const handleLeaderboardSort = (key: LeaderboardSortKey) => {
@@ -270,8 +276,10 @@ export const CustomLeaderboardDetail = () => {
       return;
     }
 
-    setLoadingParticipant(true);
-    fetchCustomLeaderboardParticipant(id, selectedLeaderboardKey)
+    queueMicrotask(() => {
+      setLoadingParticipant(true);
+    });
+    void fetchCustomLeaderboardParticipant(id, selectedLeaderboardKey)
       .then((data) => {
         if (data.ok && data.attempts) {
           setParticipantAttempts((prev) => ({

@@ -257,7 +257,9 @@ export const TestDetail = () => {
   });
 
   useEffect(() => {
-    setOnlyBookmarked(bookmarkViewRequested);
+    queueMicrotask(() => {
+      setOnlyBookmarked(bookmarkViewRequested);
+    });
   }, [bookmarkViewRequested]);
 
   useEffect(() => {
@@ -270,8 +272,10 @@ export const TestDetail = () => {
   // FIXED: useEffect logic to prevent race conditions and overwrites
   useEffect(() => {
     if (!test) {
-      setMarkingDraft(buildEmptyMarkingDraft());
-      setTypeMappingRows(buildDefaultTypeMappingRows());
+      queueMicrotask(() => {
+        setMarkingDraft(buildEmptyMarkingDraft());
+        setTypeMappingRows(buildDefaultTypeMappingRows());
+      });
       return;
     }
 
@@ -335,7 +339,9 @@ export const TestDetail = () => {
           unattempted: String(question.unattemptedMarking),
         };
       });
-      setMarkingDraft(nextDraft);
+      queueMicrotask(() => {
+        setMarkingDraft(nextDraft);
+      });
       const savedMapping = test.questionTypeMapping ?? {};
       const seen = new Set<string>();
       const rows: QuestionTypeMappingRow[] = [];
@@ -360,7 +366,9 @@ export const TestDetail = () => {
         seen.add(normalized);
         rows.push(createMappingRow(source, target as QuestionType));
       });
-      setTypeMappingRows(rows.length > 0 ? rows : buildDefaultTypeMappingRows());
+      queueMicrotask(() => {
+        setTypeMappingRows(rows.length > 0 ? rows : buildDefaultTypeMappingRows());
+      });
     }
     // Note: We deliberately removed setMarkingMessage(null) from here
   }, [test, msFormEdited]); // Re-run when test updates
@@ -650,14 +658,20 @@ export const TestDetail = () => {
 
   useEffect(() => {
     if (!test) {
-      setLeaderboard([]);
-      setLeaderboardMessage(null);
-      setIsLoadingLeaderboard(false);
+      queueMicrotask(() => {
+        setLeaderboard([]);
+        setLeaderboardMessage(null);
+        setIsLoadingLeaderboard(false);
+      });
       return;
     }
     let active = true;
-    setIsLoadingLeaderboard(true);
-    setLeaderboardMessage(null);
+    queueMicrotask(() => {
+      if (active) {
+        setIsLoadingLeaderboard(true);
+        setLeaderboardMessage(null);
+      }
+    });
     void fetchTestLeaderboard(test.id)
       .then((result) => {
         if (!active) {
@@ -710,12 +724,15 @@ export const TestDetail = () => {
       }
       return a.externalUsername.localeCompare(b.externalUsername);
     });
-    let previousScore: number | null = null;
-    let previousRank = 1;
-    const rows = rankedRows.map((entry, index) => {
+    const rows = rankedRows.reduce<Array<LeaderboardEntry & {
+      computedRank: number;
+      subjectScores: { subject: Subject; score: number; total: number }[];
+      subjectScoreMap: Record<Subject, { subject: Subject; score: number; total: number }>;
+    }>>((acc, entry, index) => {
+      const previous = acc[acc.length - 1];
       const rank =
-        previousScore !== null && entry.score === previousScore
-          ? previousRank
+        previous && entry.score === previous.score
+          ? previous.computedRank
           : index + 1;
       const subjectScores = leaderboardSubjects.map((subject) => {
         const subjectQuestions = entry.test.questions.filter(
@@ -735,17 +752,16 @@ export const TestDetail = () => {
           total,
         };
       });
-      previousScore = entry.score;
-      previousRank = rank;
-      return {
+      acc.push({
         ...entry,
         computedRank: rank,
         subjectScores,
         subjectScoreMap: Object.fromEntries(
           subjectScores.map((item) => [item.subject, item]),
         ) as Record<Subject, { subject: Subject; score: number; total: number }>,
-      };
-    });
+      });
+      return acc;
+    }, []);
     const direction = leaderboardSort.direction === "asc" ? 1 : -1;
     return [...rows].sort((a, b) => {
       if (leaderboardSort.key === "name") {
