@@ -1522,7 +1522,7 @@ export const QuestionDetail = () => {
                             "relative flex aspect-square w-full items-center justify-center rounded-md border text-xs font-medium",
                             highlightKeyChangesInPalette &&
                               item.keyChanged &&
-                              "border-dashed ring-1 ring-sky-500/70 ring-offset-1 ring-offset-background",
+                              "ring-1 ring-fuchsia-500/70",
                             item.id === question.id
                               ? "border-primary bg-primary text-primary-foreground"
                               : item.bonus
