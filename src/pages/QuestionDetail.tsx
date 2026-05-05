@@ -79,6 +79,13 @@ const splitByOr = (value: string) =>
     .map((item) => item.trim())
     .filter(Boolean);
 
+const hasKeyChange = (question: {
+  correctAnswer: unknown;
+  keyUpdate: unknown;
+}) =>
+  JSON.stringify(question.correctAnswer ?? null) !==
+  JSON.stringify(question.keyUpdate ?? null);
+
 const toOptionArray = (value: unknown): string[] => {
   if (Array.isArray(value)) {
     return value
@@ -332,6 +339,8 @@ export const QuestionDetail = () => {
   const communityEnabled =
     currentUser?.preferences.communitySolutionsEnabled ?? true;
   const mtqShowContent = currentUser?.preferences.mtqShowContent ?? true;
+  const highlightKeyChangesInPalette =
+    currentUser?.preferences.highlightKeyChangesInPalette ?? true;
   const communityTestId = ownedTest?.id ?? test?.id ?? "";
   const mode = currentUser?.preferences.mode ?? state.ui.mode;
   const displayQuestions = useMemo(() => {
@@ -354,6 +363,7 @@ export const QuestionDetail = () => {
         number: number;
         status: string;
         bonus: boolean;
+        keyChanged: boolean;
         bookmarked: boolean;
       }>
     >();
@@ -366,6 +376,7 @@ export const QuestionDetail = () => {
         number: displayNumber,
         status: getQuestionStatus(test, item),
         bonus: isBonusKey(item.keyUpdate),
+        keyChanged: hasKeyChange(item),
         bookmarked: Boolean(test.bookmarks?.[item.id]),
       });
       map.set(subject, current);
@@ -1482,6 +1493,9 @@ export const QuestionDetail = () => {
                           onClick={() => setIsSidebarOpen(false)}
                           className={cn(
                             "relative flex aspect-square w-full items-center justify-center rounded-md border text-xs font-medium",
+                            highlightKeyChangesInPalette &&
+                              item.keyChanged &&
+                              "border-dashed ring-1 ring-sky-500/70 ring-offset-1 ring-offset-background",
                             item.id === question.id
                               ? "border-primary bg-primary text-primary-foreground"
                               : item.bonus

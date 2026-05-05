@@ -28,6 +28,7 @@ export const Profile = () => {
     setMode,
     setShowComparison,
     setCommunitySolutionsEnabled,
+    setHighlightKeyChangesInPalette,
     setMtqShowContent,
     showComparison,
   } = useAppStore();
@@ -46,6 +47,8 @@ export const Profile = () => {
   const communitySolutionsEnabled =
     currentUser?.preferences.communitySolutionsEnabled ?? true;
   const mtqShowContent = currentUser?.preferences.mtqShowContent ?? true;
+  const highlightKeyChangesInPalette =
+    currentUser?.preferences.highlightKeyChangesInPalette ?? true;
 
   const handleProfileSave = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -244,6 +247,20 @@ export const Profile = () => {
               <Switch
                 checked={communitySolutionsEnabled}
                 onCheckedChange={setCommunitySolutionsEnabled}
+              />
+            </div>
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-sm font-medium text-foreground">
+                  Highlight key changes
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Mark key-changed questions in the question palette.
+                </p>
+              </div>
+              <Switch
+                checked={highlightKeyChangesInPalette}
+                onCheckedChange={setHighlightKeyChangesInPalette}
               />
             </div>
             <div className="flex items-center justify-between gap-4">

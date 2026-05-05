@@ -57,6 +57,7 @@ type Store = {
   setFontScale: (scale: number) => void;
   setCommunitySolutionsEnabled: (enabled: boolean) => void;
   setMtqShowContent: (enabled: boolean) => void;
+  setHighlightKeyChangesInPalette: (enabled: boolean) => void;
   isBootstrapped: boolean;
   register: (payload: {
     name: string;
@@ -332,6 +333,7 @@ const normalizePreferences = (
       acknowledgedKeyUpdates: {},
       communitySolutionsEnabled: true,
       mtqShowContent: true,
+      highlightKeyChangesInPalette: true,
     };
   }
 
@@ -352,6 +354,10 @@ const normalizePreferences = (
     typeof prefs.mtqShowContent === "boolean"
       ? prefs.mtqShowContent
       : true;
+  const highlightKeyChangesInPalette =
+    typeof prefs.highlightKeyChangesInPalette === "boolean"
+      ? prefs.highlightKeyChangesInPalette
+      : true;
 
   return {
     theme,
@@ -360,6 +366,7 @@ const normalizePreferences = (
     acknowledgedKeyUpdates,
     communitySolutionsEnabled,
     mtqShowContent,
+    highlightKeyChangesInPalette,
   };
 };
 
@@ -1831,6 +1838,18 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
     });
   }, [savePreferences]);
 
+  const setHighlightKeyChangesInPalette: Store["setHighlightKeyChangesInPalette"] =
+    useCallback((enabled) => {
+      const currentUser = currentUserRef.current;
+      if (!currentUser) {
+        return;
+      }
+      void savePreferences({
+        ...currentUser.preferences,
+        highlightKeyChangesInPalette: enabled,
+      });
+    }, [savePreferences]);
+
   const setShowComparison: Store["setShowComparison"] = useCallback((show) => {
     setShowComparisonState(show);
     saveShowComparison(show);
@@ -2083,6 +2102,7 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
     setFontScale,
     setCommunitySolutionsEnabled,
     setMtqShowContent,
+    setHighlightKeyChangesInPalette,
     isBootstrapped,
     register,
     login,
@@ -2138,6 +2158,7 @@ export const AppStoreProvider = ({ children }: { children: ReactNode }) => {
     setFontScale,
     setCommunitySolutionsEnabled,
     setMtqShowContent,
+    setHighlightKeyChangesInPalette,
     isBootstrapped,
     register,
     login,

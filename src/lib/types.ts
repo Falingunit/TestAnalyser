@@ -11,6 +11,7 @@ export type UserPreferences = {
   acknowledgedKeyUpdates: Record<string, string>
   communitySolutionsEnabled: boolean
   mtqShowContent: boolean
+  highlightKeyChangesInPalette: boolean
 }
 
 export type User = {

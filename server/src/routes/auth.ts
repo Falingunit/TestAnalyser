@@ -13,6 +13,7 @@ const defaultPreferences = {
   acknowledgedKeyUpdates: {},
   communitySolutionsEnabled: true,
   mtqShowContent: true,
+  highlightKeyChangesInPalette: true,
 }
 
 const sanitizeEmail = (email: string) => email.trim().toLowerCase()
@@ -46,6 +47,9 @@ const normalizePreferences = (value: unknown, existing: Record<string, unknown>)
     if (typeof prefs.mtqShowContent === 'boolean') {
       next.mtqShowContent = prefs.mtqShowContent
     }
+    if (typeof prefs.highlightKeyChangesInPalette === 'boolean') {
+      next.highlightKeyChangesInPalette = prefs.highlightKeyChangesInPalette
+    }
   }
   if (!next.theme) {
     next.theme = defaultPreferences.theme
@@ -64,6 +68,9 @@ const normalizePreferences = (value: unknown, existing: Record<string, unknown>)
   }
   if (typeof next.mtqShowContent !== 'boolean') {
     next.mtqShowContent = defaultPreferences.mtqShowContent
+  }
+  if (typeof next.highlightKeyChangesInPalette !== 'boolean') {
+    next.highlightKeyChangesInPalette = defaultPreferences.highlightKeyChangesInPalette
   }
   return next
 }
