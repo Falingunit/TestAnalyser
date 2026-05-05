@@ -9,7 +9,7 @@ import {
   type MouseEvent,
 } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { Bookmark, ChevronDown, Copy, CopyX, Menu, Pencil, X } from "lucide-react";
+import { Bookmark, ChevronDown, ChevronLeft, Copy, CopyX, Menu, Pencil, X } from "lucide-react";
 import { toBlob } from "html-to-image";
 import { useAppStore } from "@/lib/store";
 import { ParticipantNameWithTooltip } from "@/components/ParticipantNameWithTooltip";
@@ -1361,8 +1361,8 @@ export const QuestionDetail = () => {
   return (
     <div className="flex h-[calc(100vh-90px)] flex-col gap-1 overflow-hidden">
       {/* Question Detail Helper Buttons */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
+      <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3">
+        <div className="flex min-w-0 items-center gap-2">
           <Button
             type="button"
             variant="outline"
@@ -1373,17 +1373,24 @@ export const QuestionDetail = () => {
           >
             <Menu className="h-4 w-4" />
           </Button>
-          <Button asChild variant="ghost" size="sm">
+          <Button asChild variant="ghost" size="icon" className="h-8 w-8">
             <Link
               to={
                 isBookmarkView
                   ? "/app/bookmarks"
                   : `/app/tests/${ownedTest?.id ?? test.id}`
               }
+              aria-label={isBookmarkView ? "Back to bookmarks" : "Back to test"}
+              title={isBookmarkView ? "Back to bookmarks" : "Back to test"}
             >
-              {isBookmarkView ? "Back to bookmarks" : "Back to test"}
+              <ChevronLeft className="h-4 w-4" />
             </Link>
           </Button>
+        </div>
+        <div className="min-w-0 justify-self-center">
+          <p className="truncate text-center text-sm font-semibold text-foreground">
+            {test.title}
+          </p>
         </div>
         <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
           {!isReadonlyView ? (
