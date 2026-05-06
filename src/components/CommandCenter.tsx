@@ -39,9 +39,11 @@ export function CommandCenter() {
       <CommandList>
         <CommandEmpty>No results found.</CommandEmpty>
         <CommandGroup heading="Tests">
-          {state.tests.map((test) => (
-            <CommandItem
-              key={test.id}
+          {[...state.tests]
+            .sort((a, b) => new Date(b.examDate).getTime() - new Date(a.examDate).getTime())
+            .map((test) => (
+              <CommandItem
+                key={test.id}
               onSelect={() => {
                 if (test.questions.length > 0) {
                   onSelect(test.id, test.questions[0].id)
