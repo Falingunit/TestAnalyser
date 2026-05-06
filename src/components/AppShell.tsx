@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { Switch } from "@/components/ui/switch";
+import { CommandCenter } from "@/components/CommandCenter";
 
 const navItems = [
   {
@@ -158,6 +159,7 @@ export const AppShell = ({ children }: { children: ReactNode }) => {
       </header>
 
       <main className="min-w-0 px-2 py-2">{children}</main>
+      <CommandCenter />
     </div>
   );
 };
