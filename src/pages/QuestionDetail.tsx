@@ -436,6 +436,8 @@ export const QuestionDetail = () => {
   const [imageSrc, setImageSrc] = useState<string | null>(null);
   const [zoomLevel, setZoomLevel] = useState(1);
   const questionCopyRef = useRef<HTMLDivElement | null>(null);
+  const paletteNumberBufferRef = useRef("");
+  const paletteNumberResetTimeoutRef = useRef<number | null>(null);
   const availableTags = useMemo(
     () => collectPersistedTags(state.tests),
     [state.tests],
@@ -456,6 +458,12 @@ export const QuestionDetail = () => {
     tempImageUrlsRef.current = tempImageUrls;
   }, [tempImageUrls]);
 
+  useEffect(() => () => {
+    if (paletteNumberResetTimeoutRef.current !== null) {
+      window.clearTimeout(paletteNumberResetTimeoutRef.current);
+    }
+  }, []);
+
   const analysis = test ? buildAnalysis(test) : null;
   const totalScore = test
     ? test.questions.reduce((sum, question) => sum + getQuestionMaxMarks(question), 0)
@@ -467,6 +475,13 @@ export const QuestionDetail = () => {
   const currentIndex = displayQuestions.findIndex(
     (item) => item.question.id === questionId,
   );
+  const questionIdByDisplayNumber = useMemo(() => {
+    const lookup = new Map<number, string>();
+    displayQuestions.forEach(({ displayNumber, question }) => {
+      lookup.set(displayNumber, question.id);
+    });
+    return lookup;
+  }, [displayQuestions]);
   const questionEntry =
     currentIndex >= 0 ? displayQuestions[currentIndex] : null;
   const question = questionEntry?.question ?? null;
@@ -1301,6 +1316,38 @@ export const QuestionDetail = () => {
         return;
       }
 
+      if (/^\d$/.test(event.key)) {
+        if (event.repeat) {
+          return;
+        }
+        const combinedBuffer = `${paletteNumberBufferRef.current}${event.key}`;
+        const combinedNumber = Number.parseInt(combinedBuffer, 10);
+        const singleNumber = Number.parseInt(event.key, 10);
+        const hasCombinedMatch = questionIdByDisplayNumber.has(combinedNumber);
+        const targetQuestionId =
+          questionIdByDisplayNumber.get(combinedNumber) ??
+          questionIdByDisplayNumber.get(singleNumber);
+
+        paletteNumberBufferRef.current = hasCombinedMatch
+          ? combinedBuffer
+          : event.key;
+
+        if (paletteNumberResetTimeoutRef.current !== null) {
+          window.clearTimeout(paletteNumberResetTimeoutRef.current);
+        }
+        paletteNumberResetTimeoutRef.current = window.setTimeout(() => {
+          paletteNumberBufferRef.current = "";
+          paletteNumberResetTimeoutRef.current = null;
+        }, 750);
+
+        if (!targetQuestionId) {
+          return;
+        }
+        event.preventDefault();
+        navigateToQuestion(targetQuestionId);
+        return;
+      }
+
       if (
         event.key === "s" ||
         event.key === "S" ||
@@ -1342,6 +1389,7 @@ export const QuestionDetail = () => {
     isReadonlyView,
     navigateToQuestion,
     next,
+    questionIdByDisplayNumber,
     prev,
   ]);
 
